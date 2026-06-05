@@ -1,0 +1,17 @@
+# Core transcription engine (SOTA local Whisper via CTranslate2).
+# Pulls in ctranslate2, tokenizers, onnxruntime, huggingface-hub and PyAV,
+# so no separate ffmpeg binary is required for audio decoding.
+faster-whisper>=1.1.0
+
+# Modern, lightweight GUI toolkit built on top of Tkinter.
+customtkinter>=5.2.2
+
+# --- Optional: NVIDIA GPU acceleration (CUDA 12) ---------------------------
+# CTranslate2 needs the CUDA 12 cuBLAS/cuDNN runtime. Install these to run on
+# the GPU; without them the app automatically uses the CPU. The engine adds
+# these wheels' DLL directories to the search path at startup, so no manual
+# CUDA/cuDNN system install is required.
+#   pip install nvidia-cublas-cu12 nvidia-cudnn-cu12 nvidia-cuda-runtime-cu12
+# nvidia-cublas-cu12
+# nvidia-cudnn-cu12
+# nvidia-cuda-runtime-cu12

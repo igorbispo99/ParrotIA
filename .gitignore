@@ -216,3 +216,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Audios
+*.ogg
+*.mp3
+*.wav
+
+# Claude
+CLAUDE.md
