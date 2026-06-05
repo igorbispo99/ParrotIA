@@ -1,6 +1,6 @@
 """Audio Transcriber — a local, free, GUI Whisper transcription tool.
 
-Run with:  python app.py
+Run with:  parrotia-gui   (or:  python -m parrotia.app)
 """
 
 from __future__ import annotations
@@ -14,8 +14,8 @@ from typing import Optional
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 
-import formats
-from transcriber import (
+from . import formats
+from .transcriber import (
     AVAILABLE_MODELS,
     COMPUTE_TYPES,
     DEFAULT_MODEL,

@@ -1,0 +1,79 @@
+name: Release
+
+# Build the sdist + wheel and publish a GitHub Release whenever a version tag
+# (e.g. v1.0.0) is pushed. The release notes are taken from CHANGELOG.md.
+#
+#   git tag v1.0.0 && git push origin v1.0.0
+#
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write  # needed to create the GitHub Release
+
+jobs:
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+
+      - name: Check distributions
+        run: |
+          python -m pip install --upgrade twine
+          twine check dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          body_path: CHANGELOG.md
+
+  # ---------------------------------------------------------------------------
+  # Optional: publish to PyPI via Trusted Publishing (OIDC, no API token).
+  # To enable, configure a publisher on PyPI for this repo/workflow, then
+  # uncomment this job. See https://docs.pypi.org/trusted-publishers/
+  # ---------------------------------------------------------------------------
+  # pypi:
+  #   name: Publish to PyPI
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   environment: pypi
+  #   permissions:
+  #     id-token: write
+  #   steps:
+  #     - uses: actions/download-artifact@v4
+  #       with:
+  #         name: dist
+  #         path: dist
+  #     - uses: pypa/gh-action-pypi-publish@release/v1

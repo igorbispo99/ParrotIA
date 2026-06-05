@@ -227,6 +227,9 @@ __marimo__/
 *.srt
 *.txt
 *.json
+# ...but keep project docs that happen to be markdown.
+!README.md
+!CHANGELOG.md
 
 # Claude
 CLAUDE.md

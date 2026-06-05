@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from typing import Callable, Dict
 
-from transcriber import TranscriptionResult
+from .transcriber import TranscriptionResult
 
 
 def _format_timestamp(seconds: float, *, separator: str) -> str:

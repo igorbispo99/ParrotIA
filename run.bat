@@ -11,11 +11,14 @@ if exist "%USERPROFILE%\anaconda3\Scripts\activate.bat"      set "CONDA_BASE=%US
 if exist "%LOCALAPPDATA%\miniconda3\Scripts\activate.bat"    set "CONDA_BASE=%LOCALAPPDATA%\miniconda3"
 if exist "%LOCALAPPDATA%\anaconda3\Scripts\activate.bat"     set "CONDA_BASE=%LOCALAPPDATA%\anaconda3"
 
+REM Run from source without installing: add the src/ layout to PYTHONPATH.
+set "PYTHONPATH=%~dp0src;%PYTHONPATH%"
+
 if not "%CONDA_BASE%"=="" (
     call "%CONDA_BASE%\Scripts\activate.bat" "%CONDA_ENV%"
-    python "%~dp0app.py"
+    python -m parrotia.app
     goto :eof
 )
 
 REM Fallback: plain python (must be on PATH).
-python "%~dp0app.py"
+python -m parrotia.app

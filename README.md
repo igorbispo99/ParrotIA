@@ -33,9 +33,22 @@
 
 ## Installation
 
+Install the package (provides the `parrotia` and `parrotia-gui` commands):
+
 ```bash
-pip install -r requirements.txt
+pip install parrotia
 ```
+
+Or install from a checkout of this repository:
+
+```bash
+pip install .
+# For development (editable install):
+pip install -e .
+```
+
+> Prefer not to install? You can still run straight from the source tree with
+> `pip install -r requirements.txt` and the launchers below.
 
 The first time you use a model it is downloaded automatically (a few hundred MB to ~1.5 GB depending on the model) and cached for offline use afterwards.
 
@@ -44,7 +57,7 @@ The first time you use a model it is downloaded automatically (a few hundred MB 
 For much faster transcription on an NVIDIA GPU, install the CUDA 12 runtime wheels — no system-wide CUDA or cuDNN install required:
 
 ```bash
-pip install nvidia-cublas-cu12 nvidia-cudnn-cu12 nvidia-cuda-runtime-cu12
+pip install "parrotia[cuda]"
 ```
 
 The app discovers these automatically at startup. Set **Device → cuda** in the GUI (or pass `--device cuda` on the CLI). If the GPU is unavailable for any reason it falls back to CPU transparently.
@@ -56,10 +69,11 @@ The app discovers these automatically at startup. Set **Device → cuda** in the
 ### GUI
 
 ```bash
-python app.py
+parrotia-gui
+# or, without installing:  python -m parrotia.app
 ```
 
-Or use the platform launcher (edit the `PYTHON` variable inside if needed):
+Or use the platform launcher (runs from source; edit the `PYTHON` variable inside if needed):
 
 | Platform | Launcher |
 |----------|----------|
@@ -73,13 +87,14 @@ Or use the platform launcher (edit the `PYTHON` variable inside if needed):
 ### Command line
 
 ```bash
-python cli.py "talk.mp3" --model large-v3-turbo --formats txt srt --language en
+parrotia "talk.mp3" --model large-v3-turbo --formats txt srt --language en
+# or, without installing:  python -m parrotia "talk.mp3" ...
 ```
 
 ```
-usage: cli.py [-h] [--model MODEL] [--language LANGUAGE] [--device DEVICE]
-              [--compute COMPUTE] [--formats FORMAT [FORMAT ...]] [--outdir OUTDIR]
-              audio
+usage: parrotia [-h] [--model MODEL] [--language LANGUAGE] [--device DEVICE]
+                [--compute COMPUTE] [--formats FORMAT [FORMAT ...]] [--outdir OUTDIR]
+                audio
 
 positional arguments:
   audio                 Path to the audio/video file
@@ -101,7 +116,7 @@ options:
 Compare how fast different models transcribe the same file — useful for picking the best speed/accuracy trade-off for your hardware:
 
 ```bash
-python cli.py "talk.mp3" --benchmark --models tiny base small large-v3-turbo
+parrotia "talk.mp3" --benchmark --models tiny base small large-v3-turbo
 ```
 
 This loads and runs each model in turn, then prints a table reporting model **load** time, **decode** time, and **speed** — the real-time factor (seconds of audio transcribed per second of wall-clock time; higher is faster):
@@ -157,13 +172,37 @@ All models are free and run entirely on-device.
 
 | File | Purpose |
 |------|---------|
-| [`app.py`](app.py) | customtkinter GUI |
-| [`transcriber.py`](transcriber.py) | Whisper engine (model cache, progress callbacks, cancellation, GPU fallback) |
-| [`formats.py`](formats.py) | txt / md / srt / vtt / json writers |
-| [`cli.py`](cli.py) | Headless command-line interface |
-| [`benchmark.py`](benchmark.py) | Model speed benchmarking (CLI) |
+| [`src/parrotia/app.py`](src/parrotia/app.py) | customtkinter GUI |
+| [`src/parrotia/transcriber.py`](src/parrotia/transcriber.py) | Whisper engine (model cache, progress callbacks, cancellation, GPU fallback) |
+| [`src/parrotia/formats.py`](src/parrotia/formats.py) | txt / md / srt / vtt / json writers |
+| [`src/parrotia/cli.py`](src/parrotia/cli.py) | Headless command-line interface |
+| [`src/parrotia/benchmark.py`](src/parrotia/benchmark.py) | Model speed benchmarking (CLI) |
 
 ---
+
+## Use as a library
+
+The transcription engine is UI-agnostic and importable:
+
+```python
+from parrotia import Transcriber, WRITERS
+
+result = Transcriber().transcribe("talk.mp3", model="large-v3-turbo", language="en")
+print(WRITERS["srt"][1](result))   # render SRT subtitles as a string
+```
+
+## Releases
+
+Tagged versions are built into a wheel + source distribution and published as a
+[GitHub Release](https://github.com/igorbispo99/ParrotIA/releases) automatically
+by the `Release` workflow. To cut a release, bump `__version__` in
+[`src/parrotia/__init__.py`](src/parrotia/__init__.py), update
+[`CHANGELOG.md`](CHANGELOG.md), then push a matching tag:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
 
 ## Contributing
 

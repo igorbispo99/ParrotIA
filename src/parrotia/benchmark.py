@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, List, Optional
 
-from transcriber import TranscriptionCancelled, Transcriber
+from .transcriber import TranscriptionCancelled, Transcriber
 
 
 @dataclass

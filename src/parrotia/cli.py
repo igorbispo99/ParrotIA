@@ -1,10 +1,10 @@
 """Headless transcription — useful for batch jobs, scripting, and testing.
 
 Example:
-    python cli.py "talk.mp3" --model large-v3-turbo --formats txt srt --language en
+    parrotia "talk.mp3" --model large-v3-turbo --formats txt srt --language en
 
 Benchmark several models against one file and print a speed comparison:
-    python cli.py "talk.mp3" --benchmark --models tiny base small large-v3-turbo
+    parrotia "talk.mp3" --benchmark --models tiny base small large-v3-turbo
 """
 
 from __future__ import annotations
@@ -20,9 +20,8 @@ try:
 except (AttributeError, ValueError):
     pass
 
-import benchmark
-import formats
-from transcriber import (
+from . import benchmark, formats
+from .transcriber import (
     AVAILABLE_MODELS,
     COMPUTE_TYPES,
     DEFAULT_MODEL,

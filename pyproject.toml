@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "parrotia"
+description = "Fast, free, fully local audio/video transcription powered by Whisper."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "Igor Bispo", email = "igor.rabbit99@gmail.com" }]
+keywords = [
+    "whisper",
+    "transcription",
+    "speech-to-text",
+    "subtitles",
+    "faster-whisper",
+    "offline",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Environment :: X11 Applications",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dynamic = ["version"]
+dependencies = [
+    "faster-whisper>=1.1.0",
+    "customtkinter>=5.2.2",
+]
+
+[project.optional-dependencies]
+# NVIDIA GPU acceleration (CUDA 12). The engine adds these wheels' DLL
+# directories to the search path at startup, so no system CUDA install is
+# required:  pip install "parrotia[cuda]"
+cuda = [
+    "nvidia-cublas-cu12",
+    "nvidia-cudnn-cu12",
+    "nvidia-cuda-runtime-cu12",
+]
+
+[project.urls]
+Homepage = "https://github.com/igorbispo99/ParrotIA"
+Repository = "https://github.com/igorbispo99/ParrotIA"
+Issues = "https://github.com/igorbispo99/ParrotIA/issues"
+
+[project.scripts]
+parrotia = "parrotia.cli:main"
+
+[project.gui-scripts]
+# Registered as a GUI script so launching it on Windows doesn't open a console.
+parrotia-gui = "parrotia.app:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "parrotia.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,27 @@
+# Changelog
+
+All notable changes to this project are documented here. The format is based on
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
+adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.0.0] - 2026-06-05
+
+First packaged release.
+
+### Added
+- Installable Python package (`pip install parrotia`) using a `src/` layout.
+- `parrotia` console command (headless CLI) and `parrotia-gui` GUI launcher,
+  registered as entry points.
+- `python -m parrotia` runs the CLI; `python -m parrotia.app` runs the GUI.
+- Public API surface re-exported from the top-level `parrotia` package
+  (`Transcriber`, `WRITERS`, model/format constants, result dataclasses).
+- `parrotia[cuda]` optional dependency group for NVIDIA GPU acceleration.
+- GitHub Actions release workflow that builds the sdist + wheel and publishes a
+  GitHub Release on every `v*` tag.
+
+### Changed
+- Source modules moved under the `parrotia` package; imports are now
+  package-relative.
+- Launchers (`run.bat`, `run.sh`) updated to run the package from source.
+
+[1.0.0]: https://github.com/igorbispo99/ParrotIA/releases/tag/v1.0.0
