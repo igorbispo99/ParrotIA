@@ -226,6 +226,8 @@ __marimo__/
 *.md
 *.srt
 *.txt
+*.json
 
 # Claude
 CLAUDE.md
+.claude/
