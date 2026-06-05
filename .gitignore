@@ -222,5 +222,10 @@ __marimo__/
 *.mp3
 *.wav
 
+# Transcribed text
+*.md
+*.srt
+*.txt
+
 # Claude
 CLAUDE.md
