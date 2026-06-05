@@ -15,6 +15,7 @@
 
 - **State-of-the-art models** — `tiny` → `large-v3`, plus the fast `large-v3-turbo` and `distil-large-v3` variants
 - **Any language** — auto-detect, or pin a specific language for better accuracy
+- **Single file or whole folder** — transcribe one file, or point the app at a folder to batch every audio/video file inside it
 - **Multiple export formats** — `txt`, `md`, `srt`, `vtt`, `json` — pick any combination
 - **CPU and GPU support** — auto-detects your hardware; gracefully falls back to CPU if the GPU is unavailable
 - **Responsive UI** — transcription runs in a background thread with a live progress bar and a cancel button; the window never freezes
@@ -80,9 +81,9 @@ Or use the platform launcher (runs from source; edit the `PYTHON` variable insid
 | Windows  | double-click `run.bat` |
 | macOS / Linux | `chmod +x run.sh && ./run.sh` |
 
-1. **Browse** to an audio or video file
+1. Pick a single audio/video **File…**, or a **Folder…** to transcribe every supported file inside it
 2. Choose a **model**, **language**, **device**, and **output formats**
-3. Click **Transcribe** — results are saved next to the source file (or in a folder you choose) and previewed in the window
+3. Click **Transcribe** — each file's outputs are saved next to it (or in a folder you choose) and previewed in the window; a batch reports overall progress and a per-file summary at the end
 
 ### Command line
 
