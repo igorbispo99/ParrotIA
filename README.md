@@ -1,13 +1,15 @@
-# 🦜 ParrotIA — Local Audio Transcriber
+<div align="center">
 
-> Fast, free, fully local audio and video transcription powered by [Whisper](https://github.com/openai/whisper).  
-> No internet connection, accounts, or API keys required — everything runs on your machine.
+![ParrotIA — Local Audio & Video Transcriber](docs/banner.png)
 
-![Python](https://img.shields.io/badge/python-3.9%2B-blue?logo=python&logoColor=white)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
-![License](https://img.shields.io/badge/license-AGPL--3.0-blue)
+*Fast, free, fully local audio and video transcription powered by [Whisper](https://github.com/openai/whisper).*  
+*No internet connection, accounts, or API keys required — everything runs on your machine.*
 
-![Audio Transcriber GUI](docs/screenshot.png)
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#installation)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
+
+</div>
 
 ---
 
@@ -22,6 +24,12 @@
 - **No ffmpeg needed** — audio is decoded via the bundled [PyAV](https://github.com/PyAV-Org/PyAV)
 - **Headless CLI** — same engine, scriptable for batch jobs
 - **Model benchmarking** — time several models on one file and compare their transcription speed (CLI)
+
+---
+
+## Preview
+
+![Audio Transcriber GUI](docs/screenshot.png)
 
 ---
 
@@ -192,6 +200,8 @@ result = Transcriber().transcribe("talk.mp3", model="large-v3-turbo", language="
 print(WRITERS["srt"][1](result))   # render SRT subtitles as a string
 ```
 
+---
+
 ## Releases
 
 Tagged versions are built into a wheel + source distribution and published as a
@@ -204,6 +214,8 @@ by the `Release` workflow. To cut a release, bump `__version__` in
 git tag v1.0.0
 git push origin v1.0.0
 ```
+
+---
 
 ## Contributing
 
