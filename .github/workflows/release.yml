@@ -60,20 +60,23 @@ jobs:
           body_path: CHANGELOG.md
 
   # ---------------------------------------------------------------------------
-  # Optional: publish to PyPI via Trusted Publishing (OIDC, no API token).
-  # To enable, configure a publisher on PyPI for this repo/workflow, then
-  # uncomment this job. See https://docs.pypi.org/trusted-publishers/
+  # Publish to PyPI via Trusted Publishing (OIDC, no API token). This requires a
+  # one-time setup on PyPI: configure a Trusted Publisher for this repo pointing
+  # at this workflow file and the `pypi` environment.
+  # See https://docs.pypi.org/trusted-publishers/
   # ---------------------------------------------------------------------------
-  # pypi:
-  #   name: Publish to PyPI
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   environment: pypi
-  #   permissions:
-  #     id-token: write
-  #   steps:
-  #     - uses: actions/download-artifact@v4
-  #       with:
-  #         name: dist
-  #         path: dist
-  #     - uses: pypa/gh-action-pypi-publish@release/v1
+  pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # Only publish on real version tags, never on manual workflow_dispatch runs.
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment: pypi
+    permissions:
+      id-token: write  # OIDC token for Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1

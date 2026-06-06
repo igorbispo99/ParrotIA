@@ -16,7 +16,7 @@ from __future__ import annotations
 
 # Single source of truth for the version. Kept as a plain string literal so the
 # build backend can read it without importing the package (and its heavy deps).
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 # Engine API is import-light (faster-whisper is loaded lazily on first use), so
 # it is safe to re-export here. The GUI (parrotia.app) is intentionally *not*
