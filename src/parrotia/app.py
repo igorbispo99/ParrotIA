@@ -30,6 +30,32 @@ from .transcriber import (
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
 
+# --- Brand palette, drawn from banner.png ----------------------------------
+# A tropical macaw over a teal sea: parrot-green body, golden belly, sky-blue
+# wings and a coral face. These few colours give the whole UI its personality.
+TEAL_DARK = "#0E7C7B"   # the sea behind the parrot
+GREEN = "#1FAE6B"       # parrot body  -> primary "go" actions
+GREEN_HI = "#17935A"
+GOLD = "#F4B740"        # golden belly -> the "IA" in the wordmark, highlights
+BLUE = "#2D7DD2"        # wing blue    -> secondary buttons / inputs
+CORAL = "#EF5B5B"       # parrot face  -> cancel / destructive
+CORAL_HI = "#D94848"
+
+# Tuple colours are (light-mode, dark-mode) so the theme adapts to the system.
+WINDOW_BG = ("#E8F6F4", "#0B2B2C")
+CARD_BG = ("#FFFFFF", "#10393A")
+CARD_SOFT = ("#F3FBFA", "#0E3233")
+INK = ("#0E3233", "#EAF6F4")
+MUTED = ("#5A7572", "#8FB7B5")
+
+# Banner-style feature badges: (label, colour).
+_BADGES = [
+    ("🔒 100% Offline", TEAL_DARK),
+    ("🚫 No Internet", BLUE),
+    ("⚡ Fast & Easy", GOLD),
+    ("🦜 Powered by Whisper", GREEN),
+]
+
 _AUDIO_FILETYPES = [
     ("Audio / Video", " ".join(f"*{ext}" for ext in SUPPORTED_EXTENSIONS)),
     ("All files", "*.*"),
@@ -40,9 +66,10 @@ class TranscriberApp(ctk.CTk):
     def __init__(self) -> None:
         super().__init__()
 
-        self.title("Audio Transcriber")
-        self.geometry("820x760")
-        self.minsize(720, 640)
+        self.title("ParrotIA — Local Audio & Video Transcriber")
+        self.geometry("860x820")
+        self.minsize(740, 680)
+        self.configure(fg_color=WINDOW_BG)
 
         self._transcriber = Transcriber()
         self._worker: Optional[threading.Thread] = None
@@ -58,64 +85,51 @@ class TranscriberApp(ctk.CTk):
     # ----------------------------------------------------------------- UI ---
     def _build_ui(self) -> None:
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(5, weight=1)
+        self.grid_rowconfigure(4, weight=1)
         pad = {"padx": 16, "pady": (0, 12)}
 
-        header = ctk.CTkLabel(
-            self, text="🎙  Audio Transcriber",
-            font=ctk.CTkFont(size=24, weight="bold"),
-        )
-        header.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 4))
-
-        subtitle = ctk.CTkLabel(
-            self,
-            text="Fast, fully local transcription powered by Whisper. "
-                 "No internet or API keys required.",
-            text_color=("gray40", "gray60"),
-        )
-        subtitle.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 12))
+        self._build_hero()
 
         # --- Input selection (a single file, or a whole folder) -------------
-        file_frame = ctk.CTkFrame(self)
-        file_frame.grid(row=2, column=0, sticky="ew", **pad)
+        file_frame = self._card(row=1)
         file_frame.grid_columnconfigure(0, weight=1)
+        self._heading(file_frame, "📁  Choose audio or video", row=0)
 
         self.file_entry = ctk.CTkEntry(
-            file_frame,
-            placeholder_text="Select an audio/video file — or a folder to batch all of them…",
+            file_frame, height=38, border_color=BLUE,
+            placeholder_text="Pick a file — or a whole folder to batch them all…",
         )
-        self.file_entry.grid(row=0, column=0, sticky="ew", padx=(12, 8), pady=12)
+        self.file_entry.grid(row=1, column=0, sticky="ew", padx=(14, 8), pady=(0, 14))
         ctk.CTkButton(
-            file_frame, text="File…", width=84, command=self._browse_input
-        ).grid(row=0, column=1, padx=(0, 6), pady=12)
+            file_frame, text="File…", width=84, height=38,
+            fg_color=BLUE, hover_color="#246CB8", command=self._browse_input,
+        ).grid(row=1, column=1, padx=(0, 6), pady=(0, 14))
         ctk.CTkButton(
-            file_frame, text="Folder…", width=92, command=self._browse_folder
-        ).grid(row=0, column=2, padx=(0, 12), pady=12)
+            file_frame, text="Folder…", width=92, height=38,
+            fg_color=BLUE, hover_color="#246CB8", command=self._browse_folder,
+        ).grid(row=1, column=2, padx=(0, 14), pady=(0, 14))
 
         # --- Options --------------------------------------------------------
-        options = ctk.CTkFrame(self)
-        options.grid(row=3, column=0, sticky="ew", **pad)
+        options = self._card(row=2)
         for col in (1, 3):
             options.grid_columnconfigure(col, weight=1)
+        self._heading(options, "⚙️  Options", row=0, columnspan=4)
 
         self.model_var = ctk.StringVar(value=DEFAULT_MODEL)
         self.language_var = ctk.StringVar(value="Auto detect")
         self.device_var = ctk.StringVar(value=DEVICES[0])
         self.compute_var = ctk.StringVar(value=COMPUTE_TYPES[0])
 
-        self._add_option(options, 0, 0, "Model", AVAILABLE_MODELS, self.model_var)
-        self._add_option(options, 0, 2, "Language",
+        self._add_option(options, 1, 0, "Model", AVAILABLE_MODELS, self.model_var)
+        self._add_option(options, 1, 2, "Language",
                          list(LANGUAGES.keys()), self.language_var)
-        self._add_option(options, 1, 0, "Device", DEVICES, self.device_var)
-        self._add_option(options, 1, 2, "Compute", COMPUTE_TYPES, self.compute_var)
+        self._add_option(options, 2, 0, "Device", DEVICES, self.device_var)
+        self._add_option(options, 2, 2, "Compute", COMPUTE_TYPES, self.compute_var)
 
         # --- Output formats + folder ---------------------------------------
-        output = ctk.CTkFrame(self)
-        output.grid(row=4, column=0, sticky="ew", **pad)
+        output = self._card(row=3)
         output.grid_columnconfigure(0, weight=1)
-
-        ctk.CTkLabel(output, text="Save as", anchor="w").grid(
-            row=0, column=0, sticky="w", padx=12, pady=(12, 4))
+        self._heading(output, "💾  Save as", row=0)
 
         formats_row = ctk.CTkFrame(output, fg_color="transparent")
         formats_row.grid(row=1, column=0, sticky="w", padx=8)
@@ -124,7 +138,8 @@ class TranscriberApp(ctk.CTk):
         for i, fmt in enumerate(formats.WRITERS):
             var = ctk.BooleanVar(value=fmt in defaults)
             ctk.CTkCheckBox(
-                formats_row, text=fmt.upper(), variable=var, width=70
+                formats_row, text=fmt.upper(), variable=var, width=70,
+                fg_color=GREEN, hover_color=GREEN_HI,
             ).grid(row=0, column=i, padx=6, pady=4)
             self.format_vars[fmt] = var
 
@@ -132,53 +147,113 @@ class TranscriberApp(ctk.CTk):
         out_row.grid(row=2, column=0, sticky="ew", padx=8, pady=(4, 12))
         out_row.grid_columnconfigure(0, weight=1)
         self.outdir_entry = ctk.CTkEntry(
-            out_row, placeholder_text="Output folder (defaults to source folder)"
+            out_row, height=38, border_color=BLUE,
+            placeholder_text="Output folder (defaults to source folder)",
         )
         self.outdir_entry.grid(row=0, column=0, sticky="ew", padx=(4, 8))
         ctk.CTkButton(
-            out_row, text="Choose…", width=110, command=self._browse_outdir
+            out_row, text="Choose…", width=110, height=38,
+            fg_color=BLUE, hover_color="#246CB8", command=self._browse_outdir,
         ).grid(row=0, column=1, padx=(0, 4))
 
         # --- Preview --------------------------------------------------------
-        self.preview = ctk.CTkTextbox(self, wrap="word")
-        self.preview.grid(row=5, column=0, sticky="nsew", padx=16, pady=(0, 12))
-        self.preview.insert("1.0", "Transcript preview will appear here…")
+        preview_card = self._card(row=4, weight_row=1)
+        preview_card.grid_columnconfigure(0, weight=1)
+        preview_card.grid_rowconfigure(1, weight=1)
+        self._heading(preview_card, "📝  Transcript", row=0)
+        self.preview = ctk.CTkTextbox(
+            preview_card, wrap="word", fg_color=CARD_SOFT, border_width=0,
+        )
+        self.preview.grid(row=1, column=0, sticky="nsew", padx=12, pady=(0, 12))
+        self.preview.insert("1.0", "🦜  Your transcript will land right here…")
         self.preview.configure(state="disabled")
 
         # --- Action bar -----------------------------------------------------
         bar = ctk.CTkFrame(self, fg_color="transparent")
-        bar.grid(row=6, column=0, sticky="ew", padx=16, pady=(0, 8))
+        bar.grid(row=5, column=0, sticky="ew", padx=16, pady=(0, 8))
         bar.grid_columnconfigure(1, weight=1)
 
         self.transcribe_btn = ctk.CTkButton(
-            bar, text="Transcribe", width=140, height=40,
+            bar, text="🦜  Transcribe", width=170, height=44, corner_radius=22,
             font=ctk.CTkFont(size=15, weight="bold"),
+            fg_color=GREEN, hover_color=GREEN_HI,
             command=self._start_transcription,
         )
         self.transcribe_btn.grid(row=0, column=0, sticky="w")
 
         self.cancel_btn = ctk.CTkButton(
-            bar, text="Cancel", width=100, height=40,
-            fg_color="gray40", hover_color="gray30",
+            bar, text="Cancel", width=110, height=44, corner_radius=22,
+            fg_color=CORAL, hover_color=CORAL_HI,
             command=self._cancel_transcription, state="disabled",
         )
         self.cancel_btn.grid(row=0, column=2, sticky="e")
 
         # --- Progress / status ---------------------------------------------
-        self.progress = ctk.CTkProgressBar(self)
-        self.progress.grid(row=7, column=0, sticky="ew", padx=16, pady=(0, 4))
+        self.progress = ctk.CTkProgressBar(self, progress_color=GREEN, height=10)
+        self.progress.grid(row=6, column=0, sticky="ew", padx=16, pady=(0, 4))
         self.progress.set(0.0)
 
         self.status = ctk.CTkLabel(
-            self, text="Ready.", anchor="w", text_color=("gray40", "gray60")
+            self, text="Ready when you are.", anchor="w", text_color=MUTED
         )
-        self.status.grid(row=8, column=0, sticky="ew", padx=16, pady=(0, 12))
+        self.status.grid(row=7, column=0, sticky="ew", padx=16, pady=(0, 12))
+
+    # --- Reusable visual building blocks (parrot-themed) --------------------
+    def _build_hero(self) -> None:
+        """A branded banner-style header: parrot logo, wordmark and badges."""
+        hero = ctk.CTkFrame(self, fg_color=TEAL_DARK, corner_radius=16)
+        hero.grid(row=0, column=0, sticky="ew", padx=16, pady=(16, 12))
+        hero.grid_columnconfigure(1, weight=1)
+
+        ctk.CTkLabel(hero, text="🦜", font=ctk.CTkFont(size=52)).grid(
+            row=0, column=0, rowspan=2, padx=(20, 10), pady=(16, 14))
+
+        wordmark = ctk.CTkFrame(hero, fg_color="transparent")
+        wordmark.grid(row=0, column=1, sticky="w", padx=(0, 16), pady=(18, 0))
+        ctk.CTkLabel(
+            wordmark, text="Parrot", text_color="#FFFFFF",
+            font=ctk.CTkFont(size=30, weight="bold"),
+        ).grid(row=0, column=0)
+        ctk.CTkLabel(
+            wordmark, text="IA", text_color=GOLD,
+            font=ctk.CTkFont(size=30, weight="bold"),
+        ).grid(row=0, column=1)
+
+        ctk.CTkLabel(
+            hero, text="Local Audio & Video Transcriber",
+            text_color="#C9E9E6", font=ctk.CTkFont(size=13),
+        ).grid(row=1, column=1, sticky="w", padx=(0, 16), pady=(0, 6))
+
+        badges = ctk.CTkFrame(hero, fg_color="transparent")
+        badges.grid(row=2, column=0, columnspan=2, sticky="w",
+                    padx=18, pady=(2, 16))
+        for i, (text, color) in enumerate(_BADGES):
+            ctk.CTkLabel(
+                badges, text=f"  {text}  ", height=26, corner_radius=13,
+                fg_color=color, text_color="#FFFFFF",
+                font=ctk.CTkFont(size=11, weight="bold"),
+            ).grid(row=0, column=i, padx=(0, 8))
+
+    def _card(self, row: int, weight_row: bool = False) -> ctk.CTkFrame:
+        card = ctk.CTkFrame(self, fg_color=CARD_BG, corner_radius=14)
+        sticky = "nsew" if weight_row else "ew"
+        card.grid(row=row, column=0, sticky=sticky, padx=16, pady=(0, 12))
+        return card
+
+    def _heading(self, parent, text: str, row: int, columnspan: int = 1) -> None:
+        ctk.CTkLabel(
+            parent, text=text, anchor="w", text_color=INK,
+            font=ctk.CTkFont(size=14, weight="bold"),
+        ).grid(row=row, column=0, columnspan=columnspan, sticky="w",
+               padx=14, pady=(12, 8))
 
     def _add_option(self, parent, row, col, label, values, variable) -> None:
-        ctk.CTkLabel(parent, text=label, anchor="w").grid(
-            row=row, column=col, sticky="w", padx=(12, 6), pady=10)
-        ctk.CTkOptionMenu(parent, values=values, variable=variable).grid(
-            row=row, column=col + 1, sticky="ew", padx=(0, 12), pady=10)
+        ctk.CTkLabel(parent, text=label, anchor="w", text_color=MUTED).grid(
+            row=row, column=col, sticky="w", padx=(14, 6), pady=10)
+        ctk.CTkOptionMenu(
+            parent, values=values, variable=variable, height=34,
+            fg_color=TEAL_DARK, button_color=GREEN, button_hover_color=GREEN_HI,
+        ).grid(row=row, column=col + 1, sticky="ew", padx=(0, 14), pady=10)
 
     # ------------------------------------------------------------ actions ---
     def _browse_input(self) -> None:
