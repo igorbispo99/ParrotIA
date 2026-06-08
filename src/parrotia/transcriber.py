@@ -16,6 +16,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, List, Optional
 
+# On Windows with CUDA, multiple packages (CTranslate2, PyTorch/MKL, NVIDIA
+# wheels) can each ship their own copy of the Intel OpenMP runtime
+# (libiomp5md.dll).  Loading two copies causes a fatal C-level abort:
+#   "OMP: Error #15: Initializing libiomp5md.dll, but found libiomp5md.dll
+#    already initialized."
+# Setting this *before* any native library is imported tells the runtime to
+# tolerate the duplicate and keeps the process alive.
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+
 # State-of-the-art, fully local and free Whisper variants. ``turbo`` and the
 # distil models trade a sliver of accuracy for large speedups; large-v3 is the
 # most accurate.
