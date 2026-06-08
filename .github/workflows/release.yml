@@ -15,34 +15,14 @@ permissions:
   contents: write  # needed to create the GitHub Release
 
 jobs:
-  build:
-    name: Build distributions
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Build sdist and wheel
-        run: |
-          python -m pip install --upgrade pip build
-          python -m build
-
-      - name: Check distributions
-        run: |
-          python -m pip install --upgrade twine
-          twine check dist/*
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/*
+  # Run the full CI suite (tests + lint + build) before releasing.
+  ci:
+    name: CI gate
+    uses: ./.github/workflows/ci.yml
 
   release:
     name: Publish GitHub Release
-    needs: build
+    needs: ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -67,7 +47,7 @@ jobs:
   # ---------------------------------------------------------------------------
   pypi:
     name: Publish to PyPI
-    needs: build
+    needs: ci
     runs-on: ubuntu-latest
     # Only publish on real version tags, never on manual workflow_dispatch runs.
     if: startsWith(github.ref, 'refs/tags/v')

@@ -1,0 +1,111 @@
+name: CI
+
+# Run the full test suite on every push and pull request.
+# Also triggered before releases via workflow_call.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_call: {}       # allow release.yml to invoke this workflow
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: "Test — Python ${{ matrix.python-version }} / ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Linux headless display for Tkinter GUI tests
+      - name: Install Xvfb (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb
+
+      - name: Install package + test deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+          python -m pip install pytest pytest-cov
+
+      - name: Run tests (Linux — with Xvfb)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a python -m pytest --cov=parrotia --cov-report=xml -v
+
+      - name: Run tests (non-Linux)
+        if: runner.os != 'Linux'
+        run: python -m pytest --cov=parrotia --cov-report=xml -v
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: "coverage-${{ matrix.os }}-py${{ matrix.python-version }}"
+          path: coverage.xml
+
+  lint:
+    name: Lint & type-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff
+
+      - name: Ruff check
+        run: ruff check src/ tests/
+
+      - name: Ruff format check
+        run: ruff format --check src/ tests/
+
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build sdist & wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+
+      - name: Verify distributions
+        run: |
+          python -m pip install --upgrade twine
+          twine check dist/*
+
+      - name: Test install from wheel
+        run: |
+          python -m pip install dist/*.whl
+          python -c "import parrotia; print(f'parrotia {parrotia.__version__} OK')"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*

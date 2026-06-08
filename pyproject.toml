@@ -60,8 +60,25 @@ parrotia = "parrotia.cli:main"
 # Registered as a GUI script so launching it on Windows doesn't open a console.
 parrotia-gui = "parrotia.app:main"
 
+[project.optional-dependencies.dev]
+# Development / CI dependencies
+pytest = ">=7.0"
+pytest-cov = ">=4.0"
+
 [tool.setuptools.dynamic]
 version = { attr = "parrotia.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--color=yes",
+]
+markers = [
+    "slow: marks tests that need real model downloads (deselect with '-m \"not slow\"')",
+]

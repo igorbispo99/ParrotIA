@@ -71,6 +71,28 @@ SUPPORTED_EXTENSIONS = [
     ".wma", ".mp4", ".mkv", ".mov", ".avi", ".webm",
 ]
 
+# HuggingFace repo IDs used by faster-whisper for each model.
+_MODEL_REPOS: dict[str, str] = {
+    "tiny": "Systran/faster-whisper-tiny",
+    "base": "Systran/faster-whisper-base",
+    "small": "Systran/faster-whisper-small",
+    "medium": "Systran/faster-whisper-medium",
+    "large-v3": "Systran/faster-whisper-large-v3",
+    "large-v3-turbo": "Systran/faster-whisper-large-v3-turbo",
+    "distil-large-v3": "Systran/faster-distil-whisper-large-v3",
+}
+
+# Approximate download sizes (informational, shown in the UI).
+MODEL_SIZES: dict[str, str] = {
+    "tiny": "~75 MB",
+    "base": "~145 MB",
+    "small": "~465 MB",
+    "medium": "~1.5 GB",
+    "large-v3": "~3.1 GB",
+    "large-v3-turbo": "~1.6 GB",
+    "distil-large-v3": "~1.5 GB",
+}
+
 
 @dataclass
 class Segment:
@@ -155,6 +177,21 @@ class Transcriber:
         self._model = None
         self._model_key: Optional[tuple] = None
         self._lock = threading.Lock()
+
+    @staticmethod
+    def is_model_cached(model_name: str) -> bool:
+        """Return True if the model files are already downloaded locally."""
+        repo_id = _MODEL_REPOS.get(model_name)
+        if repo_id is None:
+            return True  # custom path or unknown model — assume available
+        try:
+            from huggingface_hub.constants import HF_HUB_CACHE
+            repo_dir = os.path.join(
+                HF_HUB_CACHE, "models--" + repo_id.replace("/", "--"))
+            snapshots = os.path.join(repo_dir, "snapshots")
+            return os.path.isdir(snapshots) and len(os.listdir(snapshots)) > 0
+        except Exception:
+            return True  # can't check — assume cached to avoid false alarms
 
     def _load_model(self, model: str, device: str, compute_type: str):
         from faster_whisper import WhisperModel  # imported lazily: heavy
@@ -248,7 +285,13 @@ class Transcriber:
         report,
         check_cancel,
     ) -> TranscriptionResult:
-        report(0.0, f"Loading model '{model}'…")
+        downloading = not self.is_model_cached(model)
+        if downloading:
+            size = MODEL_SIZES.get(model, "")
+            hint = f" ({size})" if size else ""
+            report(0.0, f"📥 Downloading model '{model}'{hint} — first time setup, please wait…")
+        else:
+            report(0.0, f"Loading model '{model}'…")
         check_cancel()
         whisper = self._load_model(model, device, compute_type)
 

@@ -21,6 +21,7 @@ from .transcriber import (
     DEFAULT_MODEL,
     DEVICES,
     LANGUAGES,
+    MODEL_SIZES,
     SUPPORTED_EXTENSIONS,
     TranscriptionCancelled,
     TranscriptionResult,
@@ -77,6 +78,7 @@ class TranscriberApp(ctk.CTk):
         self._events: "queue.Queue[tuple]" = queue.Queue()
         self._result: Optional[TranscriptionResult] = None
         self._total_jobs = 0
+        self._downloading = False
 
         self._build_ui()
         self.after(100, self._drain_events)
@@ -323,10 +325,6 @@ class TranscriberApp(ctk.CTk):
         self._cancel_event.clear()
         self._set_running(True)
         self._set_preview("")
-        self._set_status(
-            f"Starting… ({self._total_jobs} files)"
-            if self._total_jobs > 1 else "Starting…")
-        self.progress.set(0.0)
 
         params = dict(
             model=self.model_var.get(),
@@ -334,6 +332,24 @@ class TranscriberApp(ctk.CTk):
             device=self.device_var.get(),
             compute_type=self.compute_var.get(),
         )
+
+        # Check if model needs downloading (first-time setup)
+        needs_download = not Transcriber.is_model_cached(params['model'])
+        if needs_download:
+            self._downloading = True
+            size = MODEL_SIZES.get(params['model'], "")
+            hint = f" ({size})" if size else ""
+            self._set_status(
+                f"📥 Downloading model '{params['model']}'{hint}"
+                " — first time setup, please wait…")
+            self.progress.configure(mode="indeterminate")
+            self.progress.start()
+        else:
+            self._downloading = False
+            self._set_status(
+                f"Starting… ({self._total_jobs} files)"
+                if self._total_jobs > 1 else "Starting…")
+            self.progress.set(0.0)
         self._worker = threading.Thread(
             target=self._run_worker,
             args=(jobs, params, selected_formats, outdir_raw),
@@ -420,17 +436,31 @@ class TranscriberApp(ctk.CTk):
         kind = event[0]
         if kind == "progress":
             _, fraction, message = event
-            self.progress.set(fraction)
+            if self._downloading and fraction > 0:
+                # Model download/load complete — switch to normal progress.
+                self._downloading = False
+                self.progress.stop()
+                self.progress.configure(mode="determinate")
+            if not self._downloading:
+                self.progress.set(fraction)
             self._set_status(message)
         elif kind == "file_done":
             self._on_file_done(event[1], event[2])
         elif kind == "batch_done":
             self._on_batch_done(event[1], event[2], event[3])
         elif kind == "cancelled":
+            if self._downloading:
+                self._downloading = False
+                self.progress.stop()
+                self.progress.configure(mode="determinate")
             self._set_running(False)
             self.progress.set(0.0)
             self._set_status("Cancelled.")
         elif kind == "error":
+            if self._downloading:
+                self._downloading = False
+                self.progress.stop()
+                self.progress.configure(mode="determinate")
             self._set_running(False)
             self.progress.set(0.0)
             self._set_status("Error.")
