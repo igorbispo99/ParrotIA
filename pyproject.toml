@@ -47,6 +47,11 @@ cuda = [
     "nvidia-cudnn-cu12",
     "nvidia-cuda-runtime-cu12",
 ]
+# Development / CI dependencies
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/igorbispo99/ParrotIA"
@@ -59,11 +64,6 @@ parrotia = "parrotia.cli:main"
 [project.gui-scripts]
 # Registered as a GUI script so launching it on Windows doesn't open a console.
 parrotia-gui = "parrotia.app:main"
-
-[project.optional-dependencies.dev]
-# Development / CI dependencies
-pytest = ">=7.0"
-pytest-cov = ">=4.0"
 
 [tool.setuptools.dynamic]
 version = { attr = "parrotia.__version__" }
