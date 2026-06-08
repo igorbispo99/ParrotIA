@@ -26,7 +26,6 @@ from .transcriber import (
     COMPUTE_TYPES,
     DEFAULT_MODEL,
     DEVICES,
-    LANGUAGES,
     Transcriber,
 )
 
@@ -36,22 +35,35 @@ def _parse_args(argv=None) -> argparse.Namespace:
     parser.add_argument("audio", help="Path to the audio/video file.")
     parser.add_argument("--model", default=DEFAULT_MODEL, choices=AVAILABLE_MODELS)
     parser.add_argument(
-        "--language", default=None,
-        help="Language code (e.g. en, pt). Omit to auto-detect.")
+        "--language",
+        default=None,
+        help="Language code (e.g. en, pt). Omit to auto-detect.",
+    )
     parser.add_argument("--device", default="auto", choices=DEVICES)
     parser.add_argument("--compute", default="auto", choices=COMPUTE_TYPES)
     parser.add_argument(
-        "--formats", nargs="+", default=["txt"], choices=list(formats.WRITERS),
-        help="One or more output formats.")
+        "--formats",
+        nargs="+",
+        default=["txt"],
+        choices=list(formats.WRITERS),
+        help="One or more output formats.",
+    )
     parser.add_argument(
-        "--outdir", default=None, help="Output folder (defaults to source folder).")
+        "--outdir", default=None, help="Output folder (defaults to source folder)."
+    )
     parser.add_argument(
-        "--benchmark", action="store_true",
+        "--benchmark",
+        action="store_true",
         help="Time several models on the file and print a speed comparison "
-             "instead of transcribing.")
+        "instead of transcribing.",
+    )
     parser.add_argument(
-        "--models", nargs="+", default=None, choices=AVAILABLE_MODELS,
-        help="Models to compare in --benchmark mode (default: all).")
+        "--models",
+        nargs="+",
+        default=None,
+        choices=AVAILABLE_MODELS,
+        help="Models to compare in --benchmark mode (default: all).",
+    )
     return parser.parse_args(argv)
 
 
@@ -64,7 +76,9 @@ def _run_benchmark(args, audio: Path) -> int:
         print(
             f"\r[{index + 1}/{count}] {model:<16} "
             f"[{bar:<24}] {fraction:4.0%} {message:<24}",
-            end="", flush=True)
+            end="",
+            flush=True,
+        )
 
     print(f"Benchmarking {total} model(s) on {audio.name}…")
     runs = benchmark.benchmark_models(
@@ -84,8 +98,7 @@ def _run_benchmark(args, audio: Path) -> int:
     txt_path = outdir / f"{audio.stem}.benchmark.txt"
     json_path = outdir / f"{audio.stem}.benchmark.json"
     txt_path.write_text(report, encoding="utf-8")
-    json_path.write_text(
-        benchmark.to_json(runs, source=audio.name), encoding="utf-8")
+    json_path.write_text(benchmark.to_json(runs, source=audio.name), encoding="utf-8")
     print(f"saved {txt_path}")
     print(f"saved {json_path}")
     return 0

@@ -11,13 +11,13 @@ are skipped automatically.
 from __future__ import annotations
 
 import threading
-from unittest.mock import MagicMock, patch
 
 import pytest
 
 # Guard: skip the entire module if a display is unavailable.
 try:
     import tkinter as tk
+
     _root = tk.Tk()
     _root.destroy()
     _HAS_DISPLAY = True
@@ -50,6 +50,7 @@ class TestAppInit:
 
     def test_transcriber_exists(self, app):
         from parrotia.transcriber import Transcriber
+
         assert isinstance(app._transcriber, Transcriber)
 
     def test_cancel_event_created(self, app):

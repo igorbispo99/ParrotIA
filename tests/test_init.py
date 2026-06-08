@@ -8,7 +8,6 @@ import parrotia
 from parrotia import (
     AVAILABLE_MODELS,
     COMPUTE_TYPES,
-    DEFAULT_MODEL,
     DEVICES,
     LANGUAGES,
     SUPPORTED_EXTENSIONS,
@@ -36,7 +35,9 @@ class TestPublicAPI:
 
     def test_all_exports_importable(self):
         for name in parrotia.__all__:
-            assert hasattr(parrotia, name), f"{name} listed in __all__ but not importable"
+            assert hasattr(parrotia, name), (
+                f"{name} listed in __all__ but not importable"
+            )
 
     def test_transcriber_class(self):
         assert callable(Transcriber)
@@ -59,7 +60,6 @@ class TestPublicAPI:
 
     def test_gui_not_imported(self):
         """``import parrotia`` must NOT pull in Tkinter/customtkinter."""
-        import sys
         # If customtkinter were imported, it would be in sys.modules.
         # This is a soft check — it may be imported by other tests.
         # The key assertion is that ``parrotia.app`` is not in __all__.

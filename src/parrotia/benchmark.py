@@ -26,10 +26,10 @@ class BenchmarkRun:
     """Timing for a single model over one audio file."""
 
     model: str
-    duration: float            # audio length, seconds
-    load_time: float           # model load (download/init), seconds
-    transcribe_time: float     # decoding only, seconds
-    total_time: float          # load + transcribe, seconds
+    duration: float  # audio length, seconds
+    load_time: float  # model load (download/init), seconds
+    transcribe_time: float  # decoding only, seconds
+    total_time: float  # load + transcribe, seconds
     segments: int
     error: Optional[str] = None
 
@@ -85,8 +85,9 @@ def benchmark_models(
         # loaded; we capture that instant to split load time from decode time.
         loaded_at: List[float] = []
 
-        def on_progress(fraction: float, message: str, _model=model,
-                        _index=index) -> None:
+        def on_progress(
+            fraction: float, message: str, _model=model, _index=index
+        ) -> None:
             if not loaded_at and fraction >= 0.05:
                 loaded_at.append(time.perf_counter())
             if progress_callback is not None:
@@ -104,22 +105,30 @@ def benchmark_models(
             )
             end = time.perf_counter()
             loaded = loaded_at[0] if loaded_at else start
-            runs.append(BenchmarkRun(
-                model=model,
-                duration=result.duration,
-                load_time=loaded - start,
-                transcribe_time=end - loaded,
-                total_time=end - start,
-                segments=len(result.segments),
-            ))
+            runs.append(
+                BenchmarkRun(
+                    model=model,
+                    duration=result.duration,
+                    load_time=loaded - start,
+                    transcribe_time=end - loaded,
+                    total_time=end - start,
+                    segments=len(result.segments),
+                )
+            )
         except TranscriptionCancelled:
             raise
         except Exception as exc:  # noqa: BLE001 — record and move on
-            runs.append(BenchmarkRun(
-                model=model, duration=0.0, load_time=0.0,
-                transcribe_time=0.0, total_time=0.0, segments=0,
-                error=str(exc),
-            ))
+            runs.append(
+                BenchmarkRun(
+                    model=model,
+                    duration=0.0,
+                    load_time=0.0,
+                    transcribe_time=0.0,
+                    total_time=0.0,
+                    segments=0,
+                    error=str(exc),
+                )
+            )
     return runs
 
 
@@ -145,7 +154,8 @@ def format_report(runs: List[BenchmarkRun]) -> str:
 
     ranked = sorted(
         (r for r in runs if r.ok and r.transcribe_time > 0),
-        key=lambda r: r.speed, reverse=True,
+        key=lambda r: r.speed,
+        reverse=True,
     )
     if ranked:
         fastest = ranked[0]

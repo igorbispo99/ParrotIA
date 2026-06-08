@@ -22,6 +22,7 @@ from parrotia.transcriber import Segment, TranscriptionResult
 # Reusable domain objects
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def sample_segments() -> List[Segment]:
     """Three realistic segments spanning a ~30 s audio clip."""
@@ -75,6 +76,7 @@ def empty_result() -> TranscriptionResult:
 # Temporary audio file (valid WAV — 0.5 s of silence)
 # ---------------------------------------------------------------------------
 
+
 def _write_silent_wav(path: Path, duration: float = 0.5, rate: int = 16000) -> Path:
     """Create a minimal valid WAV file filled with silence."""
     n_frames = int(rate * duration)
@@ -95,14 +97,17 @@ def silent_wav(tmp_path: Path) -> Path:
 @pytest.fixture()
 def silent_wav_factory(tmp_path: Path):
     """Factory fixture: call with a filename to create a silent WAV."""
+
     def factory(name: str = "audio.wav", duration: float = 0.5) -> Path:
         return _write_silent_wav(tmp_path / name, duration=duration)
+
     return factory
 
 
 # ---------------------------------------------------------------------------
 # Mock Whisper model
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class _FakeInfo:
@@ -123,8 +128,10 @@ def mock_whisper_model():
     """A ``MagicMock`` mimicking ``faster_whisper.WhisperModel``."""
     model = MagicMock()
     model.transcribe.return_value = (
-        [_FakeSegment(0.0, 5.0, "Hello world"),
-         _FakeSegment(5.0, 10.0, "Second segment")],
+        [
+            _FakeSegment(0.0, 5.0, "Hello world"),
+            _FakeSegment(5.0, 10.0, "Second segment"),
+        ],
         _FakeInfo(),
     )
     return model

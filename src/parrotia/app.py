@@ -34,12 +34,12 @@ ctk.set_default_color_theme("blue")
 # --- Brand palette, drawn from banner.png ----------------------------------
 # A tropical macaw over a teal sea: parrot-green body, golden belly, sky-blue
 # wings and a coral face. These few colours give the whole UI its personality.
-TEAL_DARK = "#0E7C7B"   # the sea behind the parrot
-GREEN = "#1FAE6B"       # parrot body  -> primary "go" actions
+TEAL_DARK = "#0E7C7B"  # the sea behind the parrot
+GREEN = "#1FAE6B"  # parrot body  -> primary "go" actions
 GREEN_HI = "#17935A"
-GOLD = "#F4B740"        # golden belly -> the "IA" in the wordmark, highlights
-BLUE = "#2D7DD2"        # wing blue    -> secondary buttons / inputs
-CORAL = "#EF5B5B"       # parrot face  -> cancel / destructive
+GOLD = "#F4B740"  # golden belly -> the "IA" in the wordmark, highlights
+BLUE = "#2D7DD2"  # wing blue    -> secondary buttons / inputs
+CORAL = "#EF5B5B"  # parrot face  -> cancel / destructive
 CORAL_HI = "#D94848"
 
 # Tuple colours are (light-mode, dark-mode) so the theme adapts to the system.
@@ -88,7 +88,6 @@ class TranscriberApp(ctk.CTk):
     def _build_ui(self) -> None:
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(4, weight=1)
-        pad = {"padx": 16, "pady": (0, 12)}
 
         self._build_hero()
 
@@ -98,17 +97,29 @@ class TranscriberApp(ctk.CTk):
         self._heading(file_frame, "📁  Choose audio or video", row=0)
 
         self.file_entry = ctk.CTkEntry(
-            file_frame, height=38, border_color=BLUE,
+            file_frame,
+            height=38,
+            border_color=BLUE,
             placeholder_text="Pick a file — or a whole folder to batch them all…",
         )
         self.file_entry.grid(row=1, column=0, sticky="ew", padx=(14, 8), pady=(0, 14))
         ctk.CTkButton(
-            file_frame, text="File…", width=84, height=38,
-            fg_color=BLUE, hover_color="#246CB8", command=self._browse_input,
+            file_frame,
+            text="File…",
+            width=84,
+            height=38,
+            fg_color=BLUE,
+            hover_color="#246CB8",
+            command=self._browse_input,
         ).grid(row=1, column=1, padx=(0, 6), pady=(0, 14))
         ctk.CTkButton(
-            file_frame, text="Folder…", width=92, height=38,
-            fg_color=BLUE, hover_color="#246CB8", command=self._browse_folder,
+            file_frame,
+            text="Folder…",
+            width=92,
+            height=38,
+            fg_color=BLUE,
+            hover_color="#246CB8",
+            command=self._browse_folder,
         ).grid(row=1, column=2, padx=(0, 14), pady=(0, 14))
 
         # --- Options --------------------------------------------------------
@@ -123,8 +134,9 @@ class TranscriberApp(ctk.CTk):
         self.compute_var = ctk.StringVar(value=COMPUTE_TYPES[0])
 
         self._add_option(options, 1, 0, "Model", AVAILABLE_MODELS, self.model_var)
-        self._add_option(options, 1, 2, "Language",
-                         list(LANGUAGES.keys()), self.language_var)
+        self._add_option(
+            options, 1, 2, "Language", list(LANGUAGES.keys()), self.language_var
+        )
         self._add_option(options, 2, 0, "Device", DEVICES, self.device_var)
         self._add_option(options, 2, 2, "Compute", COMPUTE_TYPES, self.compute_var)
 
@@ -140,8 +152,12 @@ class TranscriberApp(ctk.CTk):
         for i, fmt in enumerate(formats.WRITERS):
             var = ctk.BooleanVar(value=fmt in defaults)
             ctk.CTkCheckBox(
-                formats_row, text=fmt.upper(), variable=var, width=70,
-                fg_color=GREEN, hover_color=GREEN_HI,
+                formats_row,
+                text=fmt.upper(),
+                variable=var,
+                width=70,
+                fg_color=GREEN,
+                hover_color=GREEN_HI,
             ).grid(row=0, column=i, padx=6, pady=4)
             self.format_vars[fmt] = var
 
@@ -149,13 +165,20 @@ class TranscriberApp(ctk.CTk):
         out_row.grid(row=2, column=0, sticky="ew", padx=8, pady=(4, 12))
         out_row.grid_columnconfigure(0, weight=1)
         self.outdir_entry = ctk.CTkEntry(
-            out_row, height=38, border_color=BLUE,
+            out_row,
+            height=38,
+            border_color=BLUE,
             placeholder_text="Output folder (defaults to source folder)",
         )
         self.outdir_entry.grid(row=0, column=0, sticky="ew", padx=(4, 8))
         ctk.CTkButton(
-            out_row, text="Choose…", width=110, height=38,
-            fg_color=BLUE, hover_color="#246CB8", command=self._browse_outdir,
+            out_row,
+            text="Choose…",
+            width=110,
+            height=38,
+            fg_color=BLUE,
+            hover_color="#246CB8",
+            command=self._browse_outdir,
         ).grid(row=0, column=1, padx=(0, 4))
 
         # --- Preview --------------------------------------------------------
@@ -164,7 +187,10 @@ class TranscriberApp(ctk.CTk):
         preview_card.grid_rowconfigure(1, weight=1)
         self._heading(preview_card, "📝  Transcript", row=0)
         self.preview = ctk.CTkTextbox(
-            preview_card, wrap="word", fg_color=CARD_SOFT, border_width=0,
+            preview_card,
+            wrap="word",
+            fg_color=CARD_SOFT,
+            border_width=0,
         )
         self.preview.grid(row=1, column=0, sticky="nsew", padx=12, pady=(0, 12))
         self.preview.insert("1.0", "🦜  Your transcript will land right here…")
@@ -176,17 +202,28 @@ class TranscriberApp(ctk.CTk):
         bar.grid_columnconfigure(1, weight=1)
 
         self.transcribe_btn = ctk.CTkButton(
-            bar, text="🦜  Transcribe", width=170, height=44, corner_radius=22,
+            bar,
+            text="🦜  Transcribe",
+            width=170,
+            height=44,
+            corner_radius=22,
             font=ctk.CTkFont(size=15, weight="bold"),
-            fg_color=GREEN, hover_color=GREEN_HI,
+            fg_color=GREEN,
+            hover_color=GREEN_HI,
             command=self._start_transcription,
         )
         self.transcribe_btn.grid(row=0, column=0, sticky="w")
 
         self.cancel_btn = ctk.CTkButton(
-            bar, text="Cancel", width=110, height=44, corner_radius=22,
-            fg_color=CORAL, hover_color=CORAL_HI,
-            command=self._cancel_transcription, state="disabled",
+            bar,
+            text="Cancel",
+            width=110,
+            height=44,
+            corner_radius=22,
+            fg_color=CORAL,
+            hover_color=CORAL_HI,
+            command=self._cancel_transcription,
+            state="disabled",
         )
         self.cancel_btn.grid(row=0, column=2, sticky="e")
 
@@ -208,31 +245,41 @@ class TranscriberApp(ctk.CTk):
         hero.grid_columnconfigure(1, weight=1)
 
         ctk.CTkLabel(hero, text="🦜", font=ctk.CTkFont(size=52)).grid(
-            row=0, column=0, rowspan=2, padx=(20, 10), pady=(16, 14))
+            row=0, column=0, rowspan=2, padx=(20, 10), pady=(16, 14)
+        )
 
         wordmark = ctk.CTkFrame(hero, fg_color="transparent")
         wordmark.grid(row=0, column=1, sticky="w", padx=(0, 16), pady=(18, 0))
         ctk.CTkLabel(
-            wordmark, text="Parrot", text_color="#FFFFFF",
+            wordmark,
+            text="Parrot",
+            text_color="#FFFFFF",
             font=ctk.CTkFont(size=30, weight="bold"),
         ).grid(row=0, column=0)
         ctk.CTkLabel(
-            wordmark, text="IA", text_color=GOLD,
+            wordmark,
+            text="IA",
+            text_color=GOLD,
             font=ctk.CTkFont(size=30, weight="bold"),
         ).grid(row=0, column=1)
 
         ctk.CTkLabel(
-            hero, text="Local Audio & Video Transcriber",
-            text_color="#C9E9E6", font=ctk.CTkFont(size=13),
+            hero,
+            text="Local Audio & Video Transcriber",
+            text_color="#C9E9E6",
+            font=ctk.CTkFont(size=13),
         ).grid(row=1, column=1, sticky="w", padx=(0, 16), pady=(0, 6))
 
         badges = ctk.CTkFrame(hero, fg_color="transparent")
-        badges.grid(row=2, column=0, columnspan=2, sticky="w",
-                    padx=18, pady=(2, 16))
+        badges.grid(row=2, column=0, columnspan=2, sticky="w", padx=18, pady=(2, 16))
         for i, (text, color) in enumerate(_BADGES):
             ctk.CTkLabel(
-                badges, text=f"  {text}  ", height=26, corner_radius=13,
-                fg_color=color, text_color="#FFFFFF",
+                badges,
+                text=f"  {text}  ",
+                height=26,
+                corner_radius=13,
+                fg_color=color,
+                text_color="#FFFFFF",
                 font=ctk.CTkFont(size=11, weight="bold"),
             ).grid(row=0, column=i, padx=(0, 8))
 
@@ -244,30 +291,40 @@ class TranscriberApp(ctk.CTk):
 
     def _heading(self, parent, text: str, row: int, columnspan: int = 1) -> None:
         ctk.CTkLabel(
-            parent, text=text, anchor="w", text_color=INK,
+            parent,
+            text=text,
+            anchor="w",
+            text_color=INK,
             font=ctk.CTkFont(size=14, weight="bold"),
-        ).grid(row=row, column=0, columnspan=columnspan, sticky="w",
-               padx=14, pady=(12, 8))
+        ).grid(
+            row=row, column=0, columnspan=columnspan, sticky="w", padx=14, pady=(12, 8)
+        )
 
     def _add_option(self, parent, row, col, label, values, variable) -> None:
         ctk.CTkLabel(parent, text=label, anchor="w", text_color=MUTED).grid(
-            row=row, column=col, sticky="w", padx=(14, 6), pady=10)
+            row=row, column=col, sticky="w", padx=(14, 6), pady=10
+        )
         ctk.CTkOptionMenu(
-            parent, values=values, variable=variable, height=34,
-            fg_color=TEAL_DARK, button_color=GREEN, button_hover_color=GREEN_HI,
+            parent,
+            values=values,
+            variable=variable,
+            height=34,
+            fg_color=TEAL_DARK,
+            button_color=GREEN,
+            button_hover_color=GREEN_HI,
         ).grid(row=row, column=col + 1, sticky="ew", padx=(0, 14), pady=10)
 
     # ------------------------------------------------------------ actions ---
     def _browse_input(self) -> None:
         path = filedialog.askopenfilename(
-            title="Select audio or video", filetypes=_AUDIO_FILETYPES)
+            title="Select audio or video", filetypes=_AUDIO_FILETYPES
+        )
         if path:
             self.file_entry.delete(0, "end")
             self.file_entry.insert(0, path)
 
     def _browse_folder(self) -> None:
-        path = filedialog.askdirectory(
-            title="Select a folder of audio/video files")
+        path = filedialog.askdirectory(title="Select a folder of audio/video files")
         if path:
             self.file_entry.delete(0, "end")
             self.file_entry.insert(0, path)
@@ -277,8 +334,7 @@ class TranscriberApp(ctk.CTk):
         """Supported audio/video files directly inside ``folder``, sorted."""
         exts = {ext.lower() for ext in SUPPORTED_EXTENSIONS}
         return sorted(
-            p for p in folder.iterdir()
-            if p.is_file() and p.suffix.lower() in exts
+            p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in exts
         )
 
     def _browse_outdir(self) -> None:
@@ -294,7 +350,8 @@ class TranscriberApp(ctk.CTk):
         raw_path = self.file_entry.get().strip().strip('"')
         if not raw_path:
             messagebox.showwarning(
-                "No input", "Please choose an audio file or a folder first.")
+                "No input", "Please choose an audio file or a folder first."
+            )
             return
         path = Path(raw_path)
 
@@ -305,19 +362,18 @@ class TranscriberApp(ctk.CTk):
             if not jobs:
                 messagebox.showwarning(
                     "No audio files",
-                    f"No supported audio/video files were found in:\n{raw_path}")
+                    f"No supported audio/video files were found in:\n{raw_path}",
+                )
                 return
         elif path.is_file():
             jobs = [path]
         else:
-            messagebox.showerror(
-                "Not found", f"No such file or folder:\n{raw_path}")
+            messagebox.showerror("Not found", f"No such file or folder:\n{raw_path}")
             return
 
         selected_formats = [f for f, v in self.format_vars.items() if v.get()]
         if not selected_formats:
-            messagebox.showwarning(
-                "No format", "Select at least one output format.")
+            messagebox.showwarning("No format", "Select at least one output format.")
             return
         outdir_raw = self.outdir_entry.get().strip().strip('"')
 
@@ -334,26 +390,30 @@ class TranscriberApp(ctk.CTk):
         )
 
         # Check if model needs downloading (first-time setup)
-        needs_download = not Transcriber.is_model_cached(params['model'])
+        needs_download = not Transcriber.is_model_cached(params["model"])
         if needs_download:
             self._downloading = True
-            size = MODEL_SIZES.get(params['model'], "")
+            size = MODEL_SIZES.get(params["model"], "")
             hint = f" ({size})" if size else ""
             self._set_status(
                 f"📥 Downloading model '{params['model']}'{hint}"
-                " — first time setup, please wait…")
+                " — first time setup, please wait…"
+            )
             self.progress.configure(mode="indeterminate")
             self.progress.start()
         else:
             self._downloading = False
             self._set_status(
                 f"Starting… ({self._total_jobs} files)"
-                if self._total_jobs > 1 else "Starting…")
+                if self._total_jobs > 1
+                else "Starting…"
+            )
             self.progress.set(0.0)
         self._worker = threading.Thread(
             target=self._run_worker,
             args=(jobs, params, selected_formats, outdir_raw),
-            daemon=True)
+            daemon=True,
+        )
         self._worker.start()
 
     def _cancel_transcription(self) -> None:
@@ -361,8 +421,13 @@ class TranscriberApp(ctk.CTk):
         self._set_status("Cancelling…")
 
     # ------------------------------------------------------------- worker ---
-    def _run_worker(self, jobs: "list[Path]", params: dict,
-                    selected_formats: "list[str]", outdir_raw: str) -> None:
+    def _run_worker(
+        self,
+        jobs: "list[Path]",
+        params: dict,
+        selected_formats: "list[str]",
+        outdir_raw: str,
+    ) -> None:
         """Transcribe every file in ``jobs`` in turn, on this daemon thread.
 
         Progress is reported as an overall fraction across all files; a
@@ -394,7 +459,8 @@ class TranscriberApp(ctk.CTk):
                         **params,
                     )
                     written = self._write_result(
-                        result, source, selected_formats, outdir_raw)
+                        result, source, selected_formats, outdir_raw
+                    )
                 except TranscriptionCancelled:
                     self._events.put(("cancelled",))
                     return
@@ -410,8 +476,12 @@ class TranscriberApp(ctk.CTk):
             self._events.put(("error", exc, traceback.format_exc()))
 
     @staticmethod
-    def _write_result(result: TranscriptionResult, source: Path,
-                      selected_formats: "list[str]", outdir_raw: str) -> "list[Path]":
+    def _write_result(
+        result: TranscriptionResult,
+        source: Path,
+        selected_formats: "list[str]",
+        outdir_raw: str,
+    ) -> "list[Path]":
         outdir = Path(outdir_raw) if outdir_raw else source.parent
         outdir.mkdir(parents=True, exist_ok=True)
         stem = source.stem
@@ -481,18 +551,20 @@ class TranscriberApp(ctk.CTk):
         ok = total - len(errors)
 
         if total == 1 and not errors:
-            self._set_status(
-                "Done. Saved: " + ", ".join(p.name for p in written))
+            self._set_status("Done. Saved: " + ", ".join(p.name for p in written))
             messagebox.showinfo(
                 "Transcription complete",
-                "Saved files:\n" + "\n".join(str(p) for p in written))
+                "Saved files:\n" + "\n".join(str(p) for p in written),
+            )
             return
 
         self._set_status(
             f"Done — {ok}/{total} files transcribed"
-            + (f", {len(errors)} failed." if errors else ", all saved."))
-        lines = [f"Transcribed {ok} of {total} file(s); "
-                 f"saved {len(written)} output file(s)."]
+            + (f", {len(errors)} failed." if errors else ", all saved.")
+        )
+        lines = [
+            f"Transcribed {ok} of {total} file(s); saved {len(written)} output file(s)."
+        ]
         if errors:
             lines.append("")
             lines.append("Failed:")

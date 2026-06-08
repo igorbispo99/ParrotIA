@@ -22,6 +22,7 @@ from parrotia.transcriber import Segment, TranscriptionResult
 # Timestamp formatting
 # ===================================================================
 
+
 class TestFormatTimestamp:
     def test_zero(self):
         assert _format_timestamp(0.0, separator=",") == "00:00:00,000"
@@ -54,6 +55,7 @@ class TestFormatTimestamp:
 # Plain text writer
 # ===================================================================
 
+
 class TestToTxt:
     def test_basic(self, sample_result):
         txt = to_txt(sample_result)
@@ -71,8 +73,11 @@ class TestToTxt:
 
     def test_single_segment(self):
         r = TranscriptionResult(
-            source_name="a.mp3", model="tiny", language="en", duration=5.0,
-            segments=[Segment(0.0, 5.0, "Only line.")]
+            source_name="a.mp3",
+            model="tiny",
+            language="en",
+            duration=5.0,
+            segments=[Segment(0.0, 5.0, "Only line.")],
         )
         assert to_txt(r).strip() == "Only line."
 
@@ -80,6 +85,7 @@ class TestToTxt:
 # ===================================================================
 # Markdown writer
 # ===================================================================
+
 
 class TestToMarkdown:
     def test_contains_header(self, sample_result):
@@ -119,11 +125,12 @@ class TestToMarkdown:
 # SRT writer
 # ===================================================================
 
+
 class TestToSrt:
     def test_block_count(self, sample_result):
         srt = to_srt(sample_result)
         # Each block starts with a number; count numbered lines
-        numbered = [l for l in srt.split("\n") if l.strip().isdigit()]
+        numbered = [ln for ln in srt.split("\n") if ln.strip().isdigit()]
         assert len(numbered) == 3
 
     def test_uses_comma_separator(self, sample_result):
@@ -133,7 +140,7 @@ class TestToSrt:
     def test_sequential_indices(self, sample_result):
         srt = to_srt(sample_result)
         lines = srt.split("\n")
-        indices = [int(l) for l in lines if l.strip().isdigit()]
+        indices = [int(ln) for ln in lines if ln.strip().isdigit()]
         assert indices == [1, 2, 3]
 
     def test_ends_with_newline(self, sample_result):
@@ -148,6 +155,7 @@ class TestToSrt:
 # VTT writer
 # ===================================================================
 
+
 class TestToVtt:
     def test_starts_with_webvtt(self, sample_result):
         vtt = to_vtt(sample_result)
@@ -159,7 +167,7 @@ class TestToVtt:
 
     def test_block_count(self, sample_result):
         vtt = to_vtt(sample_result)
-        numbered = [l for l in vtt.split("\n") if l.strip().isdigit()]
+        numbered = [ln for ln in vtt.split("\n") if ln.strip().isdigit()]
         assert len(numbered) == 3
 
     def test_ends_with_newline(self, sample_result):
@@ -169,6 +177,7 @@ class TestToVtt:
 # ===================================================================
 # JSON writer
 # ===================================================================
+
 
 class TestToJson:
     def test_valid_json(self, sample_result):
@@ -207,8 +216,11 @@ class TestToJson:
 
     def test_unicode_preserved(self):
         r = TranscriptionResult(
-            source_name="日本語.mp3", model="tiny", language="ja", duration=1.0,
-            segments=[Segment(0.0, 1.0, "こんにちは世界")]
+            source_name="日本語.mp3",
+            model="tiny",
+            language="ja",
+            duration=1.0,
+            segments=[Segment(0.0, 1.0, "こんにちは世界")],
         )
         data = json.loads(to_json(r))
         assert data["source"] == "日本語.mp3"
@@ -222,18 +234,22 @@ class TestToJson:
 # WRITERS registry
 # ===================================================================
 
+
 class TestWritersRegistry:
     def test_all_formats_registered(self):
         expected = {"txt", "md", "srt", "vtt", "json"}
         assert set(WRITERS.keys()) == expected
 
-    @pytest.mark.parametrize("fmt,ext", [
-        ("txt", ".txt"),
-        ("md", ".md"),
-        ("srt", ".srt"),
-        ("vtt", ".vtt"),
-        ("json", ".json"),
-    ])
+    @pytest.mark.parametrize(
+        "fmt,ext",
+        [
+            ("txt", ".txt"),
+            ("md", ".md"),
+            ("srt", ".srt"),
+            ("vtt", ".vtt"),
+            ("json", ".json"),
+        ],
+    )
     def test_extensions(self, fmt, ext):
         assert WRITERS[fmt][0] == ext
 

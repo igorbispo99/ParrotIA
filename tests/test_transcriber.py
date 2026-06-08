@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import threading
-from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -28,6 +27,7 @@ from parrotia.transcriber import (
 # ===================================================================
 # Constants and enumerations
 # ===================================================================
+
 
 class TestConstants:
     def test_available_models_not_empty(self):
@@ -65,6 +65,7 @@ class TestConstants:
 # ===================================================================
 # Dataclasses
 # ===================================================================
+
 
 class TestSegment:
     def test_creation(self):
@@ -105,6 +106,7 @@ class TestTranscriptionResult:
 # Helper functions
 # ===================================================================
 
+
 class TestResolveComputeType:
     def test_explicit_passthrough(self):
         assert _resolve_compute_type("cuda", "float16") == "float16"
@@ -122,22 +124,28 @@ class TestResolveComputeType:
 
 
 class TestIsCudaError:
-    @pytest.mark.parametrize("msg", [
-        "Failed to load cublas64_12.dll",
-        "Could not load cuDNN shared library",
-        "CUDA driver version is insufficient",
-        "cannot be loaded because a module was not found",
-        "libcudart.so.12: cannot open shared object",
-        "GPU out of memory",
-    ])
+    @pytest.mark.parametrize(
+        "msg",
+        [
+            "Failed to load cublas64_12.dll",
+            "Could not load cuDNN shared library",
+            "CUDA driver version is insufficient",
+            "cannot be loaded because a module was not found",
+            "libcudart.so.12: cannot open shared object",
+            "GPU out of memory",
+        ],
+    )
     def test_cuda_errors_detected(self, msg):
         assert _is_cuda_error(RuntimeError(msg))
 
-    @pytest.mark.parametrize("msg", [
-        "File not found: audio.mp3",
-        "Invalid model name",
-        "Permission denied",
-    ])
+    @pytest.mark.parametrize(
+        "msg",
+        [
+            "File not found: audio.mp3",
+            "Invalid model name",
+            "Permission denied",
+        ],
+    )
     def test_non_cuda_errors_not_detected(self, msg):
         assert not _is_cuda_error(RuntimeError(msg))
 
@@ -145,6 +153,7 @@ class TestIsCudaError:
 # ===================================================================
 # Transcriber class
 # ===================================================================
+
 
 class TestTranscriber:
     def test_init_state(self):
@@ -161,8 +170,10 @@ class TestTranscriber:
     def test_transcribe_success(self, MockWhisper, silent_wav, mock_whisper_model):
         """Full transcribe flow with mocked WhisperModel."""
         MockWhisper.return_value = mock_whisper_model
-        with patch("parrotia.transcriber.Transcriber._load_model",
-                    return_value=mock_whisper_model):
+        with patch(
+            "parrotia.transcriber.Transcriber._load_model",
+            return_value=mock_whisper_model,
+        ):
             t = Transcriber()
             result = t.transcribe(str(silent_wav), model="tiny", device="cpu")
 
@@ -172,18 +183,23 @@ class TestTranscriber:
         assert len(result.segments) == 2
 
     @patch("parrotia.transcriber.WhisperModel", create=True)
-    def test_progress_callback_called(self, MockWhisper, silent_wav, mock_whisper_model):
+    def test_progress_callback_called(
+        self, MockWhisper, silent_wav, mock_whisper_model
+    ):
         MockWhisper.return_value = mock_whisper_model
         calls = []
 
         def cb(fraction, msg):
             calls.append((fraction, msg))
 
-        with patch("parrotia.transcriber.Transcriber._load_model",
-                    return_value=mock_whisper_model):
+        with patch(
+            "parrotia.transcriber.Transcriber._load_model",
+            return_value=mock_whisper_model,
+        ):
             t = Transcriber()
-            t.transcribe(str(silent_wav), model="tiny", device="cpu",
-                         progress_callback=cb)
+            t.transcribe(
+                str(silent_wav), model="tiny", device="cpu", progress_callback=cb
+            )
 
         assert len(calls) > 0
         # First call should be 0.0 (loading), last should be 1.0 (done)
@@ -197,15 +213,20 @@ class TestTranscriber:
         cancel = threading.Event()
         cancel.set()  # already cancelled
 
-        with patch("parrotia.transcriber.Transcriber._load_model",
-                    return_value=mock_whisper_model):
+        with patch(
+            "parrotia.transcriber.Transcriber._load_model",
+            return_value=mock_whisper_model,
+        ):
             t = Transcriber()
             with pytest.raises(TranscriptionCancelled):
-                t.transcribe(str(silent_wav), model="tiny", device="cpu",
-                             cancel_event=cancel)
+                t.transcribe(
+                    str(silent_wav), model="tiny", device="cpu", cancel_event=cancel
+                )
 
     @patch("parrotia.transcriber.WhisperModel", create=True)
-    def test_gpu_fallback_on_cuda_error(self, MockWhisper, silent_wav, mock_whisper_model):
+    def test_gpu_fallback_on_cuda_error(
+        self, MockWhisper, silent_wav, mock_whisper_model
+    ):
         """When GPU transcription fails with a CUDA error, retry on CPU."""
         call_count = 0
 
@@ -226,6 +247,7 @@ class TestTranscriber:
     @patch("parrotia.transcriber.WhisperModel", create=True)
     def test_non_cuda_error_propagates(self, MockWhisper, silent_wav):
         """Non-CUDA errors are not retried and propagate immediately."""
+
         def fake_load(model, device, compute_type):
             raise ValueError("Something else went wrong")
 

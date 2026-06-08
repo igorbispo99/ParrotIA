@@ -35,8 +35,11 @@ def to_markdown(result: TranscriptionResult) -> str:
         "",
         f"- **Model:** {result.model}",
         f"- **Language:** {result.language}"
-        + (f" (confidence {result.language_probability:.0%})"
-           if result.language_probability is not None else ""),
+        + (
+            f" (confidence {result.language_probability:.0%})"
+            if result.language_probability is not None
+            else ""
+        ),
         f"- **Duration:** {_format_timestamp(result.duration, separator='.')}",
         "",
         "---",
@@ -49,8 +52,9 @@ def to_markdown(result: TranscriptionResult) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _to_subtitles(result: TranscriptionResult, *, separator: str,
-                  header: str = "") -> str:
+def _to_subtitles(
+    result: TranscriptionResult, *, separator: str, header: str = ""
+) -> str:
     blocks = [header] if header else []
     for index, segment in enumerate(result.segments, start=1):
         start = _format_timestamp(segment.start, separator=separator)
@@ -78,8 +82,7 @@ def to_json(result: TranscriptionResult) -> str:
         "language_probability": result.language_probability,
         "duration": result.duration,
         "segments": [
-            {"start": s.start, "end": s.end, "text": s.text}
-            for s in result.segments
+            {"start": s.start, "end": s.end, "text": s.text} for s in result.segments
         ],
     }
     return json.dumps(payload, ensure_ascii=False, indent=2) + "\n"

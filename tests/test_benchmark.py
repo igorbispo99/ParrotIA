@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import threading
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -21,41 +21,62 @@ from parrotia.transcriber import TranscriptionCancelled, TranscriptionResult, Se
 # BenchmarkRun dataclass
 # ===================================================================
 
+
 class TestBenchmarkRun:
     def test_ok_when_no_error(self):
         r = BenchmarkRun(
-            model="tiny", duration=10.0, load_time=1.0,
-            transcribe_time=2.0, total_time=3.0, segments=5
+            model="tiny",
+            duration=10.0,
+            load_time=1.0,
+            transcribe_time=2.0,
+            total_time=3.0,
+            segments=5,
         )
         assert r.ok is True
         assert r.error is None
 
     def test_not_ok_when_error(self):
         r = BenchmarkRun(
-            model="tiny", duration=0.0, load_time=0.0,
-            transcribe_time=0.0, total_time=0.0, segments=0,
-            error="CUDA not found"
+            model="tiny",
+            duration=0.0,
+            load_time=0.0,
+            transcribe_time=0.0,
+            total_time=0.0,
+            segments=0,
+            error="CUDA not found",
         )
         assert r.ok is False
 
     def test_speed_calculation(self):
         r = BenchmarkRun(
-            model="tiny", duration=10.0, load_time=1.0,
-            transcribe_time=2.0, total_time=3.0, segments=5
+            model="tiny",
+            duration=10.0,
+            load_time=1.0,
+            transcribe_time=2.0,
+            total_time=3.0,
+            segments=5,
         )
         assert r.speed == pytest.approx(5.0)
 
     def test_speed_zero_transcribe_time(self):
         r = BenchmarkRun(
-            model="tiny", duration=10.0, load_time=1.0,
-            transcribe_time=0.0, total_time=1.0, segments=0
+            model="tiny",
+            duration=10.0,
+            load_time=1.0,
+            transcribe_time=0.0,
+            total_time=1.0,
+            segments=0,
         )
         assert r.speed == 0.0
 
     def test_speed_negative_transcribe_time(self):
         r = BenchmarkRun(
-            model="tiny", duration=10.0, load_time=1.0,
-            transcribe_time=-1.0, total_time=0.0, segments=0
+            model="tiny",
+            duration=10.0,
+            load_time=1.0,
+            transcribe_time=-1.0,
+            total_time=0.0,
+            segments=0,
         )
         assert r.speed == 0.0
 
@@ -63,6 +84,7 @@ class TestBenchmarkRun:
 # ===================================================================
 # benchmark_models()
 # ===================================================================
+
 
 class TestBenchmarkModels:
     def test_file_not_found(self):
@@ -72,7 +94,9 @@ class TestBenchmarkModels:
     @patch("parrotia.benchmark.Transcriber")
     def test_successful_run(self, MockTrans, silent_wav):
         fake_result = TranscriptionResult(
-            source_name="silence.wav", model="tiny", language="en",
+            source_name="silence.wav",
+            model="tiny",
+            language="en",
             duration=10.0,
             segments=[Segment(0.0, 10.0, "text")],
         )
@@ -86,8 +110,11 @@ class TestBenchmarkModels:
     @patch("parrotia.benchmark.Transcriber")
     def test_multiple_models(self, MockTrans, silent_wav):
         fake_result = TranscriptionResult(
-            source_name="silence.wav", model="tiny", language="en",
-            duration=10.0, segments=[]
+            source_name="silence.wav",
+            model="tiny",
+            language="en",
+            duration=10.0,
+            segments=[],
         )
         MockTrans.return_value.transcribe.return_value = fake_result
 
@@ -105,8 +132,11 @@ class TestBenchmarkModels:
             if call_count == 1:
                 raise RuntimeError("Model download failed")
             return TranscriptionResult(
-                source_name="silence.wav", model="base", language="en",
-                duration=10.0, segments=[]
+                source_name="silence.wav",
+                model="base",
+                language="en",
+                duration=10.0,
+                segments=[],
             )
 
         MockTrans.return_value.transcribe.side_effect = side_effect
@@ -123,23 +153,27 @@ class TestBenchmarkModels:
         cancel.set()
 
         with pytest.raises(TranscriptionCancelled):
-            benchmark_models(str(silent_wav), ["tiny", "base"],
-                             device="cpu", cancel_event=cancel)
+            benchmark_models(
+                str(silent_wav), ["tiny", "base"], device="cpu", cancel_event=cancel
+            )
 
     @patch("parrotia.benchmark.Transcriber")
     def test_progress_callback_invoked(self, MockTrans, silent_wav):
         fake_result = TranscriptionResult(
-            source_name="silence.wav", model="tiny", language="en",
-            duration=10.0, segments=[]
+            source_name="silence.wav",
+            model="tiny",
+            language="en",
+            duration=10.0,
+            segments=[],
         )
         MockTrans.return_value.transcribe.return_value = fake_result
 
         calls = []
+
         def cb(index, count, model, fraction, msg):
             calls.append((index, count, model))
 
-        benchmark_models(str(silent_wav), ["tiny"], device="cpu",
-                         progress_callback=cb)
+        benchmark_models(str(silent_wav), ["tiny"], device="cpu", progress_callback=cb)
         # At minimum, on_progress is wired — but calls depend on transcribe
         # internals; we just verify no crash
 
@@ -147,6 +181,7 @@ class TestBenchmarkModels:
 # ===================================================================
 # format_report()
 # ===================================================================
+
 
 class TestFormatReport:
     def test_header_present(self):
@@ -194,6 +229,7 @@ class TestFormatReport:
 # ===================================================================
 # to_json()
 # ===================================================================
+
 
 class TestBenchmarkToJson:
     def test_valid_json(self):

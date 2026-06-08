@@ -67,8 +67,20 @@ COMPUTE_TYPES = ["auto", "int8", "int8_float16", "float16", "float32"]
 
 # Audio/video containers PyAV (bundled with faster-whisper) can decode.
 SUPPORTED_EXTENSIONS = [
-    ".mp3", ".wav", ".m4a", ".ogg", ".oga", ".opus", ".flac", ".aac",
-    ".wma", ".mp4", ".mkv", ".mov", ".avi", ".webm",
+    ".mp3",
+    ".wav",
+    ".m4a",
+    ".ogg",
+    ".oga",
+    ".opus",
+    ".flac",
+    ".aac",
+    ".wma",
+    ".mp4",
+    ".mkv",
+    ".mov",
+    ".avi",
+    ".webm",
 ]
 
 # HuggingFace repo IDs used by faster-whisper for each model.
@@ -186,8 +198,10 @@ class Transcriber:
             return True  # custom path or unknown model — assume available
         try:
             from huggingface_hub.constants import HF_HUB_CACHE
+
             repo_dir = os.path.join(
-                HF_HUB_CACHE, "models--" + repo_id.replace("/", "--"))
+                HF_HUB_CACHE, "models--" + repo_id.replace("/", "--")
+            )
             snapshots = os.path.join(repo_dir, "snapshots")
             return os.path.isdir(snapshots) and len(os.listdir(snapshots)) > 0
         except Exception:
@@ -212,9 +226,7 @@ class Transcriber:
                 # GPU unavailable / driver mismatch / unsupported compute type:
                 # fall back to a CPU configuration that always works.
                 if resolved_device != "cpu":
-                    self._model = WhisperModel(
-                        model, device="cpu", compute_type="int8"
-                    )
+                    self._model = WhisperModel(model, device="cpu", compute_type="int8")
                     key = (model, "cpu", "int8")
                 else:
                     raise
@@ -254,8 +266,15 @@ class Transcriber:
 
         try:
             return self._transcribe_once(
-                path, model, language, device, compute_type,
-                beam_size, vad_filter, report, check_cancel,
+                path,
+                model,
+                language,
+                device,
+                compute_type,
+                beam_size,
+                vad_filter,
+                report,
+                check_cancel,
             )
         except TranscriptionCancelled:
             raise
@@ -268,8 +287,15 @@ class Transcriber:
                 self._model = None
                 self._model_key = None
                 return self._transcribe_once(
-                    path, model, language, "cpu", "int8",
-                    beam_size, vad_filter, report, check_cancel,
+                    path,
+                    model,
+                    language,
+                    "cpu",
+                    "int8",
+                    beam_size,
+                    vad_filter,
+                    report,
+                    check_cancel,
                 )
             raise
 
@@ -289,7 +315,10 @@ class Transcriber:
         if downloading:
             size = MODEL_SIZES.get(model, "")
             hint = f" ({size})" if size else ""
-            report(0.0, f"📥 Downloading model '{model}'{hint} — first time setup, please wait…")
+            report(
+                0.0,
+                f"📥 Downloading model '{model}'{hint} — first time setup, please wait…",
+            )
         else:
             report(0.0, f"Loading model '{model}'…")
         check_cancel()
