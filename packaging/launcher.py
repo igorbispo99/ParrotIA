@@ -82,6 +82,7 @@ def main() -> int:
             gui_main()
     except Exception:  # noqa: BLE001 -- surface startup errors from any dependency
         detail = traceback.format_exc()
+        print(detail, file=sys.stderr)
         if len(sys.argv) == 3 and sys.argv[1] == "--smoke-test":
             Path(sys.argv[2]).write_text(detail, encoding="utf-8")
         else:

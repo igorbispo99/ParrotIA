@@ -30,9 +30,9 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def app():
-    """Create a hidden TranscriberApp and destroy it after the test."""
+    """Inspect one real app lifetime; Tk font caches outlive individual roots."""
     from parrotia.app import TranscriberApp
 
     try:

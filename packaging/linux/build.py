@@ -140,11 +140,17 @@ def main() -> None:
     )
     bundle = ROOT / "dist/ParrotIA"
     report = work / "smoke-test.json"
-    subprocess.run(
+    result = subprocess.run(
         [str(bundle / "parrotia-gui"), "--smoke-test", str(report)],
         timeout=120,
-        check=True,
+        check=False,
     )
+    if result.returncode:
+        raise SystemExit(
+            report.read_text(encoding="utf-8")
+            if report.exists()
+            else f"Frozen app failed (exit {result.returncode})."
+        )
     print(report.read_text(encoding="utf-8"))
     # Each build gets fresh staging paths without deleting existing directories.
     import tempfile
