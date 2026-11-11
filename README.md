@@ -78,15 +78,15 @@ and its Explorer entries, while preserving your transcripts and downloaded model
 
 ### Linux installers
 
-Download the v1.3.0 `.deb` or `.rpm` from
+Download the v1.3.1 `.deb` or `.rpm` from
 [Releases](https://github.com/igorbispo99/ParrotIA/releases). Install it with your
 distribution's package manager so desktop-library dependencies are resolved:
 
 ```bash
 # Debian / Ubuntu
-sudo apt install ./parrotia_1.3.0_amd64.deb
+sudo apt install ./parrotia_1.3.1_amd64.deb
 # Fedora / compatible RPM distributions
-sudo dnf install ./parrotia-1.3.0-1.x86_64.rpm
+sudo dnf install ./parrotia-1.3.1-1.x86_64.rpm
 ```
 
 Open **ParrotIA** from the applications menu, or run `parrotia-gui`. Both packages
@@ -269,8 +269,8 @@ by the `Release` workflow. To cut a release, bump `__version__` in
 [`CHANGELOG.md`](CHANGELOG.md), then push a matching tag:
 
 ```bash
-git tag v1.3.0
-git push origin v1.3.0
+git tag v1.3.1
+git push origin v1.3.1
 ```
 
 ### Build the Windows installer locally

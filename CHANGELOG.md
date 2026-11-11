@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-11-11
+
+### Fixed
+- The "Downloading model... first time setup" notice no longer appears on every
+  run with the `large-v3-turbo` model. The cache check used the wrong
+  HuggingFace repository (`Systran/...` instead of `mobiuslabsgmbh/...`), so an
+  already downloaded model was never detected.
+
 ## [1.3.0] - 2026-11-11
 
 ### Added
@@ -86,6 +94,7 @@ First packaged release.
 - Launchers (`run.bat`, `run.sh`) updated to run the package from source.
 
 [1.2.0]: https://github.com/igorbispo99/ParrotIA/releases/tag/v1.2.0
+[1.3.1]: https://github.com/igorbispo99/ParrotIA/releases/tag/v1.3.1
 [1.3.0]: https://github.com/igorbispo99/ParrotIA/releases/tag/v1.3.0
 [1.1.0]: https://github.com/igorbispo99/ParrotIA/releases/tag/v1.1.0
 [1.0.0]: https://github.com/igorbispo99/ParrotIA/releases/tag/v1.0.0
