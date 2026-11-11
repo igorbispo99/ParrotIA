@@ -62,6 +62,9 @@ class TestAppInit:
 
 
 class TestAppWidgets:
+    def test_packaged_logo_exists(self, app):
+        assert app._logo is not None
+
     def test_file_entry_exists(self, app):
         assert app.file_entry is not None
 

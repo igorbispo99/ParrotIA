@@ -13,6 +13,7 @@ from typing import Optional
 
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
+from PIL import Image
 
 from . import formats
 from .resources import set_window_icon
@@ -52,10 +53,10 @@ MUTED = ("#5A7572", "#8FB7B5")
 
 # Banner-style feature badges: (label, colour).
 _BADGES = [
-    ("🔒 100% Offline", TEAL_DARK),
-    ("🚫 No Internet", BLUE),
-    ("⚡ Fast & Easy", GOLD),
-    ("🦜 Powered by Whisper", GREEN),
+    ("Local processing", TEAL_DARK),
+    ("Private audio", BLUE),
+    ("Fast & Easy", GOLD),
+    ("Powered by Whisper", GREEN),
 ]
 
 _AUDIO_FILETYPES = [
@@ -96,7 +97,7 @@ class TranscriberApp(ctk.CTk):
         # --- Input selection (a single file, or a whole folder) -------------
         file_frame = self._card(row=1)
         file_frame.grid_columnconfigure(0, weight=1)
-        self._heading(file_frame, "📁  Choose audio or video", row=0)
+        self._heading(file_frame, "Choose audio or video", row=0)
 
         self.file_entry = ctk.CTkEntry(
             file_frame,
@@ -128,7 +129,7 @@ class TranscriberApp(ctk.CTk):
         options = self._card(row=2)
         for col in (1, 3):
             options.grid_columnconfigure(col, weight=1)
-        self._heading(options, "⚙️  Options", row=0, columnspan=4)
+        self._heading(options, "Options", row=0, columnspan=4)
 
         self.model_var = ctk.StringVar(value=DEFAULT_MODEL)
         self.language_var = ctk.StringVar(value="Auto detect")
@@ -145,7 +146,7 @@ class TranscriberApp(ctk.CTk):
         # --- Output formats + folder ---------------------------------------
         output = self._card(row=3)
         output.grid_columnconfigure(0, weight=1)
-        self._heading(output, "💾  Save as", row=0)
+        self._heading(output, "Save as", row=0)
 
         formats_row = ctk.CTkFrame(output, fg_color="transparent")
         formats_row.grid(row=1, column=0, sticky="w", padx=8)
@@ -187,7 +188,7 @@ class TranscriberApp(ctk.CTk):
         preview_card = self._card(row=4, weight_row=1)
         preview_card.grid_columnconfigure(0, weight=1)
         preview_card.grid_rowconfigure(1, weight=1)
-        self._heading(preview_card, "📝  Transcript", row=0)
+        self._heading(preview_card, "Transcript", row=0)
         self.preview = ctk.CTkTextbox(
             preview_card,
             wrap="word",
@@ -195,7 +196,7 @@ class TranscriberApp(ctk.CTk):
             border_width=0,
         )
         self.preview.grid(row=1, column=0, sticky="nsew", padx=12, pady=(0, 12))
-        self.preview.insert("1.0", "🦜  Your transcript will land right here…")
+        self.preview.insert("1.0", "Your transcript will land right here…")
         self.preview.configure(state="disabled")
 
         # --- Action bar -----------------------------------------------------
@@ -247,7 +248,10 @@ class TranscriberApp(ctk.CTk):
         hero.grid(row=0, column=0, sticky="ew", padx=16, pady=(16, 12))
         hero.grid_columnconfigure(1, weight=1)
 
-        ctk.CTkLabel(hero, text="🦜", font=ctk.CTkFont(size=52)).grid(
+        # A bitmap avoids color-emoji font crashes in older Linux Tk builds.
+        with Image.open(Path(__file__).with_name("assets") / "parrotia.png") as logo:
+            self._logo = ctk.CTkImage(light_image=logo.copy(), size=(64, 64))
+        ctk.CTkLabel(hero, text="", image=self._logo).grid(
             row=0, column=0, rowspan=2, padx=(20, 10), pady=(16, 14)
         )
 
@@ -399,7 +403,7 @@ class TranscriberApp(ctk.CTk):
             size = MODEL_SIZES.get(params["model"], "")
             hint = f" ({size})" if size else ""
             self._set_status(
-                f"📥 Downloading model '{params['model']}'{hint}"
+                f"Downloading model '{params['model']}'{hint}"
                 " — first time setup, please wait…"
             )
             self.progress.configure(mode="indeterminate")
@@ -580,7 +584,7 @@ class TranscriberApp(ctk.CTk):
         self.cancel_btn.configure(state="normal" if running else "disabled")
 
     def _set_status(self, message: str) -> None:
-        self.status.configure(text=message)
+        self.status.configure(text=message.replace("📥 ", ""))
 
     def _set_preview(self, text: str) -> None:
         self.preview.configure(state="normal")

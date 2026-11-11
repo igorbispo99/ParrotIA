@@ -6,6 +6,7 @@ av>=11,<19
 
 # Modern, lightweight GUI toolkit built on top of Tkinter.
 customtkinter>=5.2.2,<6
+pillow>=10
 
 # --- Optional: NVIDIA GPU acceleration (CUDA 12) ---------------------------
 # CTranslate2 needs the CUDA 12 cuBLAS/cuDNN runtime. Install these to run on
