@@ -6,7 +6,8 @@ from PyInstaller.utils.hooks import collect_all, copy_metadata
 root = Path(SPECPATH).resolve().parent
 datas = [(str(root / "src/parrotia/assets"), "parrotia/assets")]
 binaries = []
-hiddenimports = []
+# Pillow loads its Tk bridge dynamically; its Linux finder is otherwise missed.
+hiddenimports = ["PIL._tkinter_finder", "PIL._imagingtk"]
 for package in ("customtkinter", "faster_whisper", "ctranslate2", "av", "onnxruntime", "tokenizers"):
     package_data, package_binaries, package_imports = collect_all(package)
     datas += package_data
