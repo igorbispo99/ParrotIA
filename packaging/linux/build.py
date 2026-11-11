@@ -63,6 +63,8 @@ def build_deb(stage: Path, output: Path) -> None:
             "dpkg-deb",
             "--build",
             "--root-owner-group",
+            "-Zxz",
+            "-z3",
             str(stage),
             str(output / f"parrotia_{__version__}_amd64.deb"),
         ],
@@ -106,7 +108,16 @@ def build_rpm(stage: Path, output: Path, work: Path) -> None:
         encoding="utf-8",
     )
     subprocess.run(
-        ["rpmbuild", "-bb", "--define", f"_topdir {top}", str(spec)], check=True
+        [
+            "rpmbuild",
+            "-bb",
+            "--define",
+            f"_topdir {top}",
+            "--define",
+            "_binary_payload w6.gzdio",
+            str(spec),
+        ],
+        check=True,
     )
     packages = list((top / "RPMS").rglob("*.rpm"))
     if len(packages) != 1:

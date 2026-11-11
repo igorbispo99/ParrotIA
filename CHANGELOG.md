@@ -12,7 +12,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   on uninstall. Python and FFmpeg do not need separate installation.
 - Self-contained Linux x86-64 `.deb` and `.rpm` installers with application-menu
   entries and a parrot icon. Package checks install, run, and uninstall the app in
-  clean Ubuntu and Fedora containers before release.
+  Ubuntu and in a clean Fedora container before release.
 - **Transcribe on Parrot** Explorer action for supported audio/video extensions,
   including multiple selections collected into a single sequential queue and
   progress window. UTF-8 text saves beside each source without overwriting

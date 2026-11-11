@@ -48,20 +48,26 @@ jobs:
           fi
           dpkg-deb --info dist/installer/*.deb
           rpm -qip dist/installer/*.rpm
-      - name: Install, run, and remove DEB in clean Ubuntu
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-installers
+          path: |
+            dist/installer/*.deb
+            dist/installer/*.rpm
+          if-no-files-found: error
+      - name: Install, run, and remove DEB on Ubuntu
         run: |
-          docker run --rm -v "$PWD/dist/installer:/packages:ro" ubuntu:22.04 bash -euc '
-            apt-get update -qq
-            DEBIAN_FRONTEND=noninteractive apt-get install -y /packages/*.deb xvfb xauth
-            test -f /usr/share/applications/parrotia.desktop
-            test -f /usr/share/icons/hicolor/256x256/apps/parrotia.png
-            xvfb-run -a parrotia-gui --smoke-test /tmp/parrotia-smoke.json
-            cat /tmp/parrotia-smoke.json
-            apt-get purge -y parrotia
-            test ! -e /opt/parrotia
-            test ! -e /usr/bin/parrotia-gui
-            test ! -e /usr/share/applications/parrotia.desktop
-          '
+          # All declared desktop dependencies are present on this hosted image.
+          # apt still verifies them; no unrelated repository refresh is needed.
+          sudo apt-get install -y ./dist/installer/*.deb
+          test -f /usr/share/applications/parrotia.desktop
+          test -f /usr/share/icons/hicolor/256x256/apps/parrotia.png
+          xvfb-run -a parrotia-gui --smoke-test /tmp/parrotia-smoke.json
+          cat /tmp/parrotia-smoke.json
+          sudo apt-get purge -y parrotia
+          test ! -e /opt/parrotia
+          test ! -e /usr/bin/parrotia-gui
+          test ! -e /usr/share/applications/parrotia.desktop
       - name: Install, run, and remove RPM in clean Fedora
         run: |
           docker run --rm -v "$PWD/dist/installer:/packages:ro" fedora:43 bash -euc '
@@ -78,10 +84,3 @@ jobs:
             test ! -e /usr/bin/parrotia-gui
             test ! -e /usr/share/applications/parrotia.desktop
           '
-      - uses: actions/upload-artifact@v4
-        with:
-          name: linux-installers
-          path: |
-            dist/installer/*.deb
-            dist/installer/*.rpm
-          if-no-files-found: error

@@ -332,8 +332,8 @@ under `/opt/parrotia`, with a `parrotia-gui` launcher and application-menu entry
 Outputs are `dist/installer/parrotia_<version>_amd64.deb` and
 `dist/installer/parrotia-<version>-1.x86_64.rpm`. Linux installers require no
 separate Python installation. The **Linux installers** CI workflow verifies both
-packages by installing, running the frozen app, and uninstalling in clean Ubuntu
-and Fedora containers before uploading release artifacts.
+packages by installing, running the frozen app, and uninstalling on an Ubuntu
+runner and in a clean Fedora container before release.
 
 ---
 
