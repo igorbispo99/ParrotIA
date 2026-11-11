@@ -35,7 +35,9 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "faster-whisper>=1.1.0",
-    "customtkinter>=5.2.2",
+    "customtkinter>=5.2.2,<6",
+    # faster-whisper 1.2 calls av.open(metadata_errors=...), removed in PyAV 19.
+    "av>=11,<19",
 ]
 
 [project.optional-dependencies]
@@ -55,15 +57,10 @@ dev = [
 windows-build = [
     "pyinstaller>=6.11,<7",
     "pillow>=10",
-    "customtkinter>=5.2.2,<6",
-    # faster-whisper 1.2 uses av.open(metadata_errors=...), removed in PyAV 19.
-    "av>=11,<19",
 ]
 linux-build = [
     "pyinstaller>=6.11,<7",
     "pillow>=10",
-    "customtkinter>=5.2.2,<6",
-    "av>=11,<19",
 ]
 
 [project.urls]

@@ -24,8 +24,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Packaged GUI windows use the same parrot icon as the installer and shortcuts.
-- Installer build constrains PyAV to versions compatible with faster-whisper's
-  audio decoder, and uses CustomTkinter 5 for the existing GUI.
+- Dependency constraints keep PyAV compatible with faster-whisper's audio
+  decoder and retain CustomTkinter 5 for the existing GUI.
+- The Transcribe button uses text without a color emoji to avoid crashes in
+  older Linux Tk/font combinations.
 
 ## [1.2.0] - 2026-06-08
 

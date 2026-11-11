@@ -30,16 +30,22 @@ jobs:
         with:
           python-version: "3.12"
           architecture: x64
-      - name: Install packaging and GUI build tools
+      - name: Check runner tools and install Python build dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y rpm python3-tk xvfb xauth desktop-file-utils
+          # The Ubuntu 22.04 hosted image already contains these tools and Tk.
+          # Avoid unnecessary distro updates and dependence on mirror availability.
+          command -v rpmbuild
+          command -v dpkg-deb
+          command -v xvfb-run
+          python -c "import tkinter; print('Tk', tkinter.TkVersion)"
           python -m pip install ".[linux-build]"
       - name: Build and smoke-test standalone app, then DEB and RPM packages
         run: xvfb-run -a python packaging/linux/build.py
       - name: Validate desktop entry and package metadata
         run: |
-          desktop-file-validate packaging/linux/parrotia.desktop
+          if command -v desktop-file-validate >/dev/null; then
+            desktop-file-validate packaging/linux/parrotia.desktop
+          fi
           dpkg-deb --info dist/installer/*.deb
           rpm -qip dist/installer/*.rpm
       - name: Install, run, and remove DEB in clean Ubuntu

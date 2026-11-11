@@ -2,9 +2,10 @@
 # Pulls in ctranslate2, tokenizers, onnxruntime, huggingface-hub and PyAV,
 # so no separate ffmpeg binary is required for audio decoding.
 faster-whisper>=1.1.0
+av>=11,<19
 
 # Modern, lightweight GUI toolkit built on top of Tkinter.
-customtkinter>=5.2.2
+customtkinter>=5.2.2,<6
 
 # --- Optional: NVIDIA GPU acceleration (CUDA 12) ---------------------------
 # CTranslate2 needs the CUDA 12 cuBLAS/cuDNN runtime. Install these to run on

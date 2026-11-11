@@ -35,8 +35,10 @@ jobs:
       - name: Install Xvfb (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq xvfb
+          if ! command -v xvfb-run >/dev/null; then
+            sudo apt-get update -qq -o Acquire::Retries=3 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20
+            sudo apt-get install -y -qq xvfb
+          fi
 
       - name: Install package + test deps
         run: |

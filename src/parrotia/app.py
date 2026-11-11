@@ -205,7 +205,8 @@ class TranscriberApp(ctk.CTk):
 
         self.transcribe_btn = ctk.CTkButton(
             bar,
-            text="🦜  Transcribe",
+            # Older Linux Tk builds can crash on color emoji in button fonts.
+            text="Transcribe",
             width=170,
             height=44,
             corner_radius=22,
