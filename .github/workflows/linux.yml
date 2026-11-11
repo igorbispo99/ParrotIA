@@ -62,7 +62,8 @@ jobs:
           sudo apt-get install -y ./dist/installer/*.deb
           test -f /usr/share/applications/parrotia.desktop
           test -f /usr/share/icons/hicolor/256x256/apps/parrotia.png
-          xvfb-run -a parrotia-gui --smoke-test /tmp/parrotia-smoke.json
+          # Use the native launcher, not pip's earlier entry on setup-python's PATH.
+          timeout 120s xvfb-run -a /usr/bin/parrotia-gui --smoke-test /tmp/parrotia-smoke.json
           cat /tmp/parrotia-smoke.json
           sudo apt-get purge -y parrotia
           test ! -e /opt/parrotia
@@ -77,7 +78,7 @@ jobs:
             Xvfb :99 -screen 0 1024x768x24 &
             export DISPLAY=:99
             sleep 2
-            parrotia-gui --smoke-test /tmp/parrotia-smoke.json
+            timeout 120s /usr/bin/parrotia-gui --smoke-test /tmp/parrotia-smoke.json
             cat /tmp/parrotia-smoke.json
             dnf remove -y parrotia
             test ! -e /opt/parrotia
