@@ -15,6 +15,7 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 
 from . import formats
+from .resources import set_window_icon
 from .transcriber import (
     AVAILABLE_MODELS,
     COMPUTE_TYPES,
@@ -68,6 +69,7 @@ class TranscriberApp(ctk.CTk):
         super().__init__()
 
         self.title("ParrotIA — Local Audio & Video Transcriber")
+        set_window_icon(self)
         self.geometry("860x820")
         self.minsize(740, 680)
         self.configure(fg_color=WINDOW_BG)

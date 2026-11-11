@@ -20,9 +20,19 @@ jobs:
     name: CI gate
     uses: ./.github/workflows/ci.yml
 
+  windows:
+    name: Build Windows installer
+    needs: ci
+    uses: ./.github/workflows/windows.yml
+
+  linux:
+    name: Build Linux installers
+    needs: ci
+    uses: ./.github/workflows/linux.yml
+
   release:
     name: Publish GitHub Release
-    needs: ci
+    needs: [ci, windows, linux]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,6 +40,16 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: dist
+          path: dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-installer
+          path: dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-installers
           path: dist
 
       - name: Create GitHub Release

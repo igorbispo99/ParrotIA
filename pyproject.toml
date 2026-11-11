@@ -52,6 +52,19 @@ dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
 ]
+windows-build = [
+    "pyinstaller>=6.11,<7",
+    "pillow>=10",
+    "customtkinter>=5.2.2,<6",
+    # faster-whisper 1.2 uses av.open(metadata_errors=...), removed in PyAV 19.
+    "av>=11,<19",
+]
+linux-build = [
+    "pyinstaller>=6.11,<7",
+    "pillow>=10",
+    "customtkinter>=5.2.2,<6",
+    "av>=11,<19",
+]
 
 [project.urls]
 Homepage = "https://github.com/igorbispo99/ParrotIA"
@@ -64,12 +77,16 @@ parrotia = "parrotia.cli:main"
 [project.gui-scripts]
 # Registered as a GUI script so launching it on Windows doesn't open a console.
 parrotia-gui = "parrotia.app:main"
+parrotia-explorer = "parrotia.explorer:main"
 
 [tool.setuptools.dynamic]
 version = { attr = "parrotia.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+parrotia = ["assets/*.ico", "assets/*.png", "assets/*.svg"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -82,3 +99,10 @@ addopts = [
 markers = [
     "slow: marks tests that need real model downloads (deselect with '-m \"not slow\"')",
 ]
+
+[tool.ruff]
+target-version = "py39"
+
+[tool.ruff.lint]
+# Preserve the original CI rule set explicitly as Ruff's defaults evolve.
+select = ["E4", "E7", "E9", "F"]

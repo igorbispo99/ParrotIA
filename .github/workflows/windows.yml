@@ -1,0 +1,47 @@
+name: Windows installer
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "src/**"
+      - "packaging/**"
+      - "pyproject.toml"
+      - ".github/workflows/windows.yml"
+  workflow_dispatch: {}
+  workflow_call: {}
+  pull_request:
+    paths:
+      - "src/**"
+      - "packaging/**"
+      - "pyproject.toml"
+      - ".github/workflows/windows.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+      - name: Install build dependencies
+        run: python -m pip install ".[windows-build]"
+      - name: Install installer compiler
+        run: choco install innosetup --yes --no-progress
+      - name: Build and smoke-test standalone app, then compile installer
+        run: python packaging/windows/build.py
+      - name: Verify shortcuts, Explorer registration, and uninstall
+        shell: pwsh
+        run: |
+          $installer = (Get-ChildItem dist/installer/*-setup.exe).FullName
+          ./packaging/windows/test-installer.ps1 -Installer $installer
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: dist/installer/*-setup.exe
+          if-no-files-found: error

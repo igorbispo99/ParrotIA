@@ -4,6 +4,29 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-11-11
+
+### Added
+- Self-contained Windows x64 installer with a per-user setup wizard, desktop and
+  Start menu shortcuts, a branded parrot icon, and clean Explorer unregistration
+  on uninstall. Python and FFmpeg do not need separate installation.
+- Self-contained Linux x86-64 `.deb` and `.rpm` installers with application-menu
+  entries and a parrot icon. Package checks install, run, and uninstall the app in
+  clean Ubuntu and Fedora containers before release.
+- **Transcribe on Parrot** Explorer action for supported audio/video extensions,
+  including multiple selections collected into a single sequential queue and
+  progress window. UTF-8 text saves beside each source without overwriting
+  existing files. Per-file failures and cancellation are supported.
+- Platform build scripts, shared PyInstaller packaging, frozen-app smoke tests
+  (audio decoding, ONNX, Tk), and `.exe` / `.deb` / `.rpm` artifacts on releases.
+- Regression tests for Explorer request concurrency, process ownership,
+  collision-safe filenames, cancellation, and resilient batch processing.
+
+### Changed
+- Packaged GUI windows use the same parrot icon as the installer and shortcuts.
+- Installer build constrains PyAV to versions compatible with faster-whisper's
+  audio decoder, and uses CustomTkinter 5 for the existing GUI.
+
 ## [1.2.0] - 2026-06-08
 
 ### Added
@@ -61,5 +84,6 @@ First packaged release.
 - Launchers (`run.bat`, `run.sh`) updated to run the package from source.
 
 [1.2.0]: https://github.com/igorbispo99/ParrotIA/releases/tag/v1.2.0
+[1.3.0]: https://github.com/igorbispo99/ParrotIA/releases/tag/v1.3.0
 [1.1.0]: https://github.com/igorbispo99/ParrotIA/releases/tag/v1.1.0
 [1.0.0]: https://github.com/igorbispo99/ParrotIA/releases/tag/v1.0.0

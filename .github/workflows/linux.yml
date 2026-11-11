@@ -1,0 +1,81 @@
+name: Linux installers
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "src/**"
+      - "packaging/**"
+      - "pyproject.toml"
+      - ".github/workflows/linux.yml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "packaging/**"
+      - "pyproject.toml"
+      - ".github/workflows/linux.yml"
+  workflow_dispatch: {}
+  workflow_call: {}
+
+permissions:
+  contents: read
+
+jobs:
+  installers:
+    # Build on the oldest supported glibc rather than linking against the latest.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+      - name: Install packaging and GUI build tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y rpm python3-tk xvfb xauth desktop-file-utils
+          python -m pip install ".[linux-build]"
+      - name: Build and smoke-test standalone app, then DEB and RPM packages
+        run: xvfb-run -a python packaging/linux/build.py
+      - name: Validate desktop entry and package metadata
+        run: |
+          desktop-file-validate packaging/linux/parrotia.desktop
+          dpkg-deb --info dist/installer/*.deb
+          rpm -qip dist/installer/*.rpm
+      - name: Install, run, and remove DEB in clean Ubuntu
+        run: |
+          docker run --rm -v "$PWD/dist/installer:/packages:ro" ubuntu:22.04 bash -euc '
+            apt-get update -qq
+            DEBIAN_FRONTEND=noninteractive apt-get install -y /packages/*.deb xvfb xauth
+            test -f /usr/share/applications/parrotia.desktop
+            test -f /usr/share/icons/hicolor/256x256/apps/parrotia.png
+            xvfb-run -a parrotia-gui --smoke-test /tmp/parrotia-smoke.json
+            cat /tmp/parrotia-smoke.json
+            apt-get purge -y parrotia
+            test ! -e /opt/parrotia
+            test ! -e /usr/bin/parrotia-gui
+            test ! -e /usr/share/applications/parrotia.desktop
+          '
+      - name: Install, run, and remove RPM in clean Fedora
+        run: |
+          docker run --rm -v "$PWD/dist/installer:/packages:ro" fedora:43 bash -euc '
+            dnf install -y /packages/*.rpm xorg-x11-server-Xvfb xorg-x11-xauth
+            test -f /usr/share/applications/parrotia.desktop
+            test -f /usr/share/icons/hicolor/256x256/apps/parrotia.png
+            Xvfb :99 -screen 0 1024x768x24 &
+            export DISPLAY=:99
+            sleep 2
+            parrotia-gui --smoke-test /tmp/parrotia-smoke.json
+            cat /tmp/parrotia-smoke.json
+            dnf remove -y parrotia
+            test ! -e /opt/parrotia
+            test ! -e /usr/bin/parrotia-gui
+            test ! -e /usr/share/applications/parrotia.desktop
+          '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-installers
+          path: |
+            dist/installer/*.deb
+            dist/installer/*.rpm
+          if-no-files-found: error

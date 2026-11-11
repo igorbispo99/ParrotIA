@@ -3,7 +3,7 @@
 ![ParrotIA — Local Audio & Video Transcriber](docs/banner.png)
 
 *Fast, free, fully local audio and video transcription powered by [Whisper](https://github.com/openai/whisper).*  
-*No internet connection, accounts, or API keys required — everything runs on your machine.*
+*No accounts or API keys required. After the first model download, everything runs offline on your machine.*
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#installation)
@@ -24,6 +24,9 @@
 - **No ffmpeg needed** — audio is decoded via the bundled [PyAV](https://github.com/PyAV-Org/PyAV)
 - **Headless CLI** — same engine, scriptable for batch jobs
 - **Model benchmarking** — time several models on one file and compare their transcription speed (CLI)
+- **Windows installer** — includes Python and the app's dependencies, with a parrot icon and desktop/Start menu shortcuts
+- **Linux installers** — `.deb` and `.rpm` packages with bundled Python, an application-menu entry, and the same parrot icon
+- **Explorer transcription** — right-click one or several audio/video files, then choose **Transcribe on Parrot** to save text beside each file
 
 ---
 
@@ -35,12 +38,66 @@
 
 ## Requirements
 
-- Python 3.9 or later
-- pip
+- **Windows installer:** 64-bit Windows 10 (1809 or later) or Windows 11. Python and FFmpeg are included; models download on first use.
+- **Linux installers:** x86-64 Linux with glibc 2.35 or newer (Ubuntu 22.04+, Debian 12+, current Fedora, or RHEL 10+), and an X11/XWayland desktop.
+- **Install from Python/source:** Python 3.9 or later and pip.
 
 ---
 
 ## Installation
+
+### Windows installer (recommended)
+
+Download `ParrotIA-<version>-windows-x64-setup.exe` from
+[Releases](https://github.com/igorbispo99/ParrotIA/releases), once a release containing
+the installer has been published. Run it and follow the setup wizard. The installer
+works for your Windows account without administrator access. It creates a Start
+menu shortcut and offers a desktop shortcut and Explorer integration, both
+enabled by default. Launch **ParrotIA** from either shortcut.
+
+To transcribe without configuring a job, select one or more supported media files
+in Explorer, right-click, and choose **Transcribe on Parrot**. On Windows 11, open
+**Show more options** to find this entry. One progress window queues the files,
+uses `large-v3-turbo` with automatic language/device detection, and saves a UTF-8
+`.txt` beside each source. Additional selections join the same queue. A failed
+file is reported in the window while the rest continue; **Cancel queue** stops
+the remaining work.
+
+Existing files are preserved: `meeting.mp4` produces `meeting.txt`, or
+`meeting (1).txt`, `meeting (2).txt`, etc. if needed. Read-only folders report an
+error; use the full GUI and choose a writable output folder for those files.
+The classic Explorer menu supports selections of up to 100 files
+([Windows selection model](https://learn.microsoft.com/en-us/windows/win32/shell/how-to-employ-the-verb-selection-model));
+submit larger batches through the GUI's folder picker.
+
+The installer bundles the CPU inference runtime and all audio codecs required by
+PyAV. CUDA runtime wheels and Whisper models are not bundled. The first use of
+the default model downloads approximately 1.6 GB; subsequent runs use the local
+model cache. Uninstalling through Windows Settings removes the app, shortcuts,
+and its Explorer entries, while preserving your transcripts and downloaded models.
+
+### Linux installers
+
+Download the v1.3.0 `.deb` or `.rpm` from
+[Releases](https://github.com/igorbispo99/ParrotIA/releases). Install it with your
+distribution's package manager so desktop-library dependencies are resolved:
+
+```bash
+# Debian / Ubuntu
+sudo apt install ./parrotia_1.3.0_amd64.deb
+# Fedora / compatible RPM distributions
+sudo dnf install ./parrotia-1.3.0-1.x86_64.rpm
+```
+
+Open **ParrotIA** from the applications menu, or run `parrotia-gui`. Both packages
+include Python, the inference engine, audio codecs, and a parrot icon. Models
+download on first use. Use the GUI to select files/folders and output formats;
+the Explorer right-click action is specific to Windows.
+
+Remove the app with `sudo apt remove parrotia` or `sudo dnf remove parrotia`.
+Transcripts and the model cache in your home folder are preserved.
+
+### Python installation
 
 Install the package (provides the `parrotia` and `parrotia-gui` commands):
 
@@ -204,16 +261,79 @@ print(WRITERS["srt"][1](result))   # render SRT subtitles as a string
 
 ## Releases
 
-Tagged versions are built into a wheel + source distribution and published as a
+Tagged versions are built into a wheel, source distribution, Windows `.exe`, and
+Linux `.deb` / `.rpm` installers and published as a
 [GitHub Release](https://github.com/igorbispo99/ParrotIA/releases) automatically
 by the `Release` workflow. To cut a release, bump `__version__` in
 [`src/parrotia/__init__.py`](src/parrotia/__init__.py), update
 [`CHANGELOG.md`](CHANGELOG.md), then push a matching tag:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.3.0
+git push origin v1.3.0
 ```
+
+### Build the Windows installer locally
+
+Use 64-bit Python 3.12 and [Inno Setup 6 or newer](https://jrsoftware.org/isdl.php)
+on Windows. From the repository root:
+
+```powershell
+.\packaging\windows\build.ps1
+# If ISCC.exe is not in a standard install location:
+.\packaging\windows\build.ps1 -Iscc "C:\path\to\ISCC.exe"
+# Build just the standalone folder, without an installer compiler:
+.\packaging\windows\build.ps1 -BundleOnly
+```
+
+The script creates an isolated `.venv-windows` environment. PyInstaller bundles
+the application, Python, Tk, fonts, native inference libraries, audio codecs, and
+the Silero speech detector. The build smoke-tests the **frozen executable** by
+decoding a small WAV, loading Silero ONNX, and creating the GUI; no Whisper model
+download is required. Inno Setup then writes the single distributable installer
+to `dist/installer/`. Keep the whole `dist/ParrotIA/` folder together when using
+the portable build.
+
+The **Windows installer** GitHub Actions workflow also supports manual runs and
+uploads the installer as an artifact. Releases wait for it and attach the EXE
+alongside the Python distributions. Packaging sources live in
+[`packaging/windows/`](packaging/windows/); media associations are generated from
+the engine's `SUPPORTED_EXTENSIONS` so the supported file lists stay aligned.
+
+The CI build also installs into a temporary test folder, verifies both shortcut
+targets and every Explorer registration, runs the installed executable's smoke
+test, and uninstalls to verify cleanup. Run the same check locally with
+`packaging/windows/test-installer.ps1 -Installer <path-to-setup.exe>` only when
+ParrotIA is not already installed. It refuses to replace an existing installation,
+shortcut, or Explorer entry. Managed Windows policies such as Controlled Folder
+Access can block this check; the script does not change security settings.
+For diagnosing policies that track the installer's temporary helper path, compile
+`installer.iss` with the additional Inno preprocessor definition
+`/DStableValidation=1`. This creates a diagnostic installer at the fixed path
+`dist/installer-check/ParrotIA-InstallerCheck.exe`, with companion `.bin` files
+that must stay beside it. It uses Inno's `UseSetupLdr=no` debug mode; the release
+installer is still a single EXE. Any Windows allowance is a manual user action.
+
+### Build the Linux installers
+
+Build on x86-64 Ubuntu 22.04 to keep the glibc baseline at 2.35:
+
+```bash
+sudo apt install rpm python3-tk xvfb xauth desktop-file-utils
+python -m venv .venv
+. .venv/bin/activate
+pip install '.[linux-build]'
+xvfb-run -a python packaging/linux/build.py
+```
+
+The shared [`packaging/ParrotIA.spec`](packaging/ParrotIA.spec) and launcher build
+the same self-contained desktop app on Windows and Linux. Linux packages install
+under `/opt/parrotia`, with a `parrotia-gui` launcher and application-menu entry.
+Outputs are `dist/installer/parrotia_<version>_amd64.deb` and
+`dist/installer/parrotia-<version>-1.x86_64.rpm`. Linux installers require no
+separate Python installation. The **Linux installers** CI workflow verifies both
+packages by installing, running the frozen app, and uninstalling in clean Ubuntu
+and Fedora containers before uploading release artifacts.
 
 ---
 
