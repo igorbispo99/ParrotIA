@@ -234,7 +234,19 @@ __marimo__/
 # ...but keep project docs that happen to be markdown.
 !README.md
 !CHANGELOG.md
+!docs/store-submission-plan.md
 
 # Claude
 CLAUDE.md
 .claude/
+
+# Snap build output and versioned packaging inputs
+*.snap
+/parts/
+/stage/
+/prime/
+/snap/.snapcraft/
+!snap/README.md
+!snap/requirements.txt
+!snap/licenses/*.txt
+!snap/licenses/SOURCES.md

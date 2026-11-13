@@ -1,0 +1,55 @@
+name: Snap package
+
+on:
+  pull_request:
+    paths: ["src/**", "snap/**", "packaging/launcher.py", "pyproject.toml", "MANIFEST.in", ".github/workflows/snap.yml"]
+  push:
+    branches: [main, master]
+    paths: ["src/**", "snap/**", "packaging/launcher.py", "pyproject.toml", "MANIFEST.in", ".github/workflows/snap.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate desktop entry and shell launcher
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y desktop-file-utils xvfb xauth
+          sed 's|${SNAP}|/snap/parrotia/current|g' snap/gui/parrotia.desktop > /tmp/parrotia.desktop
+          desktop-file-validate /tmp/parrotia.desktop
+          sh -n snap/local/command-chain
+      - uses: snapcore/action-build@v1
+        id: snapcraft
+        with:
+          snapcraft-channel: latest/stable
+      - name: Install strictly confined package
+        env:
+          SNAP_FILE: ${{ steps.snapcraft.outputs.snap }}
+        run: |
+          sudo snap install --dangerous "$SNAP_FILE"
+          snap connections parrotia
+          parrotia --help
+      - name: Exercise packaged native libraries, cache and GUI
+        run: |
+          HF_HUB_OFFLINE=1 parrotia.check
+          timeout 120s xvfb-run -a -s "-screen 0 1280x1024x24 -ac" env XAUTHORITY= parrotia.check --gui
+          test -f /var/lib/snapd/desktop/applications/parrotia_parrotia.desktop
+      - name: Exercise CPU inference and offline model reuse
+        run: |
+          timeout 600s parrotia.check --model tiny
+          HF_HUB_OFFLINE=1 timeout 120s parrotia.check --model tiny
+      - name: Preserve package for review
+        if: ${{ always() && steps.snapcraft.outputs.snap != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: parrotia-snap-amd64
+          path: ${{ steps.snapcraft.outputs.snap }}
+          if-no-files-found: error
+      - name: Remove test installation
+        if: always()
+        run: sudo snap remove --purge parrotia || true

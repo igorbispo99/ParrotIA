@@ -4,3 +4,5 @@ include CHANGELOG.md
 include requirements.txt
 recursive-include docs *.png
 recursive-include packaging *.py *.ps1 *.iss *.spec *.desktop
+recursive-include snap *.yaml *.desktop *.py *.md *.txt
+include snap/local/command-chain

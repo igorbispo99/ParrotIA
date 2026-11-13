@@ -1,0 +1,61 @@
+name: parrotia
+title: ParrotIA
+adopt-info: parrotia
+summary: Private, local audio and video transcription with Whisper
+description: |
+  Transcribe recordings on your computer with a desktop interface or CLI.
+  Export plain text, Markdown, SRT, WebVTT and JSON transcripts. Process
+  individual files or folders, detect languages and compare model speeds.
+
+  CPU inference is supported. No account or API key is needed. The first use
+  of each Whisper model downloads it from Hugging Face (about 75 MB to 3.1 GB;
+  the default model is about 1.6 GB). Transcription runs locally; downloaded
+  models are cached for subsequent offline use. Audio is not sent to a
+  transcription service.
+
+  Open ParrotIA from your application menu or run parrotia.gui. For scripts,
+  run parrotia --help. Files in your home are accessible; external drives
+  need the optional removable-media connection. NVIDIA acceleration is not
+  part of this package's supported configuration.
+base: core24
+grade: devel
+confinement: strict
+license: AGPL-3.0-or-later
+icon: src/parrotia/assets/parrotia.png
+contact: https://github.com/igorbispo99/ParrotIA/issues
+issues: https://github.com/igorbispo99/ParrotIA/issues
+source-code: https://github.com/igorbispo99/ParrotIA
+website: https://github.com/igorbispo99/ParrotIA
+platforms:
+  amd64:
+
+apps:
+  parrotia:
+    command: bin/parrotia
+    command-chain: [bin/parrotia-env]
+    plugs: [home, network, removable-media]
+  gui:
+    command: bin/python3 $SNAP/share/parrotia/launcher.py
+    command-chain: [bin/parrotia-env]
+    desktop: usr/share/applications/parrotia.desktop
+    plugs: [home, network, removable-media, x11]
+  check:
+    command: bin/python3 $SNAP/share/parrotia/check.py
+    command-chain: [bin/parrotia-env]
+    plugs: [home, network, x11]
+
+parts:
+  parrotia:
+    plugin: python
+    source: .
+    python-requirements: [snap/requirements.txt]
+    build-packages: [python3-dev, python3-venv]
+    stage-packages:
+      - python3-tk
+      - libgomp1
+      - libfontconfig1
+      - fonts-dejavu-core
+    override-build: |
+      craftctl default
+      craftctl set version="$(python3 snap/local/stage.py --version)"
+      python3 snap/local/stage.py "$CRAFT_PART_INSTALL"

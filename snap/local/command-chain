@@ -1,0 +1,17 @@
+#!/bin/sh
+# Models survive refreshes without opening the host's hidden cache.
+set -eu
+: "${SNAP:?This launcher must run inside a snap}"
+: "${SNAP_USER_COMMON:?Snap user storage is unavailable}"
+export HF_HOME="$SNAP_USER_COMMON/huggingface"
+export HF_HUB_CACHE="$HF_HOME/hub"
+export HF_HUB_DISABLE_TELEMETRY=1
+export DO_NOT_TRACK=1
+export PYTHONNOUSERSITE=1
+export PYTHONPATH="$SNAP/usr/lib/python3.12/lib-dynload"
+export LD_LIBRARY_PATH="$SNAP/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export XDG_CACHE_HOME="$SNAP_USER_COMMON/cache"
+export TCL_LIBRARY="$SNAP/usr/share/tcltk/tcl8.6"
+export TK_LIBRARY="$SNAP/usr/share/tcltk/tk8.6"
+mkdir -p "$HF_HUB_CACHE" "$XDG_CACHE_HOME"
+exec "$@"
