@@ -238,3 +238,8 @@ __marimo__/
 # Claude
 CLAUDE.md
 .claude/
+
+# Native Fedora packaging sources and documentation
+!packaging/fedora/parrotia.spec
+!packaging/fedora/README.md
+!packaging/fedora/CC0-1.0.txt

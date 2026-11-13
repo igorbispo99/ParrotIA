@@ -1,0 +1,89 @@
+name: Fedora preparation
+
+on:
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-rpm:
+    name: Fedora 45 source RPM and metadata (preparation only)
+    runs-on: ubuntu-latest
+    container: registry.fedoraproject.org/fedora:45
+    outputs:
+      prerequisites-available: ${{ steps.audit.outputs.available }}
+    steps:
+      - name: Install official Fedora build tools
+        run: >-
+          dnf -y --repo=fedora --repo=updates install
+          glibc-langpack-en git-core rpm-build redhat-rpm-config pyproject-rpm-macros
+          python3-devel python3-setuptools python3-wheel python3-build
+          desktop-file-utils appstream rpmlint python3-tkinter
+          xorg-x11-server-Xvfb xorg-x11-xauth
+      - uses: actions/checkout@v4
+      - name: Validate metadata and build source RPM
+        run: bash packaging/fedora/prepare.sh
+      - name: Audit native runtime prerequisites
+        id: audit
+        shell: bash
+        run: |
+          set +e
+          python3 packaging/fedora/audit_dependencies.py --output dist/fedora/dependency-audit.json
+          status=$?
+          set -e
+          case "$status" in
+            0) echo "available=true" >> "$GITHUB_OUTPUT" ;;
+            2) echo "available=false" >> "$GITHUB_OUTPUT"
+               echo "::warning::Native runtime dependencies are missing or incompatible. Source RPM preparation succeeded; Fedora submission remains blocked." ;;
+            *) exit "$status" ;;
+          esac
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          data = json.load(open("dist/fedora/dependency-audit.json"))
+          print("## Fedora prerequisite audit")
+          print("Source RPM preparation does not establish repository readiness.\n")
+          print("| Requirement | Status |")
+          print("| --- | --- |")
+          for row in data["requirements"]:
+              print(f"| `{row['requirement']}` | {row['status']} |")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fedora-45-preparation
+          path: |
+            dist/fedora/*.json
+            dist/fedora/*.log
+            dist/fedora/SHA256SUMS
+            dist/fedora/rpmbuild/SOURCES/*.tar.gz
+            dist/fedora/rpmbuild/SRPMS/*.src.rpm
+
+  native-build:
+    name: Native binary RPM (requires available prerequisites)
+    needs: source-rpm
+    if: needs.source-rpm.outputs.prerequisites-available == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: fedora-45-preparation
+          path: candidate
+      - name: Build source RPM in clean Fedora Mock root
+        run: |
+          mkdir -p result
+          docker run --rm --privileged \
+            -v "$PWD/candidate:/candidate:ro" -v "$PWD/result:/result" \
+            registry.fedoraproject.org/fedora:45 bash -euxo pipefail -c '
+              dnf -y --repo=fedora --repo=updates install mock
+              useradd --create-home --groups mock builder
+              chown builder:mock /result
+              runuser -u builder -- mock --isolation=simple -r fedora-45-x86_64 --resultdir=/result --rebuild /candidate/rpmbuild/SRPMS/*.src.rpm
+            '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fedora-45-native-build
+          path: result/

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<component type="desktop-application">
+  <id>io.github.igorbispo99.ParrotIA</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-or-later</project_license>
+  <name>ParrotIA</name>
+  <summary>Transcribe audio and video locally</summary>
+  <description>
+    <p>Turn recordings into text and subtitles with Whisper speech recognition.
+    ParrotIA processes audio on your computer and offers both a desktop
+    interface and a command-line tool.</p>
+    <ul>
+      <li>Transcribe multiple files and detect the spoken language</li>
+      <li>Export text, Markdown, SRT, WebVTT and JSON</li>
+      <li>Choose a speech model to balance speed and accuracy</li>
+    </ul>
+    <p>An internet connection is needed to download a speech model on first use.
+    Cached models can then be used offline. Audio recordings are processed
+    locally.</p>
+  </description>
+  <launchable type="desktop-id">io.github.igorbispo99.ParrotIA.desktop</launchable>
+  <url type="homepage">https://github.com/igorbispo99/ParrotIA</url>
+  <url type="bugtracker">https://github.com/igorbispo99/ParrotIA/issues</url>
+  <url type="vcs-browser">https://github.com/igorbispo99/ParrotIA</url>
+  <developer id="io.github.igorbispo99">
+    <name>Igor Bispo</name>
+  </developer>
+  <provides><binary>parrotia</binary><binary>parrotia-gui</binary></provides>
+  <categories><category>AudioVideo</category><category>Audio</category></categories>
+  <keywords><keyword>transcription</keyword><keyword>Whisper</keyword><keyword>subtitles</keyword></keywords>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Choose recordings and transcription settings</caption>
+      <image type="source" width="860" height="820">https://raw.githubusercontent.com/igorbispo99/ParrotIA/main/docs/parrotia-linux.png</image>
+    </screenshot>
+  </screenshots>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="1.3.1" date="2026-11-11">
+      <description><p>Improve detection of cached speech models.</p></description>
+    </release>
+  </releases>
+</component>
