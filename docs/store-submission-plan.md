@@ -39,21 +39,99 @@ Official repository metadata was queried in clean `fedora:43`, `44`, `45` and `r
   - As an unprivileged user, the CLI transcribed synthesized speech and the GUI launched from the installed entry point. Removal was clean.
   - Real CLI transcription was also verified on F44, F45 and Rawhide.
 
+### Release and policy recheck (14 November 2026)
+
+- **Release:** ParrotIA 1.4.0 contains this work, and the spec `Version` is 1.4.0. 1.3.1 was bumped but never tagged, so its fixes ship first in 1.4.0.
+- **Review entry point:** reviews are still filed in Red Hat Bugzilla (product *Fedora*, component *Package Review*).
+  - In early November 2026 the Council was still debating a move from Bugzilla to Forgejo ([This Week in Fedora, 2–8 Nov 2026](https://communityblog.fedoraproject.org/this-week-in-fedora-2026-11-02/)).
+  - A pull-request-based review flow on Forgejo exists only as a prototype ([GSoC 2025](https://communityblog.fedoraproject.org/gsoc-2025-bringing-package-reviews-to-forgejo/), [discussion](https://discussion.fedoraproject.org/t/fedora-package-review-process-reimagined/198109)).
+  - The FESCo [Package Review Policy](https://docs.fedoraproject.org/en-US/fesco/Package_review_policy/) points to Bugzilla.
+- **Not verified:** docs.fedoraproject.org serves an anti-bot challenge to automated clients, so the following still need a browser read before filing:
+  - [Package Review Process](https://docs.fedoraproject.org/en-US/package-maintainers/Package_Review_Process/)
+  - [Joining the Package Maintainers](https://docs.fedoraproject.org/en-US/package-maintainers/Joining_the_Package_Maintainers/)
+  - [Python guidelines](https://docs.fedoraproject.org/en-US/packaging-guidelines/Python/)
+  - [AppData guidelines](https://docs.fedoraproject.org/en-US/packaging-guidelines/AppData/)
+- **Long-standing process** (still to confirm on those pages):
+  1. Create an account at accounts.fedoraproject.org and sign the FPCA there.
+  2. File the first review request with the `FE-NEEDSPONSOR` blocker. A sponsor adds you to the `packager` group, usually after you have done a few informal reviews of other people's packages.
+  3. After approval, run `fedpkg request-repo <name> <bug>`, then `fedpkg request-branch` for each stable release.
+  4. Import with `fedpkg import`, build in Koji with `fedpkg build`, and file Bodhi updates with `fedpkg update`.
+
+### Review request drafts
+
+File in dependency order. The `parrotia` request lists the other two under *Depends On*. Host the SRPMs somewhere public; a COPR project is the usual choice, and `fedora-review --copr-build` accepts a COPR build directly. The spec URLs point at the release tag.
+
+**1. `Review Request: python-darkdetect - Detect whether the desktop uses a dark theme`** (Blocks: FE-NEEDSPONSOR)
+
+```text
+Spec URL: https://raw.githubusercontent.com/igorbispo99/ParrotIA/v1.4.0/packaging/fedora/python-darkdetect.spec
+SRPM URL: <public URL of python-darkdetect-0.8.0-1.fc*.src.rpm>
+Description:
+darkdetect reports whether the operating system is using a dark or light
+theme, and can watch for changes. On Linux it reads the GNOME/GTK color
+scheme setting.
+Fedora Account System Username: <FAS username>
+
+This is my first package and I need a sponsor. It is a dependency of
+python-customtkinter, which ParrotIA (an AGPL desktop transcription app I
+maintain upstream) needs. Upstream ships no tests, so %check runs
+%pyproject_check_import with the macOS/Windows-only modules excluded.
+```
+
+**2. `Review Request: python-customtkinter - Modern, customizable widgets for Tkinter`** (Depends On: #1)
+
+```text
+Spec URL: https://raw.githubusercontent.com/igorbispo99/ParrotIA/v1.4.0/packaging/fedora/python-customtkinter.spec
+SRPM URL: <public URL>
+Description: <%description from the spec>
+Fedora Account System Username: <FAS username>
+
+Notes for the reviewer:
+- License: upstream LICENSE is MIT, while setup.cfg declares CC0. The spec
+  follows the LICENSE file; I will ask upstream to fix the metadata.
+- Fonts: the bundled Roboto files are replaced by symlinks into
+  google-roboto-fonts (rpmlint dangling-symlink is expected, as the target comes
+  from a Requires). CustomTkinter_shapes_font.otf is an upstream-made
+  glyph font used to draw widget corners and is not packaged elsewhere.
+- At runtime upstream copies its fonts into ~/.fonts on Linux; that is
+  upstream behavior and is not changed here.
+```
+
+**3. `Review Request: parrotia - Private, local audio and video transcription with Whisper`** (Depends On: #1, #2)
+
+```text
+Spec URL: https://raw.githubusercontent.com/igorbispo99/ParrotIA/v1.4.0/packaging/fedora/parrotia.spec
+SRPM URL: <public URL>
+Description: <%description from the spec>
+Fedora Account System Username: <FAS username>
+
+I am the upstream author. Notes for the reviewer:
+- Fedora lacks faster-whisper/CTranslate2/PyAV, so the package uses
+  ParrotIA's whisper.cpp backend on python3-pywhispercpp; %prep drops
+  those two requirements. ExclusiveArch follows pywhispercpp (x86_64).
+- Speech models are not packaged. The app downloads them on first use
+  from Hugging Face, pinned to a fixed revision and checked against a
+  SHA-256 table in the source; the MetaInfo description discloses this.
+  Models are MIT-licensed (ggerganov/whisper.cpp, ggml-org/whisper-vad).
+- rpmlint: no-manual-page-for-binary (parrotia, parrotia-gui), and
+  python-leftover-require for python3-tkinter/python3-pillow-tk, which
+  have no python3dist() provider.
+```
+
 ### Remaining before review submission
 
-1. **Release:** tag an upstream release containing this work (proposed 1.4.0) and set the spec `Version` to it. `Source` points at `archive/v%{version}`.
-2. **Policy recheck (work package 0, step 1):** read current Packaging/Python/Review guidelines through an accessible channel. Confirm Bugzilla versus Forge as the review entry point.
-3. **Reviewer questions to raise:**
+1. **Browser policy read:** confirm the four guideline pages listed above.
+2. **Reviewer questions to raise** (included in the drafts above):
    - Runtime model downloads. Weights are not packaged; they are pinned and verified, and the user's data directory can be overridden for offline use.
    - customtkinter's `CustomTkinter_shapes_font.otf`.
    - customtkinter copying fonts into `~/.fonts` at runtime, which is upstream behavior.
    - customtkinter's MIT LICENSE contradicting its CC0 `setup.cfg` metadata.
-4. **rpmlint items to explain or fix:**
+3. **rpmlint items to explain or fix:**
    - `dangling-symlink` on the Roboto links: expected, since the target comes from the required font package.
    - `python-leftover-require` for tkinter and pillow-tk: no `python3dist()` provider exists for either.
    - `no-manual-page-for-binary`: optional; could be generated from argparse.
-5. **Owner actions:** Fedora account, FPCA, packager sponsorship. Then submit reviews in dependency order: darkdetect, customtkinter, parrotia.
-6. **After acceptance:** Koji builds, Bodhi updates per branch, and GNOME Software discovery testing on a real Fedora Workstation (work package 5).
+4. **Owner actions:** Fedora account, FPCA, packager sponsorship. Then submit reviews in dependency order: darkdetect, customtkinter, parrotia.
+5. **After acceptance:** Koji builds, Bodhi updates per branch, and GNOME Software discovery testing on a real Fedora Workstation (work package 5).
 
 ## Recommendation and readiness
 
