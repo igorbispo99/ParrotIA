@@ -1,0 +1,51 @@
+name: Snap Store delivery QA
+
+on:
+  push:
+    branches: [codex/snap-store]
+    paths: [".github/workflows/snap-store-qa.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  store-delivery:
+    runs-on: ubuntu-24.04
+    env:
+      EXPECTED_REVISION: "1"
+      EXPECTED_SHA256: "11262300cc5757d24304a44d208f693002712a5c880084ef1106a9f6c87d0c2e"
+    steps:
+      - name: Install desktop test tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb xauth espeak-ng
+      - name: Install exact signed revision from edge
+        run: |
+          sudo snap install parrotia --channel=latest/edge --revision="$EXPECTED_REVISION"
+          test "$(readlink /snap/parrotia/current)" = "$EXPECTED_REVISION"
+          actual=$(sudo sha256sum "/var/lib/snapd/snaps/parrotia_${EXPECTED_REVISION}.snap" | cut -d ' ' -f 1)
+          test "$actual" = "$EXPECTED_SHA256"
+          mkdir -p review
+          snap list parrotia > review/installed-version.log
+          snap connections parrotia > review/connections.log
+          parrotia --help
+      - name: Exercise signed runtime and offline cache
+        run: |
+          timeout 600s parrotia.check --model tiny | tee review/first-model.json
+          HF_HUB_OFFLINE=1 timeout 120s parrotia.check --model tiny | tee review/offline.json
+      - name: Exercise GUI from Store-installed Snap
+        run: |
+          fixture="$HOME/Documents/ParrotIA Store QA/audio café.wav"
+          mkdir -p "$(dirname "$fixture")"
+          espeak-ng -v en-us -s 135 -w "$fixture" "Hello. This is a test of local audio transcription. The quick brown fox jumps over the lazy dog."
+          HF_HUB_OFFLINE=1 timeout 300s xvfb-run -a -s "-screen 0 1280x1024x24 -ac" env XAUTHORITY= parrotia.check --exercise-gui "$fixture" | tee review/gui.json
+          cp "$HOME/snap/parrotia/common/qa-gui.png" review/gui.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: snap-store-delivery-qa
+          path: review/
+      - name: Remove test installation
+        if: always()
+        run: sudo snap remove --purge parrotia || true
