@@ -240,3 +240,21 @@ __marimo__/
 # Claude
 CLAUDE.md
 .claude/
+
+# Snap build output and versioned packaging inputs
+*.snap
+/parts/
+/stage/
+/prime/
+/snap/.snapcraft/
+!snap/README.md
+!snap/requirements.txt
+!snap/licenses/*.txt
+!snap/licenses/SOURCES.md
+
+!snap/native-sources.json
+!snap/build-requirements.txt
+
+!snap/assets.json
+!snap/model-repositories.json
+!snap/licenses/**

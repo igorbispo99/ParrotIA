@@ -1,0 +1,59 @@
+{
+  "sources": [
+    {
+      "name": "ffmpeg-8.1.3.tar.xz",
+      "url": "https://ffmpeg.org/releases/ffmpeg-8.1.3.tar.xz",
+      "sha256": "7138d28c96d9d3e3af4ee3d8cad72741f8ffb40da90c1112235dea3ecd3178a3",
+      "destination": "ffmpeg-8.1.3",
+      "release_signing_key": "FCF986EA15E6E293A5644F10B4322F04D67658D8"
+    },
+    {
+      "name": "av-18.1.0.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/8d/f4/f22114d30d3435e38c6af2b4870f37b864403dca6ae7af747a289ce0a18e/av-18.1.0.tar.gz",
+      "sha256": "47bfc286e1bc9de7ab4681fc2b575cd2460a66919d31ffe1bd5aa54fae531a28",
+      "destination": "av"
+    },
+    {
+      "name": "numpy-2.5.4.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/95/b0/c7453d0b6e2073c3264468b106ee1563750cecc910965e67357e3698c83e/numpy-2.5.4.tar.gz",
+      "sha256": "9a94cf751c9ad8ebaa835bcd3d40dacf8534ad086b88c38029b65123c7999d2a",
+      "destination": "numpy"
+    },
+    {
+      "name": "ctranslate2-a22ba1c.tar.gz",
+      "url": "https://codeload.github.com/OpenNMT/CTranslate2/tar.gz/a22ba1c63ee35d1a0d25db149aa2a66d36a6a732",
+      "sha256": "f3eaaa6717a0cdfdd5a26a3a201bfad74cad8ce02a43b7a7d5be7f2e1e81b448",
+      "destination": "ctranslate2"
+    },
+    {
+      "name": "cpu_features-8a494eb1.tar.gz",
+      "url": "https://codeload.github.com/google/cpu_features/tar.gz/8a494eb1e158ec2050e5f699a504fbc9b896a43b",
+      "sha256": "9b2019dae7608630ab985129a5c3263fc788e4f82e26965a8d8c33b8c035802e",
+      "destination": "ctranslate2/third_party/cpu_features"
+    },
+    {
+      "name": "spdlog-76fb40d9.tar.gz",
+      "url": "https://codeload.github.com/gabime/spdlog/tar.gz/76fb40d95455f249bd70824ecfcae7a8f0930fa3",
+      "sha256": "4530d53b86d45228a5b8982a8f4fe7d95d3ba8e1944858d3f663732c7e949cb7",
+      "destination": "ctranslate2/third_party/spdlog"
+    },
+    {
+      "name": "ruy-363f2522.tar.gz",
+      "url": "https://codeload.github.com/google/ruy/tar.gz/363f252289fb7a1fba1703d99196524698cb884d",
+      "sha256": "3c2181c9134896784d5d0494e2638c43127de4da2ddf81b3a64c06311fb17432",
+      "destination": "ctranslate2/third_party/ruy"
+    },
+    {
+      "name": "cpuinfo-082deffc.tar.gz",
+      "url": "https://codeload.github.com/pytorch/cpuinfo/tar.gz/082deffc80ce517f81dc2f3aebe6ba671fcd09c9",
+      "sha256": "4379348ec3127b37e854a0a66f85ea1d3c606e5f3a6dce235dc9c69ce663c026",
+      "destination": "ctranslate2/third_party/ruy/third_party/cpuinfo"
+    }
+  ],
+  "versions": {
+    "ffmpeg": "8.1.3",
+    "av": "18.1.0",
+    "numpy": "2.5.4",
+    "ctranslate2": "4.9.0"
+  }
+}

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=ParrotIA
+Comment=Transcribe audio and video privately on your computer
+Exec=parrotia.gui
+Icon=${SNAP}/meta/gui/icon.png
+Terminal=false
+Categories=AudioVideo;Audio;
+Keywords=transcription;audio;video;whisper;speech;
+StartupNotify=true
+StartupWMClass=io.github.igorbispo99.ParrotIA

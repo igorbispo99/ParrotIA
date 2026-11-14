@@ -1,0 +1,18 @@
+[
+  {
+    "path": "customtkinter/assets/fonts/Roboto/Roboto-Regular.ttf",
+    "sha256": "319cff6e7a31f0f2a41c475dca42890aa5d19fe16017e2290f8c1d4e14f76481"
+  },
+  {
+    "path": "customtkinter/assets/fonts/Roboto/Roboto-Medium.ttf",
+    "sha256": "4ac8e03606ffa4c37f61a6510a2080f1f37a7054f4726c214887d3b23f72e369"
+  },
+  {
+    "path": "customtkinter/assets/fonts/CustomTkinter_shapes_font.otf",
+    "sha256": "fad67e2b060c318b6c8646d087fbd3add938b6676243f14b0c52623179641274"
+  },
+  {
+    "path": "faster_whisper/assets/silero_vad_v6.onnx",
+    "sha256": "4cbf549b8326f60f80f2536d9eefeb450a9abe83365a098031c89719f1be17d2"
+  }
+]
