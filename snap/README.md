@@ -1,7 +1,9 @@
 # ParrotIA Snap
 
 Status: development package for amd64 on core24. Strict confinement, CPU inference.
-No store upload or stable release is configured in CI. Fedora and Android work
+No store upload or stable release is configured in CI.
+This release branch retains the approved 1.3.1 baseline while the separate Fedora
+agent develops the shared 1.4.0 branch; integration will follow after that work stabilizes. Fedora and Android work
 are independent of this packaging directory; the shared engine is unchanged.
 
 ## Build

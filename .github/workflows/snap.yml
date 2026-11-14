@@ -4,7 +4,7 @@ on:
   pull_request:
     paths: ["src/**", "snap/**", "packaging/launcher.py", "pyproject.toml", "MANIFEST.in", ".github/workflows/snap.yml"]
   push:
-    branches: [main, master]
+    branches: [main, master, codex/snap-store]
     paths: ["src/**", "snap/**", "packaging/launcher.py", "pyproject.toml", "MANIFEST.in", ".github/workflows/snap.yml"]
   workflow_dispatch:
 
@@ -12,7 +12,27 @@ permissions:
   contents: read
 
 jobs:
+  source-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install source test environment
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb
+          python -m pip install -r snap/requirements.txt
+          python -m pip install --no-deps -e .
+          python -m pip install pytest ruff
+      - name: Check source and Snap helpers
+        run: |
+          ruff check src tests packaging snap
+          ruff format --check src tests packaging snap
+          HF_HUB_OFFLINE=1 xvfb-run -a python -m pytest
   build:
+    needs: source-tests
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
