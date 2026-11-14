@@ -10,7 +10,8 @@ Scope: Snap Store and **official Fedora repositories, with visibility in GNOME S
 - Revision 2: 1.4.0, stable grade, built by CI run 43559661381, uploaded to edge, then released to **stable**. The store download is byte-identical to the CI artifact (sha256 `678d89d7b215fd4c8623f66ec661439198d6f1c3ccbbd71b99d8ee788f115fd4`).
 - Public page: https://snapcraft.io/parrotia. Install with `sudo snap install parrotia`.
 - Uploads use a scoped `snapcraft export-login` credential kept outside the repository. Its channel restriction uses bare names, so release with `--release=edge` (not `latest/edge`).
-- Remaining: fill in the store listing (description, screenshots, links) and install from stable on a real desktop.
+- Listing updated 14 November 2026: stable-release description, source link to the repository, a 1920x640 banner and three new screenshots. The screenshots show a real `small`-model transcription, captured under Xvfb in an Ubuntu 24.04 container from the PyPI 1.4.0 package. Local copies are in the gitignored `dist/store-listing/`.
+- Remaining: install from stable on a real desktop.
 
 ## Fedora progress (13 November 2026)
 
