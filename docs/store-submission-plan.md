@@ -119,20 +119,33 @@ I am the upstream author. Notes for the reviewer:
   have no python3dist() provider.
 ```
 
-### Remaining before review submission
+### Submitted (14 November 2026)
 
-1. **Browser policy read:** confirm the four guideline pages listed above.
-2. **Reviewer questions to raise** (included in the drafts above):
-   - Runtime model downloads. Weights are not packaged; they are pinned and verified, and the user's data directory can be overridden for offline use.
-   - customtkinter's `CustomTkinter_shapes_font.otf`.
-   - customtkinter copying fonts into `~/.fonts` at runtime, which is upstream behavior.
-   - customtkinter's MIT LICENSE contradicting its CC0 `setup.cfg` metadata.
-3. **rpmlint items to explain or fix:**
-   - `dangling-symlink` on the Roboto links: expected, since the target comes from the required font package.
-   - `python-leftover-require` for tkinter and pillow-tk: no `python3dist()` provider exists for either.
-   - `no-manual-page-for-binary`: optional; could be generated from argparse.
-4. **Owner actions:** Fedora account, FPCA, packager sponsorship. Then submit reviews in dependency order: darkdetect, customtkinter, parrotia.
-5. **After acceptance:** Koji builds, Bodhi updates per branch, and GNOME Software discovery testing on a real Fedora Workstation (work package 5).
+The guideline pages were read in a browser and match the process above. Repository requests after approval now need a Fedora Forge API token in `~/.config/rpkg/fedpkg.conf` (or `fedpkg set-distgit-token`).
+
+- Fedora account `igorbispopessoal`, FPCA signed, not yet in `packager`. Bugzilla uses the same email.
+- COPR project [igorbispopessoal/parrotia](https://copr.fedorainfracloud.org/coprs/igorbispopessoal/parrotia/) (fedora-44, fedora-45, rawhide x86_64, fedora-review enabled). Builds 11324216, 11324218 and 11324219 succeeded on all three chroots, and the SRPM URLs in the bugs point at it.
+- Review requests (component Package Review, version rawhide):
+
+| Package | Bug | Links |
+| --- | --- | --- |
+| python-darkdetect | [2573565](https://bugzilla.redhat.com/show_bug.cgi?id=2573565) | blocks FE-NEEDSPONSOR (177841) |
+| python-customtkinter | [2573566](https://bugzilla.redhat.com/show_bug.cgi?id=2573566) | depends on 2573565 |
+| parrotia | [2573567](https://bugzilla.redhat.com/show_bug.cgi?id=2573567) | depends on 2573565, 2573566 |
+
+### Next steps
+
+1. **Answer reviewer comments** on the three bugs and post updated Spec/SRPM URLs for each change. Unanswered tickets get closed.
+2. **Sponsorship:** a sponsor must add the account to `packager`. Speed it up by asking in the Package Review Swaps category on Fedora Discussion or on the devel list, doing informal reviews of other people's packages, and opening a request at packager-sponsors. The docs also suggest a self-introduction on the devel list.
+3. **After each `fedora-review +`:** set up the Forge token and Kerberos, then:
+   - `fedpkg request-repo <name> <bug>`
+   - `fedpkg request-branch` (f44, f45)
+   - `fedpkg import`
+   - `fedpkg build`
+   - `fedpkg update`
+
+   Close each review bug as NEXTRELEASE, or let Bodhi close it.
+4. **GNOME Software check** on a real Fedora Workstation once updates reach stable (work package 5).
 
 ## Recommendation and readiness
 
