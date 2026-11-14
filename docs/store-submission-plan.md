@@ -2,7 +2,15 @@
 
 Research date: **12 November 2026**. Checkout inspected: **ParrotIA 1.3.1**.
 
-Scope: Snap Store and **official Fedora repositories, with visibility in GNOME Software**, as selected by the owner. This document covers preparation and implementation planning. Fedora packaging work began on 13 November 2026 (see **Fedora progress** below). Account changes, external submissions and publication have not begun.
+Scope: Snap Store and **official Fedora repositories, with visibility in GNOME Software**, as selected by the owner. This document covers preparation and implementation planning. Fedora packaging work began on 13 November 2026 (see **Fedora progress** below). The Snap is published on the stable channel and the Fedora reviews are filed (see **Snap Store status** and **Fedora progress** below).
+
+## Snap Store status (14 November 2026)
+
+- Revision 1: 1.3.1, devel grade, uploaded to edge; signed store delivery verified by `snap-store-qa.yml`.
+- Revision 2: 1.4.0, stable grade, built by CI run 43559661381, uploaded to edge, then released to **stable**. The store download is byte-identical to the CI artifact (sha256 `678d89d7b215fd4c8623f66ec661439198d6f1c3ccbbd71b99d8ee788f115fd4`).
+- Public page: https://snapcraft.io/parrotia. Install with `sudo snap install parrotia`.
+- Uploads use a scoped `snapcraft export-login` credential kept outside the repository. Its channel restriction uses bare names, so release with `--release=edge` (not `latest/edge`).
+- Remaining: fill in the store listing (description, screenshots, links) and install from stable on a real desktop.
 
 ## Fedora progress (13 November 2026)
 

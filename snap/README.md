@@ -22,7 +22,7 @@ parrotia.check
 The `Snap package` GitHub Actions workflow builds the package, installs it under
 strict confinement, exercises decoding/Silero/native libraries and the GUI, then
 uploads a review artifact. It does not need store credentials or publish anything.
-`grade: devel` deliberately prevents promotion to stable before release QA.
+`grade: stable` allows the reviewed revision to be released to the stable channel.
 The version is read from the literal `__version__` in `src/parrotia/__init__.py`.
 
 `snap/requirements.txt` hashes the complete bootstrap Python dependency set.
@@ -143,6 +143,10 @@ Once installed-package QA and the license/source gates pass:
 
 The publisher must provide support and maintain dependencies/source availability.
 There is no automated upload and no credential is stored in the repository.
+
+Store status (14 November 2026): revision 2 (1.4.0, `grade: stable`) is released to
+`stable` and `edge`. Its store download is byte-identical to the CI artifact from run
+43559661381 (sha256 `678d89d7…115fd4`). Revision 1 (1.3.1, devel grade) was the first edge upload.
 
 Official references:
 - https://ubuntu.com/docs/snapcraft/9/how-to/publishing/publish-a-snap/
