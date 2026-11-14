@@ -267,16 +267,20 @@ class TestLoadAudio:
         failed = subprocess.CompletedProcess(
             [], 1, stdout=b"", stderr=b"noise\ntalk.wma: Invalid data found\n"
         )
-        with patch.object(wcpp.shutil, "which", return_value="/usr/bin/ffmpeg"), \
-                patch.object(wcpp.subprocess, "run", return_value=failed):
+        with (
+            patch.object(wcpp.shutil, "which", return_value="/usr/bin/ffmpeg"),
+            patch.object(wcpp.subprocess, "run", return_value=failed),
+        ):
             with pytest.raises(RuntimeError, match="talk.wma: Invalid data found"):
                 wcpp.load_audio("talk.wma")
 
     def test_decodes_float32_pcm(self):
         samples = np.array([0.0, 0.5, -0.25], dtype=np.float32)
         ok = subprocess.CompletedProcess([], 0, stdout=samples.tobytes(), stderr=b"")
-        with patch.object(wcpp.shutil, "which", return_value="/usr/bin/ffmpeg"), \
-                patch.object(wcpp.subprocess, "run", return_value=ok) as run:
+        with (
+            patch.object(wcpp.shutil, "which", return_value="/usr/bin/ffmpeg"),
+            patch.object(wcpp.subprocess, "run", return_value=ok) as run,
+        ):
             audio = wcpp.load_audio("talk.mp3")
 
         np.testing.assert_array_equal(audio, samples)
@@ -299,8 +303,12 @@ class _FakeEngine:
         self.calls = []
 
 
-def _fake_run(engine, audio, *, language, beam_size, vad_model, on_segment, should_abort):
-    engine.calls.append(dict(language=language, beam_size=beam_size, vad_model=vad_model))
+def _fake_run(
+    engine, audio, *, language, beam_size, vad_model, on_segment, should_abort
+):
+    engine.calls.append(
+        dict(language=language, beam_size=beam_size, vad_model=vad_model)
+    )
     for start, end, text in engine.segments:
         if should_abort():
             return
@@ -311,14 +319,18 @@ def _fake_run(engine, audio, *, language, beam_size, vad_model, on_segment, shou
 def whispercpp_env(silent_wav, models_dir):
     """Patch the native/ffmpeg edges of ``_whispercpp`` with fakes."""
     engine = _FakeEngine()
-    with patch.object(wcpp, "is_downloaded", return_value=True), \
-            patch.object(wcpp, "ensure_downloaded", return_value=Path("vad.bin")) as dl, \
-            patch.object(wcpp, "load_model", return_value=engine) as load, \
-            patch.object(wcpp, "load_audio", return_value=np.zeros(16000 * 10, np.float32)), \
-            patch.object(wcpp, "detect_language", return_value=("pt", 0.9)), \
-            patch.object(wcpp, "supports_vad", return_value=True), \
-            patch.object(wcpp, "run", side_effect=_fake_run):
-        yield dict(engine=engine, ensure_downloaded=dl, load_model=load, audio=silent_wav)
+    with (
+        patch.object(wcpp, "is_downloaded", return_value=True),
+        patch.object(wcpp, "ensure_downloaded", return_value=Path("vad.bin")) as dl,
+        patch.object(wcpp, "load_model", return_value=engine) as load,
+        patch.object(wcpp, "load_audio", return_value=np.zeros(16000 * 10, np.float32)),
+        patch.object(wcpp, "detect_language", return_value=("pt", 0.9)),
+        patch.object(wcpp, "supports_vad", return_value=True),
+        patch.object(wcpp, "run", side_effect=_fake_run),
+    ):
+        yield dict(
+            engine=engine, ensure_downloaded=dl, load_model=load, audio=silent_wav
+        )
 
 
 class TestWhisperCppTranscription:
@@ -439,8 +451,15 @@ class _Model15:
     def get_params_schema():
         return {"language": {}, "vad": {}, "vad_model_path": {}}
 
-    def transcribe(self, media, n_processors=None, new_segment_callback=None,
-                   abort_callback=None, extract_probability=False, **params):
+    def transcribe(
+        self,
+        media,
+        n_processors=None,
+        new_segment_callback=None,
+        abort_callback=None,
+        extract_probability=False,
+        **params,
+    ):
         self.params = dict(params, abort_callback=abort_callback)
         for t0, t1, text in self.segments:
             new_segment_callback(MagicMock(t0=t0, t1=t1, text=text))
@@ -496,8 +515,13 @@ class TestRunAdapter:
     def test_greedy_without_vad(self):
         model = _Model15(segments=())
         wcpp.run(
-            model, "AUDIO", language="en", beam_size=1, vad_model=None,
-            on_segment=lambda *a: None, should_abort=lambda: False,
+            model,
+            "AUDIO",
+            language="en",
+            beam_size=1,
+            vad_model=None,
+            on_segment=lambda *a: None,
+            should_abort=lambda: False,
         )
         assert model.params["vad"] is False
         assert "beam_search" not in model.params
@@ -506,8 +530,13 @@ class TestRunAdapter:
     def test_old_bindings_get_only_supported_params(self):
         model = _Model14()
         wcpp.run(
-            model, "AUDIO", language="en", beam_size=5, vad_model=None,
-            on_segment=lambda *a: None, should_abort=lambda: False,
+            model,
+            "AUDIO",
+            language="en",
+            beam_size=5,
+            vad_model=None,
+            on_segment=lambda *a: None,
+            should_abort=lambda: False,
         )
         assert model.params == {
             "language": "en",

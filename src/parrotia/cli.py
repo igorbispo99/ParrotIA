@@ -47,7 +47,9 @@ def _parse_args(argv=None) -> argparse.Namespace:
         choices=BACKENDS,
         help="Inference engine (default: faster-whisper if installed, else whisper.cpp).",
     )
-    parser.add_argument("--model", default=DEFAULT_MODEL, choices=_all_choices("models"))
+    parser.add_argument(
+        "--model", default=DEFAULT_MODEL, choices=_all_choices("models")
+    )
     parser.add_argument(
         "--language",
         default=None,

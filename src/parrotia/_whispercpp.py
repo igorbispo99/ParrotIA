@@ -229,9 +229,21 @@ def load_audio(path: str):
         )
     proc = subprocess.run(
         [
-            ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error",
-            "-i", path,
-            "-vn", "-ac", "1", "-ar", str(SAMPLE_RATE), "-f", "f32le", "-",
+            ffmpeg,
+            "-nostdin",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-i",
+            path,
+            "-vn",
+            "-ac",
+            "1",
+            "-ar",
+            str(SAMPLE_RATE),
+            "-f",
+            "f32le",
+            "-",
         ],
         capture_output=True,
     )

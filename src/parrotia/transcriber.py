@@ -181,7 +181,9 @@ def backend_options(backend: Optional[str] = None) -> BackendOptions:
             devices=list(DEVICES),
             compute_types=list(COMPUTE_TYPES),
         )
-    raise ValueError(f"Unknown backend {backend!r}; expected one of: {', '.join(BACKENDS)}")
+    raise ValueError(
+        f"Unknown backend {backend!r}; expected one of: {', '.join(BACKENDS)}"
+    )
 
 
 @dataclass
@@ -504,7 +506,9 @@ class Transcriber:
                 percent = int(100 * done / total) if total else 0
                 if percent != last_percent[0]:  # throttle UI updates to 1% steps
                     last_percent[0] = percent
-                    report(0.0, f"📥 Downloading model '{model}' — {percent}% of {size}…")
+                    report(
+                        0.0, f"📥 Downloading model '{model}' — {percent}% of {size}…"
+                    )
 
             _whispercpp.ensure_downloaded(spec, on_download, check_cancel)
 
