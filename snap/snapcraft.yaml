@@ -45,7 +45,19 @@ apps:
     plugs: [home, network, x11]
 
 parts:
+  native-runtime:
+    plugin: nil
+    source: .
+    build-packages: [build-essential, cmake, ninja-build, nasm, pkg-config, python3-dev, python3-venv, patchelf]
+    override-build: |
+      python3 snap/local/build_native.py --install "$CRAFT_PART_INSTALL" --work "$CRAFT_PART_BUILD/native-work"
+    prime:
+      - -usr/include
+      - -usr/lib/pkgconfig
+      - -usr/lib/cmake
+      - -share/parrotia/native-wheels
   parrotia:
+    after: [native-runtime]
     plugin: python
     source: .
     python-requirements: [snap/requirements.txt]
@@ -56,5 +68,6 @@ parts:
       - fonts-dejavu-core
     override-build: |
       craftctl default
+      python3 snap/local/replace_native.py "$CRAFT_PART_INSTALL" "$CRAFT_STAGE/share/parrotia/native-wheels"
       craftctl set version="$(python3 snap/local/stage.py --version)"
       python3 snap/local/stage.py "$CRAFT_PART_INSTALL"

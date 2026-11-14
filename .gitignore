@@ -250,3 +250,10 @@ CLAUDE.md
 !snap/requirements.txt
 !snap/licenses/*.txt
 !snap/licenses/SOURCES.md
+
+!snap/native-sources.json
+!snap/build-requirements.txt
+
+!snap/assets.json
+!snap/model-repositories.json
+!snap/licenses/**

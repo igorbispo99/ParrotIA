@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
 import os
 import shutil
@@ -66,7 +67,10 @@ def test_inventory_uses_versioned_supplemental_text(tmp_path):
     assert (install / records[0]["notices"][0]).read_text() == "upstream Apache text"
 
 
-def test_staging_includes_source_and_inventory_without_workspace_secrets(tmp_path):
+@pytest.mark.parametrize("tamper", [False, True])
+def test_staging_includes_source_and_inventory_without_workspace_secrets(
+    tmp_path, tamper
+):
     source = tmp_path / "source"
     source.mkdir()
     for name in ("src/parrotia", "snap", "packaging"):
@@ -89,6 +93,24 @@ def test_staging_includes_source_and_inventory_without_workspace_secrets(tmp_pat
     (metadata / "METADATA").write_text("Name: demo\nVersion: 1\n")
     (metadata / "LICENSE").write_text("test license")
     (metadata / "RECORD").write_text("demo-1.dist-info/LICENSE,,\n")
+    asset = metadata.parent / "demo/reviewed-font.ttf"
+    asset.parent.mkdir()
+    asset.write_bytes(b"reviewed fixture")
+    (source / "snap/assets.json").write_text(
+        json.dumps(
+            [
+                {
+                    "path": "demo/reviewed-font.ttf",
+                    "sha256": hashlib.sha256(asset.read_bytes()).hexdigest(),
+                }
+            ]
+        )
+    )
+    if tamper:
+        asset.write_bytes(b"changed asset")
+        with pytest.raises(RuntimeError, match="Embedded asset changed"):
+            snap_stage.stage(source, install)
+        return
     snap_stage.stage(source, install)
     records = json.loads(
         (install / "share/doc/parrotia/python-dependencies.json").read_text()

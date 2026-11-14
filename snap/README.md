@@ -23,11 +23,25 @@ uploads a review artifact. It does not need store credentials or publish anythin
 `grade: devel` deliberately prevents promotion to stable before release QA.
 The version is read from the literal `__version__` in `src/parrotia/__init__.py`.
 
-`snap/requirements.txt` pins and hashes the Linux Python dependency set, including transitive
-packages. Only the recorded binary wheels are accepted. Refresh it in Python 3.12 on amd64 Linux using pip's resolution report;
-review license/runtime changes and rerun installed-package checks. Ubuntu package
-revisions are recorded by Snapcraft's build manifest and can change on rebuilds.
-These pins are isolated from source installs and other platform ports.
+`snap/requirements.txt` hashes the complete bootstrap Python dependency set.
+The final PyAV 18.1.0, CTranslate2 4.9.0 and NumPy 2.5.4 wheels are rebuilt from
+`snap/native-sources.json`, with separately hashed build tools. Their bootstrap
+wheel files and private native-library bundles are removed before staging.
+
+FFmpeg 8.1.3 is built as shared libraries with GPL/nonfree components, network
+protocols and external-library autodetection disabled. Its release signature was
+verified against the official FFmpeg signing key; the signature/key are retained.
+CTranslate2 uses the CPU Ruy backend with MKL, OpenMP, CUDA and cuDNN disabled.
+NumPy uses its internal BLAS/LAPACK fallback. Performance can differ from PyPI
+builds; Whisper matrix multiplication runs through CTranslate2. These choices
+are isolated to this Snap and do not change Fedora or Android packaging.
+
+The native source builder retains all original source archives, SHA-256 hashes,
+build commands, configure/CMake output and upstream notices under
+`$SNAP/share/doc/parrotia/native/`. Builds use at most four compiler jobs. CI
+checks actual library versions, configuration/license strings, source hashes and
+the absence of the three original wheel-native bundles inside the installed Snap.
+Ubuntu package revisions remain recorded by Snapcraft's build manifest.
 
 ## Files, privacy and models
 
@@ -67,10 +81,20 @@ parrotia.check --model tiny     # explicit model download and CPU inference on s
 HF_HUB_OFFLINE=1 parrotia.check --model tiny
 ```
 
-Also transcribe a real recording with the CLI and GUI; check language, all export
-formats, cancellation, batch errors, unicode paths and read-only outputs. Validate
-home access, removable media with/without connection, refresh and revert. Run on
-a normal Ubuntu desktop with confinement; WSL/direct execution is not equivalent.
+The installed-package CI generates a spoken fixture and transcribes WAV, MP3,
+FLAC, Ogg/Vorbis, M4A/AAC and MP4/AAC through the real CLI, checking all five
+export formats and nonempty speech text. It tests Unicode/spaces in paths,
+hidden-home denial, optional removable-media access, read-only output failure
+and recovery using a writable folder. The real GUI controls and worker threads
+exercise transcription, export, damaged-file batch recovery and cancellation
+under Xvfb, with a screenshot saved as QA evidence.
+
+CI also installs a second, test-only local revision, verifies offline model-cache
+reuse and a common-data marker, then reverts to the original revision and repeats
+those checks. That synthetic revision is never preserved as a Store artifact.
+The exact original artifact remains the upload candidate. A local sideload test
+does not prove Store-signed delivery or every physical desktop configuration;
+install and test the first edge revision separately before a stable release.
 
 ## Licenses and source
 
@@ -81,16 +105,23 @@ Wheel-provided license/notice files are preserved under
 `$SNAP/share/licenses/parrotia/python/`. Ubuntu packages retain their copyright
 files where staged. This generated inventory is evidence, not legal clearance.
 
-Before publication, review the exact artifact and close these release gates:
+The native source archives accompany the binary in the same downloadable Snap.
+For example, copy them from `/snap/parrotia/current/share/doc/parrotia/native/`
+after installation. FFmpeg is dynamically linked under `$SNAP/usr/lib`; users
+can rebuild compatible libraries from the included sources/configuration,
+replace those libraries in an unpacked copy, repack with `snap pack`, and install
+the modified Snap locally with `sudo snap install --dangerous <modified.snap>`.
+No EULA restricts modification, reverse engineering or relinking.
 
-- Review every license, including wheel-native dependencies/codecs, CustomTkinter's
-  Roboto/shapes fonts and the packaged Silero ONNX asset. Add any absent notices.
-- Record corresponding upstream sources and build configurations for bundled
-  components; fulfill applicable source/relinking obligations. ParrotIA's source
-  archive alone is not the corresponding source for all native wheel libraries.
-- Verify the license/provenance of the seven offered Whisper model repositories;
-  model weights are downloaded at runtime, not included in the Snap.
-- Review the full Snapcraft build manifest and dependency/security scan results.
+Additional embedded-asset notices and provenance are recorded in
+`snap/licenses/SOURCES.md`. The Roboto fonts identify Apache-2.0 in their embedded
+metadata; their text and copyright notice are now included. The Silero VAD asset
+is hash-matched to faster-whisper 1.2.1 and retains the Silero Team MIT notice.
+`snap/assets.json` makes the build fail if any reviewed font/VAD asset changes.
+`snap/model-repositories.json` records the current MIT declarations and commit
+identities of the seven offered model repositories. Model downloads follow their
+upstream repositories at runtime; future upstream changes require renewed review.
+The weights are not included in the Snap.
 
 ## Owner onboarding and publication
 
@@ -98,8 +129,8 @@ Once installed-package QA and the license/source gates pass:
 
 1. Sign in/register at https://dashboard.snapcraft.io/ as the upstream publisher;
    read and accept the agreements shown there and secure the account.
-2. Check/reserve `parrotia`; availability has not been established by this recipe.
-3. Fill in the listing with the recipe description, icon, Linux screenshots,
+2. `parrotia` is reserved by the owner (publisher `igorbispo`, confirmed in the dashboard).
+3. After the first revision unlocks the listing editor, fill in the listing with the recipe description, icon, Linux screenshots,
    source/support links, first-model download/storage needs and CPU support.
 4. Log in with `snapcraft login`, then upload the reviewed artifact to edge:
    `snapcraft upload --release=latest/edge <artifact.snap>`.

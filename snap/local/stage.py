@@ -94,6 +94,24 @@ def stage(source: Path, install: Path) -> None:
     shutil.copy2(source / "LICENSE", docs / "LICENSE")
     shutil.copy2(source / "snap/README.md", docs / "SNAP-README.md")
     shutil.copy2(source / "snap/licenses/SOURCES.md", docs / "LICENSE-SOURCES.md")
+    # Include embedded-asset notices as well as distribution-level licenses.
+    shutil.copytree(
+        source / "snap/licenses",
+        install / "share/licenses/parrotia/supplemental",
+        dirs_exist_ok=True,
+    )
+    shutil.copy2(source / "snap/model-repositories.json", docs)
+    asset_manifest = json.loads((source / "snap/assets.json").read_text())
+    import hashlib
+
+    site = next(install.glob("lib/python*/site-packages"))
+    for asset in asset_manifest:
+        path = site / asset["path"]
+        if hashlib.sha256(path.read_bytes()).hexdigest() != asset["sha256"]:
+            raise RuntimeError(
+                "Embedded asset changed; review its license/source: " + asset["path"]
+            )
+    shutil.copy2(source / "snap/assets.json", docs)
     records = inventory(install, source / "snap/licenses")
     (docs / "python-dependencies.json").write_text(
         json.dumps(records, indent=2) + "\n", encoding="utf-8"
