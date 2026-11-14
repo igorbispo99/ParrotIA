@@ -4,6 +4,29 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- whisper.cpp inference backend (through `pywhispercpp`), selected automatically
+  when faster-whisper is not installed, or with `--backend whisper.cpp` /
+  `PARROTIA_BACKEND`. It lets distributions without CTranslate2, such as Fedora,
+  ship ParrotIA from source. Its model downloads are pinned to exact Hugging Face
+  revisions, verified by SHA-256, written atomically and resumable, and can be
+  placed with `PARROTIA_MODELS_DIR`.
+- Freedesktop desktop entry, hicolor icon and AppStream MetaInfo under the
+  application ID `io.github.igorbispo99.ParrotIA`. The GUI sets a matching
+  window class so desktops associate the window with its launcher.
+- Native Fedora RPM specs for ParrotIA and its unpackaged dependencies
+  (`python-customtkinter`, `python-darkdetect`) in `packaging/fedora/`.
+
+### Fixed
+- GUI tests no longer turn every window construction error into a skip; only
+  display/Tk failures skip.
+
+### Changed
+- Package metadata uses an SPDX license expression (`license-files`), which
+  needs setuptools 77 or newer to build.
+
 ## [1.3.1] - 2026-11-11
 
 ### Fixed
