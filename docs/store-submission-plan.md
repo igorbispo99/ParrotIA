@@ -42,6 +42,7 @@ Official repository metadata was queried in clean `fedora:43`, `44`, `45` and `r
 ### Release and policy recheck (14 November 2026)
 
 - **Release:** ParrotIA 1.4.0 contains this work, and the spec `Version` is 1.4.0. 1.3.1 was bumped but never tagged, so its fixes ship first in 1.4.0.
+- **Pre-review check (14 November 2026):** the three SRPMs were rebuilt from their real `Source` URLs, including GitHub's `v1.4.0` archive (SHA-256 `3c91d336…c26f6`). They passed a Rawhide mock chain build. `fedora-review --prebuilt` then reported no automated issues for any package; rpmlint gave 0 errors, and its warnings were only the expected ones listed below. The remaining `[ ]` items are manual checks for the reviewer.
 - **Review entry point:** reviews are still filed in Red Hat Bugzilla (product *Fedora*, component *Package Review*).
   - In early November 2026 the Council was still debating a move from Bugzilla to Forgejo ([This Week in Fedora, 2–8 Nov 2026](https://communityblog.fedoraproject.org/this-week-in-fedora-2026-11-02/)).
   - A pull-request-based review flow on Forgejo exists only as a prototype ([GSoC 2025](https://communityblog.fedoraproject.org/gsoc-2025-bringing-package-reviews-to-forgejo/), [discussion](https://discussion.fedoraproject.org/t/fedora-package-review-process-reimagined/198109)).
