@@ -18,7 +18,7 @@ description: |
   need the optional removable-media connection. NVIDIA acceleration is not
   part of this package's supported configuration.
 base: core24
-grade: devel
+grade: stable
 confinement: strict
 license: AGPL-3.0-or-later
 icon: src/parrotia/assets/parrotia.png

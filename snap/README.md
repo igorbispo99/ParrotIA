@@ -1,7 +1,7 @@
 # ParrotIA Snap
 
-Status: development package for amd64 on core24. Strict confinement, CPU inference.
-No store upload or stable release is configured in CI.
+Status: stable-grade package for amd64 on core24. Strict confinement, CPU inference.
+CI builds the snap but never uploads it; store uploads are done manually with `snapcraft upload`.
 The snap version follows `parrotia.__version__` (1.4.0 on `main`). The snap bundles
 faster-whisper, so it uses the default backend; the whisper.cpp backend is used only
 where faster-whisper is missing, such as the Fedora package.
