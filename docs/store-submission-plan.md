@@ -133,10 +133,13 @@ The guideline pages were read in a browser and match the process above. Reposito
 | python-customtkinter | [2573566](https://bugzilla.redhat.com/show_bug.cgi?id=2573566) | depends on 2573565 |
 | parrotia | [2573567](https://bugzilla.redhat.com/show_bug.cgi?id=2573567) | depends on 2573565, 2573566 |
 
+- Sponsorship request: [packaging/sponsors#813](https://forge.fedoraproject.org/packaging/sponsors/issues/813).
+- Self-introduction on devel: [thread](https://lists.fedoraproject.org/archives/list/devel@lists.fedoraproject.org/thread/LDUFT7U722BIAGLX77MIXAFYR6W7HOHF/). The account is subscribed to devel with MIME digests.
+
 ### Next steps
 
 1. **Answer reviewer comments** on the three bugs and post updated Spec/SRPM URLs for each change. Unanswered tickets get closed.
-2. **Sponsorship:** a sponsor must add the account to `packager`. Speed it up by asking in the Package Review Swaps category on Fedora Discussion or on the devel list, doing informal reviews of other people's packages, and opening a request at packager-sponsors. The docs also suggest a self-introduction on the devel list.
+2. **Sponsorship:** a sponsor must add the account to `packager`. The request and introduction are posted (above). Speed it up by asking in the Package Review Swaps category on Fedora Discussion or on the devel list, doing informal reviews of other people's packages, and opening a request at packager-sponsors. The docs also suggest a self-introduction on the devel list.
 3. **After each `fedora-review +`:** set up the Forge token and Kerberos, then:
    - `fedpkg request-repo <name> <bug>`
    - `fedpkg request-branch` (f44, f45)
