@@ -18,16 +18,12 @@ from PIL import Image
 from . import formats
 from .resources import set_window_icon
 from .transcriber import (
-    AVAILABLE_MODELS,
-    COMPUTE_TYPES,
-    DEFAULT_MODEL,
-    DEVICES,
     LANGUAGES,
-    MODEL_SIZES,
     SUPPORTED_EXTENSIONS,
     TranscriptionCancelled,
     TranscriptionResult,
     Transcriber,
+    backend_options,
 )
 
 ctk.set_appearance_mode("System")
@@ -45,6 +41,10 @@ CORAL = "#EF5B5B"  # parrot face  -> cancel / destructive
 CORAL_HI = "#D94848"
 
 # Tuple colours are (light-mode, dark-mode) so the theme adapts to the system.
+# Reverse-DNS application ID shared by the desktop entry, icon and AppStream
+# metadata (packaging/linux/io.github.igorbispo99.ParrotIA.*).
+APP_ID = "io.github.igorbispo99.ParrotIA"
+
 WINDOW_BG = ("#E8F6F4", "#0B2B2C")
 CARD_BG = ("#FFFFFF", "#10393A")
 CARD_SOFT = ("#F3FBFA", "#0E3233")
@@ -67,7 +67,9 @@ _AUDIO_FILETYPES = [
 
 class TranscriberApp(ctk.CTk):
     def __init__(self) -> None:
-        super().__init__()
+        # The Tk class name becomes the X11/XWayland WM_CLASS instance, letting
+        # desktops match the window to the installed launcher of the same ID.
+        super().__init__(className=APP_ID)
 
         self.title("ParrotIA — Local Audio & Video Transcriber")
         set_window_icon(self)
@@ -76,6 +78,9 @@ class TranscriberApp(ctk.CTk):
         self.configure(fg_color=WINDOW_BG)
 
         self._transcriber = Transcriber()
+        # Models/devices offered depend on the installed inference backend.
+        # (Not ``_options``: that would shadow tkinter.Misc._options.)
+        self._backend_opts = backend_options(self._transcriber.backend)
         self._worker: Optional[threading.Thread] = None
         self._cancel_event = threading.Event()
         self._events: "queue.Queue[tuple]" = queue.Queue()
@@ -131,17 +136,18 @@ class TranscriberApp(ctk.CTk):
             options.grid_columnconfigure(col, weight=1)
         self._heading(options, "Options", row=0, columnspan=4)
 
-        self.model_var = ctk.StringVar(value=DEFAULT_MODEL)
+        opts = self._backend_opts
+        self.model_var = ctk.StringVar(value=opts.default_model)
         self.language_var = ctk.StringVar(value="Auto detect")
-        self.device_var = ctk.StringVar(value=DEVICES[0])
-        self.compute_var = ctk.StringVar(value=COMPUTE_TYPES[0])
+        self.device_var = ctk.StringVar(value=opts.devices[0])
+        self.compute_var = ctk.StringVar(value=opts.compute_types[0])
 
-        self._add_option(options, 1, 0, "Model", AVAILABLE_MODELS, self.model_var)
+        self._add_option(options, 1, 0, "Model", opts.models, self.model_var)
         self._add_option(
             options, 1, 2, "Language", list(LANGUAGES.keys()), self.language_var
         )
-        self._add_option(options, 2, 0, "Device", DEVICES, self.device_var)
-        self._add_option(options, 2, 2, "Compute", COMPUTE_TYPES, self.compute_var)
+        self._add_option(options, 2, 0, "Device", opts.devices, self.device_var)
+        self._add_option(options, 2, 2, "Compute", opts.compute_types, self.compute_var)
 
         # --- Output formats + folder ---------------------------------------
         output = self._card(row=3)
@@ -397,10 +403,12 @@ class TranscriberApp(ctk.CTk):
         )
 
         # Check if model needs downloading (first-time setup)
-        needs_download = not Transcriber.is_model_cached(params["model"])
+        needs_download = not Transcriber.is_model_cached(
+            params["model"], self._transcriber.backend
+        )
         if needs_download:
             self._downloading = True
-            size = MODEL_SIZES.get(params["model"], "")
+            size = self._backend_opts.model_sizes.get(params["model"], "")
             hint = f" ({size})" if size else ""
             self._set_status(
                 f"Downloading model '{params['model']}'{hint}"

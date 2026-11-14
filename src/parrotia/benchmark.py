@@ -58,6 +58,7 @@ def benchmark_models(
     compute_type: str = "auto",
     progress_callback: Optional[BenchmarkProgressCallback] = None,
     cancel_event: Optional[threading.Event] = None,
+    backend: Optional[str] = None,
 ) -> List[BenchmarkRun]:
     """Transcribe ``audio_path`` with each model in ``models`` and time it.
 
@@ -79,7 +80,7 @@ def benchmark_models(
         # A fresh engine per model guarantees the model is loaded from scratch,
         # so a model cached by a previous run never reports a misleading ~0s
         # load time and skews the comparison.
-        engine = Transcriber()
+        engine = Transcriber(backend=backend)
         start = time.perf_counter()
         # ``transcribe`` reports fraction >= 0.05 only after the model is
         # loaded; we capture that instant to split load time from decode time.

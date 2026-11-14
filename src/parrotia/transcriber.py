@@ -1,20 +1,26 @@
-"""Transcription engine wrapping faster-whisper (CTranslate2).
+"""Transcription engine wrapping faster-whisper (CTranslate2) or whisper.cpp.
 
 The module is deliberately UI-agnostic: it exposes a small dataclass result and
 a :class:`Transcriber` that loads models lazily, caches them, reports progress
 through a callback, and supports cooperative cancellation. The GUI imports this;
 it could equally be driven from a script or a test.
+
+Two inference backends are supported. faster-whisper is the default wherever it
+is installed (pip, Windows/Linux installers). whisper.cpp, through
+``pywhispercpp``, is used where faster-whisper is unavailable — notably the
+native Fedora package. ``PARROTIA_BACKEND`` forces a choice.
 """
 
 from __future__ import annotations
 
 import glob
+import importlib.util
 import os
 import site
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Callable, Dict, List, Optional
 
 # On Windows with CUDA, multiple packages (CTranslate2, PyTorch/MKL, NVIDIA
 # wheels) can each ship their own copy of the Intel OpenMP runtime
@@ -105,6 +111,78 @@ MODEL_SIZES: dict[str, str] = {
     "distil-large-v3": "~1.5 GB",
 }
 
+FASTER_WHISPER = "faster-whisper"
+WHISPER_CPP = "whisper.cpp"
+BACKENDS: List[str] = [FASTER_WHISPER, WHISPER_CPP]
+
+
+@dataclass(frozen=True)
+class BackendOptions:
+    """The choices a UI should offer for one inference backend."""
+
+    name: str
+    models: List[str]
+    model_sizes: Dict[str, str]
+    devices: List[str]
+    compute_types: List[str]
+    default_model: str = DEFAULT_MODEL
+
+
+def _module_available(name: str) -> bool:
+    try:
+        return importlib.util.find_spec(name) is not None
+    except (ImportError, ValueError):
+        return False
+
+
+def detect_backend() -> str:
+    """Pick the inference backend: ``PARROTIA_BACKEND``, else what's installed.
+
+    faster-whisper wins when both are installed. If neither is, faster-whisper
+    is returned so the eventual import error names the default dependency.
+    """
+    requested = os.environ.get("PARROTIA_BACKEND", "").strip().lower()
+    if requested:
+        if requested not in BACKENDS:
+            raise ValueError(
+                f"PARROTIA_BACKEND={requested!r} is not one of: {', '.join(BACKENDS)}"
+            )
+        return requested
+    if _module_available("faster_whisper"):
+        return FASTER_WHISPER
+    if _module_available("pywhispercpp"):
+        return WHISPER_CPP
+    return FASTER_WHISPER
+
+
+def backend_options(backend: Optional[str] = None) -> BackendOptions:
+    """Models/devices/compute types valid for ``backend`` (default: detected).
+
+    The module-level ``AVAILABLE_MODELS``/``DEVICES``/``COMPUTE_TYPES`` describe
+    the faster-whisper backend; front-ends should prefer this function.
+    """
+    backend = backend or detect_backend()
+    if backend == WHISPER_CPP:
+        from . import _whispercpp
+
+        return BackendOptions(
+            name=WHISPER_CPP,
+            models=list(_whispercpp.AVAILABLE_MODELS),
+            model_sizes=dict(_whispercpp.MODEL_SIZES),
+            # whisper.cpp runs on the CPU here; precision is fixed by the model file.
+            devices=["auto", "cpu"],
+            compute_types=["auto"],
+        )
+    if backend == FASTER_WHISPER:
+        return BackendOptions(
+            name=FASTER_WHISPER,
+            models=list(AVAILABLE_MODELS),
+            model_sizes=dict(MODEL_SIZES),
+            devices=list(DEVICES),
+            compute_types=list(COMPUTE_TYPES),
+        )
+    raise ValueError(f"Unknown backend {backend!r}; expected one of: {', '.join(BACKENDS)}")
+
 
 @dataclass
 class Segment:
@@ -185,14 +263,24 @@ class Transcriber:
     reloads when the combination actually changes.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, backend: Optional[str] = None) -> None:
+        self.backend = backend or detect_backend()
+        if self.backend not in BACKENDS:
+            raise ValueError(
+                f"Unknown backend {self.backend!r}; expected one of: {', '.join(BACKENDS)}"
+            )
         self._model = None
         self._model_key: Optional[tuple] = None
         self._lock = threading.Lock()
 
     @staticmethod
-    def is_model_cached(model_name: str) -> bool:
+    def is_model_cached(model_name: str, backend: Optional[str] = None) -> bool:
         """Return True if the model files are already downloaded locally."""
+        if (backend or detect_backend()) == WHISPER_CPP:
+            from . import _whispercpp
+
+            spec = _whispercpp.MODEL_FILES.get(model_name)
+            return spec is None or _whispercpp.is_downloaded(spec)
         repo_id = _MODEL_REPOS.get(model_name)
         if repo_id is None:
             return True  # custom path or unknown model — assume available
@@ -282,7 +370,11 @@ class Transcriber:
             # CTranslate2 can fail lazily — the missing-cuBLAS/cuDNN DLL only
             # surfaces once decoding actually touches the GPU. If the GPU path
             # breaks, transparently restart the whole run on CPU.
-            if device != "cpu" and _is_cuda_error(exc):
+            if (
+                self.backend == FASTER_WHISPER
+                and device != "cpu"
+                and _is_cuda_error(exc)
+            ):
                 report(0.0, "GPU unavailable — falling back to CPU…")
                 self._model = None
                 self._model_key = None
@@ -311,7 +403,11 @@ class Transcriber:
         report,
         check_cancel,
     ) -> TranscriptionResult:
-        downloading = not self.is_model_cached(model)
+        if self.backend == WHISPER_CPP:
+            return self._transcribe_whispercpp(
+                path, model, language, beam_size, vad_filter, report, check_cancel
+            )
+        downloading = not self.is_model_cached(model, FASTER_WHISPER)
         if downloading:
             size = MODEL_SIZES.get(model, "")
             hint = f" ({size})" if size else ""
@@ -352,6 +448,124 @@ class Transcriber:
                 segments.append(Segment(segment.start, segment.end, text))
             if duration > 0:
                 report(0.1 + 0.9 * (segment.end / duration), "Transcribing…")
+
+        report(1.0, "Done.")
+        return TranscriptionResult(
+            source_name=path.name,
+            model=model,
+            language=detected_language,
+            duration=duration,
+            segments=segments,
+            language_probability=language_probability,
+        )
+
+    # ------------------------------------------------------- whisper.cpp ---
+    def _load_whispercpp(self, model: str, beam_size: int):
+        from . import _whispercpp
+
+        # Beam search vs greedy is fixed when the whisper.cpp model is created.
+        key = (WHISPER_CPP, model, beam_size > 1)
+        with self._lock:
+            if key == self._model_key and self._model is not None:
+                return self._model
+            path = _whispercpp.model_path(_whispercpp.MODEL_FILES[model])
+            self._model = _whispercpp.load_model(path, beam_size)
+            self._model_key = key
+            return self._model
+
+    def _transcribe_whispercpp(
+        self,
+        path: Path,
+        model: str,
+        language: Optional[str],
+        beam_size: int,
+        vad_filter: bool,
+        report,
+        check_cancel,
+    ) -> TranscriptionResult:
+        from . import _whispercpp
+
+        spec = _whispercpp.MODEL_FILES.get(model)
+        if spec is None:
+            raise ValueError(
+                f"Model '{model}' is not available with the whisper.cpp backend. "
+                f"Choose one of: {', '.join(_whispercpp.AVAILABLE_MODELS)}"
+            )
+
+        if not _whispercpp.is_downloaded(spec):
+            size = _whispercpp.MODEL_SIZES[model]
+            report(
+                0.0,
+                f"📥 Downloading model '{model}' ({size}) — first time setup, please wait…",
+            )
+            last_percent = [-1]
+
+            def on_download(done: int, total: int) -> None:
+                percent = int(100 * done / total) if total else 0
+                if percent != last_percent[0]:  # throttle UI updates to 1% steps
+                    last_percent[0] = percent
+                    report(0.0, f"📥 Downloading model '{model}' — {percent}% of {size}…")
+
+            _whispercpp.ensure_downloaded(spec, on_download, check_cancel)
+
+        report(0.0, f"Loading model '{model}'…")
+        check_cancel()
+        whisper = self._load_whispercpp(model, beam_size)
+
+        vad_model: Optional[Path] = None
+        if vad_filter and _whispercpp.supports_vad(whisper):
+            try:
+                vad_model = _whispercpp.ensure_downloaded(
+                    _whispercpp.VAD_MODEL, None, check_cancel
+                )
+            except TranscriptionCancelled:
+                raise
+            except Exception:
+                # VAD only skips silence; transcribe the whole file without it.
+                vad_model = None
+
+        report(0.05, "Analyzing audio…")
+        check_cancel()
+        audio = _whispercpp.load_audio(str(path))
+        duration = len(audio) / _whispercpp.SAMPLE_RATE
+
+        language_probability: Optional[float] = None
+        if language:
+            detected_language = language
+        else:
+            detected_language, language_probability = _whispercpp.detect_language(
+                whisper, audio
+            )
+
+        report(0.1, f"Transcribing ({detected_language})…")
+        check_cancel()
+
+        segments: List[Segment] = []
+
+        def on_segment(start: float, end: float, text: str) -> None:
+            text = text.strip()
+            if text:
+                segments.append(Segment(start, end, text))
+            if duration > 0:
+                report(0.1 + 0.9 * min(1.0, end / duration), "Transcribing…")
+
+        def should_abort() -> bool:
+            try:
+                check_cancel()
+            except TranscriptionCancelled:
+                return True
+            return False
+
+        _whispercpp.run(
+            whisper,
+            audio,
+            language=detected_language,
+            beam_size=beam_size,
+            vad_model=vad_model,
+            on_segment=on_segment,
+            should_abort=should_abort,
+        )
+        check_cancel()  # an aborted decode returns normally with partial output
 
         report(1.0, "Done.")
         return TranscriptionResult(

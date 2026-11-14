@@ -18,12 +18,13 @@ from __future__ import annotations
 # build backend can read it without importing the package (and its heavy deps).
 __version__ = "1.3.1"
 
-# Engine API is import-light (faster-whisper is loaded lazily on first use), so
+# Engine API is import-light (the inference backend is loaded lazily on first use), so
 # it is safe to re-export here. The GUI (parrotia.app) is intentionally *not*
 # imported, so ``import parrotia`` never pulls in Tkinter/customtkinter.
 from .formats import WRITERS
 from .transcriber import (
     AVAILABLE_MODELS,
+    BACKENDS,
     COMPUTE_TYPES,
     DEFAULT_MODEL,
     DEVICES,
@@ -33,11 +34,14 @@ from .transcriber import (
     Transcriber,
     TranscriptionCancelled,
     TranscriptionResult,
+    backend_options,
+    detect_backend,
 )
 
 __all__ = [
     "__version__",
     "AVAILABLE_MODELS",
+    "BACKENDS",
     "COMPUTE_TYPES",
     "DEFAULT_MODEL",
     "DEVICES",
@@ -48,4 +52,6 @@ __all__ = [
     "TranscriptionCancelled",
     "TranscriptionResult",
     "WRITERS",
+    "backend_options",
+    "detect_backend",
 ]

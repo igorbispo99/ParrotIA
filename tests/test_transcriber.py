@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import threading
 from unittest.mock import MagicMock, patch
 
@@ -257,6 +258,13 @@ class TestTranscriber:
                 t.transcribe(str(silent_wav), model="tiny", device="cpu")
 
 
+requires_faster_whisper = pytest.mark.skipif(
+    importlib.util.find_spec("faster_whisper") is None,
+    reason="faster-whisper not installed (e.g. whisper.cpp-only Fedora build)",
+)
+
+
+@requires_faster_whisper
 class TestModelCache:
     @patch("faster_whisper.WhisperModel")
     def test_same_key_reuses_model(self, MockWhisper):
@@ -301,6 +309,10 @@ class TestModelCache:
         assert call_args[1] == ("tiny", "cpu", "int8")
 
 
+@pytest.mark.skipif(
+    importlib.util.find_spec("huggingface_hub") is None,
+    reason="huggingface_hub not installed (faster-whisper cache layout)",
+)
 class TestIsModelCached:
     @patch("parrotia.transcriber.os.path.isdir", return_value=True)
     @patch("parrotia.transcriber.os.listdir", return_value=["abc123"])

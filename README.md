@@ -128,6 +128,26 @@ pip install "parrotia[cuda]"
 
 The app discovers these automatically at startup. Set **Device → cuda** in the GUI (or pass `--device cuda` on the CLI). If the GPU is unavailable for any reason it falls back to CPU transparently.
 
+### Inference backends
+
+ParrotIA runs Whisper through one of two engines and picks one automatically:
+
+| Backend | Used when | Notes |
+|---------|-----------|-------|
+| [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (CTranslate2) | installed (the default for pip and the Windows/Linux installers) | CPU or NVIDIA GPU; all models in the guide below |
+| [whisper.cpp](https://github.com/ggml-org/whisper.cpp) via [pywhispercpp](https://github.com/absadiki/pywhispercpp) | faster-whisper is not installed (e.g. the native Fedora package) | CPU; adds `large-v3-turbo-q5_0`, a faster quantized turbo; no `distil-large-v3` |
+
+To use whisper.cpp from a pip install, run `pip install pywhispercpp` and make
+sure `ffmpeg` is on your `PATH` (it decodes the audio). Then select it with
+`--backend whisper.cpp` or by setting `PARROTIA_BACKEND=whisper.cpp`.
+
+whisper.cpp models are downloaded from Hugging Face on first use. Each file is
+pinned to an exact repository revision and checked against its SHA-256, and an
+interrupted download resumes where it stopped. Models go in
+`~/.local/share/parrotia/models` (`%LOCALAPPDATA%\parrotia\models` on Windows).
+To use a different folder, such as one copied to an offline machine, set
+`PARROTIA_MODELS_DIR`.
+
 ---
 
 ## Usage
@@ -158,7 +178,7 @@ parrotia "talk.mp3" --model large-v3-turbo --formats txt srt --language en
 ```
 
 ```
-usage: parrotia [-h] [--model MODEL] [--language LANGUAGE] [--device DEVICE]
+usage: parrotia [-h] [--backend BACKEND] [--model MODEL] [--language LANGUAGE] [--device DEVICE]
                 [--compute COMPUTE] [--formats FORMAT [FORMAT ...]] [--outdir OUTDIR]
                 audio
 
@@ -166,6 +186,7 @@ positional arguments:
   audio                 Path to the audio/video file
 
 options:
+  --backend             faster-whisper | whisper.cpp (default: detected)
   --model               Whisper model to use (default: large-v3-turbo)
   --language            Language code, e.g. en, pt (omit to auto-detect)
   --device              cpu | cuda | auto (default: auto)
@@ -222,7 +243,8 @@ Omit `--models` to benchmark every available model. The report is also written t
 | `small` / `medium` | Balanced | Good     | Solid everyday choice |
 | `large-v3`         | Slowest  | Best     | Highest accuracy |
 | `large-v3-turbo`   | Fast     | Great    | **Recommended default** |
-| `distil-large-v3`  | Fast     | Great    | English-focused, compact |
+| `distil-large-v3`  | Fast     | Great    | English-focused, compact (faster-whisper only) |
+| `large-v3-turbo-q5_0` | Faster | Great    | Quantized turbo, about 575 MB (whisper.cpp only) |
 
 All models are free and run entirely on-device.
 
@@ -239,7 +261,8 @@ All models are free and run entirely on-device.
 | File | Purpose |
 |------|---------|
 | [`src/parrotia/app.py`](src/parrotia/app.py) | customtkinter GUI |
-| [`src/parrotia/transcriber.py`](src/parrotia/transcriber.py) | Whisper engine (model cache, progress callbacks, cancellation, GPU fallback) |
+| [`src/parrotia/transcriber.py`](src/parrotia/transcriber.py) | Whisper engine (backend selection, model cache, progress callbacks, cancellation, GPU fallback) |
+| [`src/parrotia/_whispercpp.py`](src/parrotia/_whispercpp.py) | whisper.cpp backend (pinned/verified model downloads, ffmpeg decoding) |
 | [`src/parrotia/formats.py`](src/parrotia/formats.py) | txt / md / srt / vtt / json writers |
 | [`src/parrotia/cli.py`](src/parrotia/cli.py) | Headless command-line interface |
 | [`src/parrotia/benchmark.py`](src/parrotia/benchmark.py) | Model speed benchmarking (CLI) |

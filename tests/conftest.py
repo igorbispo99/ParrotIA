@@ -19,6 +19,22 @@ from parrotia.transcriber import Segment, TranscriptionResult
 
 
 # ---------------------------------------------------------------------------
+# Backend selection
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def _default_backend(monkeypatch):
+    """Run tests against the faster-whisper code path unless they opt out.
+
+    Backend auto-detection depends on what is installed (the Fedora package
+    has only whisper.cpp), so pin it for deterministic results. whisper.cpp
+    tests pass ``backend=`` explicitly or override the variable.
+    """
+    monkeypatch.setenv("PARROTIA_BACKEND", "faster-whisper")
+
+
+# ---------------------------------------------------------------------------
 # Reusable domain objects
 # ---------------------------------------------------------------------------
 

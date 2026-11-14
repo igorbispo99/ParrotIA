@@ -21,7 +21,7 @@ try:
     _root = tk.Tk()
     _root.destroy()
     _HAS_DISPLAY = True
-except (tk.TclError, Exception):
+except Exception:  # no tkinter module, or Tk can't reach a display
     _HAS_DISPLAY = False
 
 pytestmark = pytest.mark.skipif(
@@ -35,9 +35,11 @@ def app():
     """Inspect one real app lifetime; Tk font caches outlive individual roots."""
     from parrotia.app import TranscriberApp
 
+    import tkinter as tk
+
     try:
         instance = TranscriberApp()
-    except Exception as exc:
+    except tk.TclError as exc:  # display/Tk trouble only; real bugs must fail
         pytest.skip(f"Cannot create GUI window: {exc}")
     instance.withdraw()  # keep it invisible
     yield instance

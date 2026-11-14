@@ -22,25 +22,41 @@ except (AttributeError, ValueError):
 
 from . import benchmark, formats
 from .transcriber import (
-    AVAILABLE_MODELS,
-    COMPUTE_TYPES,
+    BACKENDS,
     DEFAULT_MODEL,
-    DEVICES,
     Transcriber,
+    backend_options,
 )
+
+
+def _all_choices(attribute: str) -> "list[str]":
+    """Union of one option list across every backend, in first-seen order."""
+    seen: "dict[str, None]" = {}
+    for name in BACKENDS:
+        for value in getattr(backend_options(name), attribute):
+            seen.setdefault(value, None)
+    return list(seen)
 
 
 def _parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Local Whisper transcription.")
     parser.add_argument("audio", help="Path to the audio/video file.")
-    parser.add_argument("--model", default=DEFAULT_MODEL, choices=AVAILABLE_MODELS)
+    parser.add_argument(
+        "--backend",
+        default=None,
+        choices=BACKENDS,
+        help="Inference engine (default: faster-whisper if installed, else whisper.cpp).",
+    )
+    parser.add_argument("--model", default=DEFAULT_MODEL, choices=_all_choices("models"))
     parser.add_argument(
         "--language",
         default=None,
         help="Language code (e.g. en, pt). Omit to auto-detect.",
     )
-    parser.add_argument("--device", default="auto", choices=DEVICES)
-    parser.add_argument("--compute", default="auto", choices=COMPUTE_TYPES)
+    parser.add_argument("--device", default="auto", choices=_all_choices("devices"))
+    parser.add_argument(
+        "--compute", default="auto", choices=_all_choices("compute_types")
+    )
     parser.add_argument(
         "--formats",
         nargs="+",
@@ -61,14 +77,34 @@ def _parse_args(argv=None) -> argparse.Namespace:
         "--models",
         nargs="+",
         default=None,
-        choices=AVAILABLE_MODELS,
+        choices=_all_choices("models"),
         help="Models to compare in --benchmark mode (default: all).",
     )
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+
+    # Each backend supports a subset of the combined choices above.
+    try:
+        options = backend_options(args.backend)
+    except ValueError as exc:  # e.g. an invalid PARROTIA_BACKEND
+        parser.error(str(exc))
+    args.backend = options.name
+    for flag, values, allowed in (
+        ("--model", [args.model], options.models),
+        ("--models", args.models or [], options.models),
+        ("--device", [args.device], options.devices),
+        ("--compute", [args.compute], options.compute_types),
+    ):
+        unsupported = [v for v in values if v not in allowed]
+        if unsupported:
+            parser.error(
+                f"{flag} {' '.join(unsupported)} is not supported by the "
+                f"{options.name} backend (choose from: {', '.join(allowed)})"
+            )
+    return args
 
 
 def _run_benchmark(args, audio: Path) -> int:
-    models = args.models or AVAILABLE_MODELS
+    models = args.models or backend_options(args.backend).models
     total = len(models)
 
     def progress(index, count, model, fraction, message) -> None:
@@ -88,6 +124,7 @@ def _run_benchmark(args, audio: Path) -> int:
         device=args.device,
         compute_type=args.compute,
         progress_callback=progress,
+        backend=args.backend,
     )
     print("\n")
     report = benchmark.format_report(runs)
@@ -118,7 +155,7 @@ def main(argv=None) -> int:
         bar = "█" * int(fraction * 30)
         print(f"\r[{bar:<30}] {fraction:5.0%}  {message:<28}", end="", flush=True)
 
-    result = Transcriber().transcribe(
+    result = Transcriber(backend=args.backend).transcribe(
         str(audio),
         model=args.model,
         language=args.language,
