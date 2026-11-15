@@ -143,6 +143,7 @@ The guideline pages were read in a browser and match the process above. Reposito
 | parrotia | [2573567](https://bugzilla.redhat.com/show_bug.cgi?id=2573567) | depends on 2573565, 2573566 |
 
 - Sponsorship request: [packaging/sponsors#813](https://forge.fedoraproject.org/packaging/sponsors/issues/813).
+- Review swap request (15 November 2026): [Fedora Discussion topic 208370](https://discussion.fedoraproject.org/t/review-swap-parrotia-and-two-small-python-dependencies-python-darkdetect-python-customtkinter/208370), in Project Discussion (tags engineering, ai-ml-sig). The Package Review Swaps category needs `packager` membership, or another FAS group plus the FPCA, so it can't be used yet.
 - Self-introduction on devel: [thread](https://lists.fedoraproject.org/archives/list/devel@lists.fedoraproject.org/thread/LDUFT7U722BIAGLX77MIXAFYR6W7HOHF/). The account is subscribed to devel with MIME digests.
 
 ### Next steps
