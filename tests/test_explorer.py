@@ -179,3 +179,17 @@ def test_explorer_invocations_join_one_owner(tmp_path, monkeypatch):
         assert main([first]) == 0
     run_window.assert_called_once()
     assert received == [first, second]
+
+
+def test_blocked_save_explains_controlled_folder_access(monkeypatch, tmp_path):
+    import sys
+
+    from parrotia.formats import OutputBlockedError
+
+    def refuse(self, *args, **kwargs):
+        raise FileNotFoundError(2, "No such file or directory")
+
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(Path, "open", refuse)
+    with pytest.raises(OutputBlockedError, match="Controlled folder access"):
+        _save_transcript(tmp_path / "talk.mp3", "text")

@@ -1,0 +1,7 @@
+{
+  "_comment": "Replace with Partner Center > Product management > Product identity once the name is reserved, then set placeholder to false. Values are case-sensitive.",
+  "placeholder": true,
+  "name": "ParrotIA.LocalBuild",
+  "publisher": "CN=ParrotIA Local Build",
+  "publisher_display_name": "Igor Bispo"
+}

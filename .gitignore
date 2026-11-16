@@ -236,6 +236,10 @@ __marimo__/
 !README.md
 !CHANGELOG.md
 !docs/store-submission-plan.md
+!docs/microsoft-store-plan.md
+!docs/microsoft-store-listing.md
+!docs/PRIVACY.md
+!packaging/windows/msix/identity.json
 
 # Claude
 CLAUDE.md

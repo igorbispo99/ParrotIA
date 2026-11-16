@@ -4,6 +4,28 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Microsoft Store packaging: `packaging/windows/build.py --msix` wraps the
+  frozen bundle in an MSIX with Start/taskbar logos, an "Open with" entry and
+  the "Transcribe on Parrot" Explorer verb for every supported media type.
+  Windows CI builds it, installs a test-signed copy and runs the Windows App
+  Certification Kit when available.
+- `parrotia-gui <file>` (and Windows "Open with") preloads the given file or
+  folder.
+- Privacy policy (`docs/PRIVACY.md`).
+
+### Fixed
+- When Windows Security's Controlled folder access blocks saving a transcript,
+  the GUI, CLI and Explorer queue now say so and explain how to allow ParrotIA,
+  instead of reporting "No such file or directory".
+
+### Changed
+- Inside the MSIX package, models are cached in the app's private storage
+  (removed on uninstall) unless `HF_HOME` or `HF_HUB_CACHE` is set, and the
+  app keeps the package's taskbar identity.
+
 ## [1.4.1] - 2026-11-16
 
 ### Changed

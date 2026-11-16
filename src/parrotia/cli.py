@@ -172,7 +172,7 @@ def main(argv=None) -> int:
     for fmt in args.formats:
         extension, writer = formats.WRITERS[fmt]
         target = outdir / f"{audio.stem}{extension}"
-        target.write_text(writer(result), encoding="utf-8")
+        formats.write_output(target, writer(result))
         print(f"saved {target}")
     return 0
 

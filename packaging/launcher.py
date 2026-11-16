@@ -9,7 +9,7 @@ import traceback
 from pathlib import Path
 
 
-def _smoke_test(report: Path) -> None:
+def _smoke_test(report: Path, packaged: bool) -> None:
     """Exercise native dependencies and Tk without downloading a model."""
     import io
     import tkinter
@@ -38,10 +38,17 @@ def _smoke_test(report: Path) -> None:
     app.withdraw()
     app.update()
     app.destroy()
+    hf_home = os.environ.get("HF_HOME")
+    if packaged and hf_home:
+        # Lets test-msix.ps1 confirm the cache lands in package storage,
+        # which Windows removes on uninstall.
+        Path(hf_home).mkdir(parents=True, exist_ok=True)
     report.write_text(
         json.dumps(
             {
                 "version": __version__,
+                "packaged": packaged,
+                "hf_home": hf_home,
                 "samples": len(samples),
                 "av": av.__version__,
                 "ctranslate2": ctranslate2.__version__,
@@ -62,16 +69,21 @@ def main() -> int:
         sys.stdout = open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115 -- process lifetime
     if sys.stderr is None:
         sys.stderr = open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115 -- process lifetime
-    # Pin taskbar identity to our executable and icon, rather than python.exe.
-    if sys.platform == "win32":
-        import ctypes
-
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-            "ParrotIA.Desktop"
-        )
     try:
+        # The Store (MSIX) build needs its own defaults before any model library loads.
+        from parrotia._msix import configure_packaged_environment
+
+        packaged = configure_packaged_environment()
+        # Pin taskbar identity to our executable and icon, rather than python.exe.
+        # Packaged apps must keep the identity Windows assigns to the package.
+        if sys.platform == "win32" and not packaged:
+            import ctypes
+
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                "ParrotIA.Desktop"
+            )
         if len(sys.argv) == 3 and sys.argv[1] == "--smoke-test":
-            _smoke_test(Path(sys.argv[2]))
+            _smoke_test(Path(sys.argv[2]), packaged)
         elif len(sys.argv) > 1 and sys.argv[1] == "--shell":
             from parrotia.explorer import main as explorer_main
 
@@ -79,12 +91,17 @@ def main() -> int:
         else:
             from parrotia.app import main as gui_main
 
-            gui_main()
+            # "Open with" passes the chosen media file(s) as arguments.
+            gui_main(sys.argv[1:])
     except Exception:  # noqa: BLE001 -- surface startup errors from any dependency
         detail = traceback.format_exc()
         print(detail, file=sys.stderr)
         if len(sys.argv) == 3 and sys.argv[1] == "--smoke-test":
-            Path(sys.argv[2]).write_text(detail, encoding="utf-8")
+            # Never show a dialog in unattended checks; the exit code reports it.
+            try:
+                Path(sys.argv[2]).write_text(detail, encoding="utf-8")
+            except OSError:
+                pass
         else:
             from tkinter import messagebox
 

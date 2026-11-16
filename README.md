@@ -76,6 +76,13 @@ the default model downloads approximately 1.6 GB; subsequent runs use the local
 model cache. Uninstalling through Windows Settings removes the app, shortcuts,
 and its Explorer entries, while preserving your transcripts and downloaded models.
 
+If Windows Security's **Controlled folder access** (ransomware protection) is
+on, Windows may stop ParrotIA from saving transcripts in Documents, Desktop,
+Pictures, Videos or Music, and ParrotIA reports that the save was blocked. Allow
+it under **Windows Security > Virus & threat protection > Ransomware protection >
+Allow an app through Controlled folder access**, or choose an output folder
+elsewhere. The feature is off by default.
+
 ### Linux installers
 
 Download the v1.4.1 `.deb` or `.rpm` from

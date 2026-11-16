@@ -7,9 +7,49 @@ string, so callers stay free to write to disk, a preview pane, or the clipboard.
 from __future__ import annotations
 
 import json
-from typing import Callable, Dict
+import sys
+from pathlib import Path
+from typing import Callable, Dict, Optional
 
 from .transcriber import TranscriptionResult
+
+
+class OutputBlockedError(PermissionError):
+    """Windows refused to let ParrotIA save a transcript into a folder."""
+
+
+def blocked_write_error(exc: OSError, target: Path) -> Optional[OutputBlockedError]:
+    """Describe a protected-folder denial so users can act on it.
+
+    Windows Security's Controlled folder access (ransomware protection) stops
+    unrecognized apps from writing into Documents, Desktop, Pictures, Videos
+    and Music. Python then reports a misleading "No such file or directory"
+    although the folder exists. Returns None for any other error.
+    """
+    if (
+        sys.platform == "win32"
+        and isinstance(exc, (FileNotFoundError, PermissionError))
+        and target.parent.is_dir()
+    ):
+        return OutputBlockedError(
+            f'Windows blocked saving "{target.name}" in {target.parent}. If '
+            "Controlled folder access is on, allow ParrotIA in Windows Security > "
+            "Virus & threat protection > Ransomware protection > Allow an app "
+            "through Controlled folder access, or save to a folder outside "
+            "Documents, Desktop, Pictures, Videos and Music."
+        )
+    return None
+
+
+def write_output(target: Path, text: str) -> None:
+    """Write a transcript as UTF-8, explaining protected-folder denials."""
+    try:
+        target.write_text(text, encoding="utf-8")
+    except OSError as exc:
+        blocked = blocked_write_error(exc, target)
+        if blocked is None:
+            raise
+        raise blocked from exc
 
 
 def _format_timestamp(seconds: float, *, separator: str) -> str:

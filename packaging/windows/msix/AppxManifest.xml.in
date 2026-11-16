@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendered by packaging/windows/msix.py, which fills the template fields at build time. -->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap2 uap3 desktop rescap">
+
+  <Identity Name="$name" Publisher="$publisher" Version="$version" ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>ParrotIA</DisplayName>
+    <PublisherDisplayName>$publisher_display_name</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <Description>Private, local audio and video transcription with Whisper.</Description>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="$min_version" MaxVersionTested="$max_version_tested" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="ParrotIA" Executable="$executable" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="ParrotIA"
+        Description="Private, local audio and video transcription with Whisper."
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" ShortName="ParrotIA" />
+      </uap:VisualElements>
+      <Extensions>
+        <!-- Lists ParrotIA under "Open with" (one window per file) and adds the
+             "Transcribe on Parrot" verb, which queues every selected file. -->
+        <uap3:Extension Category="windows.fileTypeAssociation">
+          <uap3:FileTypeAssociation Name="parrotia.media" MultiSelectModel="Document">
+            <uap:SupportedFileTypes>
+$file_types
+            </uap:SupportedFileTypes>
+            <uap2:SupportedVerbs>
+              <uap3:Verb Id="Transcribe" MultiSelectModel="Player" Parameters="--shell &quot;%1&quot;">$verb_title</uap3:Verb>
+            </uap2:SupportedVerbs>
+          </uap3:FileTypeAssociation>
+        </uap3:Extension>
+        <uap3:Extension Category="windows.appExecutionAlias" Executable="$executable" EntryPoint="Windows.FullTrustApplication">
+          <uap3:AppExecutionAlias>
+            <desktop:ExecutionAlias Alias="$alias" />
+          </uap3:AppExecutionAlias>
+        </uap3:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

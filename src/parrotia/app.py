@@ -6,10 +6,11 @@ Run with:  parrotia-gui   (or:  python -m parrotia.app)
 from __future__ import annotations
 
 import queue
+import sys
 import threading
 import traceback
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
@@ -333,14 +334,17 @@ class TranscriberApp(ctk.CTk):
             title="Select audio or video", filetypes=_AUDIO_FILETYPES
         )
         if path:
-            self.file_entry.delete(0, "end")
-            self.file_entry.insert(0, path)
+            self.set_input(path)
 
     def _browse_folder(self) -> None:
         path = filedialog.askdirectory(title="Select a folder of audio/video files")
         if path:
-            self.file_entry.delete(0, "end")
-            self.file_entry.insert(0, path)
+            self.set_input(path)
+
+    def set_input(self, path: str) -> None:
+        """Show ``path`` (a file or folder) as the input to transcribe."""
+        self.file_entry.delete(0, "end")
+        self.file_entry.insert(0, path)
 
     @staticmethod
     def _collect_audio_files(folder: Path) -> "list[Path]":
@@ -504,7 +508,7 @@ class TranscriberApp(ctk.CTk):
         for fmt in selected_formats:
             extension, writer = formats.WRITERS[fmt]
             target = outdir / f"{stem}{extension}"
-            target.write_text(writer(result), encoding="utf-8")
+            formats.write_output(target, writer(result))
             written.append(target)
         return written
 
@@ -605,8 +609,16 @@ class TranscriberApp(ctk.CTk):
         self.destroy()
 
 
-def main() -> None:
+def main(argv: Optional[List[str]] = None) -> None:
+    """Open the GUI, preloading a file or folder passed on the command line.
+
+    Windows' "Open with" (and ``parrotia-gui talk.mp3``) supplies the path.
+    """
+    args = sys.argv[1:] if argv is None else argv
     app = TranscriberApp()
+    initial = next((arg for arg in args if not arg.startswith("-")), None)
+    if initial:
+        app.set_input(initial)
     app.mainloop()
 
 

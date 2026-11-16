@@ -266,3 +266,70 @@ class TestWritersRegistry:
         ext, writer = WRITERS[fmt]
         output = writer(empty_result)
         assert isinstance(output, str)
+
+
+# ---------------------------------------------------------------------------
+# Protected-folder (Controlled folder access) write errors
+# ---------------------------------------------------------------------------
+
+
+class TestBlockedWrites:
+    def _deny(self, monkeypatch, error):
+        from pathlib import Path
+
+        def refuse(self, *args, **kwargs):
+            raise error
+
+        monkeypatch.setattr(Path, "write_text", refuse)
+
+    def test_denial_in_existing_folder_is_explained(self, monkeypatch, tmp_path):
+        import sys
+
+        from parrotia.formats import OutputBlockedError, write_output
+
+        monkeypatch.setattr(sys, "platform", "win32")
+        self._deny(monkeypatch, FileNotFoundError(2, "No such file or directory"))
+        with pytest.raises(OutputBlockedError) as caught:
+            write_output(tmp_path / "talk.txt", "hello")
+        message = str(caught.value)
+        assert "talk.txt" in message
+        assert "Controlled folder access" in message
+        assert isinstance(caught.value.__cause__, FileNotFoundError)
+
+    def test_missing_folder_keeps_original_error(self, monkeypatch, tmp_path):
+        import sys
+
+        from parrotia.formats import write_output
+
+        monkeypatch.setattr(sys, "platform", "win32")
+        with pytest.raises(FileNotFoundError) as caught:
+            write_output(tmp_path / "missing" / "talk.txt", "hello")
+        assert "Controlled folder access" not in str(caught.value)
+
+    def test_other_platforms_keep_original_error(self, monkeypatch, tmp_path):
+        import sys
+
+        from parrotia.formats import OutputBlockedError, write_output
+
+        monkeypatch.setattr(sys, "platform", "linux")
+        self._deny(monkeypatch, PermissionError(13, "Permission denied"))
+        with pytest.raises(PermissionError) as caught:
+            write_output(tmp_path / "talk.txt", "hello")
+        assert not isinstance(caught.value, OutputBlockedError)
+
+    def test_unrelated_errors_pass_through(self, monkeypatch, tmp_path):
+        import sys
+
+        from parrotia.formats import write_output
+
+        monkeypatch.setattr(sys, "platform", "win32")
+        self._deny(monkeypatch, OSError(28, "No space left on device"))
+        with pytest.raises(OSError, match="No space left"):
+            write_output(tmp_path / "talk.txt", "hello")
+
+    def test_writes_utf8(self, tmp_path):
+        from parrotia.formats import write_output
+
+        target = tmp_path / "talk.txt"
+        write_output(target, "Olá")
+        assert target.read_text(encoding="utf-8") == "Olá"

@@ -1,4 +1,4 @@
-"""Build a self-contained x64 Windows bundle and per-user Inno Setup installer."""
+"""Build a self-contained x64 Windows bundle, its Inno Setup installer and MSIX."""
 
 from __future__ import annotations
 
@@ -63,7 +63,12 @@ def find_compiler() -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--iscc", help="Path to the Inno Setup 6 compiler.")
-    parser.add_argument("--bundle-only", action="store_true")
+    parser.add_argument(
+        "--bundle-only", action="store_true", help="Skip the Inno Setup installer."
+    )
+    parser.add_argument(
+        "--msix", action="store_true", help="Also build the Microsoft Store MSIX."
+    )
     args = parser.parse_args()
     if sys.platform != "win32" or sys.maxsize <= 2**32:
         parser.error("Build with 64-bit Python on Windows.")
@@ -133,6 +138,16 @@ def main() -> None:
             check=True,
         )
         print(f"Installer: {ROOT / 'dist/installer'}")
+    if args.msix:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import msix
+
+        msix.build(
+            ROOT / "dist/ParrotIA",
+            __version__,
+            SUPPORTED_EXTENSIONS,
+            msix.load_identity(),
+        )
 
 
 if __name__ == "__main__":

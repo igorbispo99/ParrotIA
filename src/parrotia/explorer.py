@@ -113,6 +113,11 @@ def _save_transcript(source: Path, text: str) -> Path:
         except FileExistsError:
             index += 1
             continue
+        except OSError as exc:
+            blocked = formats.blocked_write_error(exc, target)
+            if blocked is None:
+                raise
+            raise blocked from exc
         try:
             with stream:
                 stream.write(text)
@@ -282,7 +287,10 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     if os.name != "nt":
         parser.error("Explorer integration is only available on Windows.")
-    directory = Path(os.environ["LOCALAPPDATA"]) / "ParrotIA" / "explorer-queue"
+    # The Store package keeps its queue apart from the Inno Setup build's.
+    from ._msix import local_data_dir
+
+    directory = local_data_dir() / "explorer-queue"
     requests = ExplorerQueue(directory)
     with requests.gate:
         requests.publish([str(Path(path).resolve()) for path in args.files])

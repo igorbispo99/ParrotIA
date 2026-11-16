@@ -1,4 +1,4 @@
-param([string]$Iscc = "", [switch]$BundleOnly)
+param([string]$Iscc = "", [switch]$BundleOnly, [switch]$Msix)
 $ErrorActionPreference = "Stop"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
 Push-Location $repoRoot
@@ -14,6 +14,7 @@ try {
     $buildArguments = @("packaging/windows/build.py")
     if ($Iscc) { $buildArguments += @("--iscc", $Iscc) }
     if ($BundleOnly) { $buildArguments += "--bundle-only" }
+    if ($Msix) { $buildArguments += "--msix" }
     & $buildPython @buildArguments
     if ($LASTEXITCODE -ne 0) { throw "Windows build failed." }
 } finally {

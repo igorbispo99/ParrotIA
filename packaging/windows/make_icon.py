@@ -5,10 +5,8 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 
-def main() -> None:
-    assets = Path(__file__).resolve().parents[2] / "src/parrotia/assets"
-    assets.mkdir(parents=True, exist_ok=True)
-    scale = 4
+def draw_badge(scale: int = 4) -> Image.Image:
+    """The badge at ``256 * scale`` pixels square, before downsampling."""
     image = Image.new("RGBA", (256 * scale, 256 * scale))
     draw = ImageDraw.Draw(image)
 
@@ -42,7 +40,13 @@ def main() -> None:
             radius=3 * scale,
             fill="#F3FBFA",
         )
-    image = image.resize((256, 256), Image.Resampling.LANCZOS)
+    return image
+
+
+def main() -> None:
+    assets = Path(__file__).resolve().parents[2] / "src/parrotia/assets"
+    assets.mkdir(parents=True, exist_ok=True)
+    image = draw_badge().resize((256, 256), Image.Resampling.LANCZOS)
     image.save(assets / "parrotia.png")
     image.save(
         assets / "parrotia.ico", sizes=[(s, s) for s in (16, 24, 32, 48, 64, 128, 256)]
