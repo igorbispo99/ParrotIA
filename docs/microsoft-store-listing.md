@@ -31,7 +31,7 @@ ParrotIA turns recordings into text on your own computer. It uses OpenAI's Whisp
 
 Choose one file or a whole folder, pick a model and language, and ParrotIA writes the transcript beside each file or to a folder you choose. Save plain text, Markdown, SRT or WebVTT subtitles, or JSON with timestamps, in any combination.
 
-In File Explorer, select one or more audio or video files, right-click and choose "Transcribe on Parrot" to transcribe them without opening the main window. On Windows 11 the command is under "Show more options".
+In File Explorer, select one or more audio or video files, right-click and choose "Transcribe on Parrot" to transcribe them without opening the main window. On Windows 11 the command is right in the main context menu.
 
 Models range from tiny (fastest) to large-v3 (most accurate), plus the fast large-v3-turbo and distil-large-v3. Whisper understands about 100 languages and can detect the language automatically. Transcription runs on the processor; larger models are slower on modest hardware.
 
@@ -103,7 +103,7 @@ No account or sign-in is needed.
 2. For a quick test, set Model to "tiny" (about 75 MB) or "base" (about 145 MB). The first use of a model downloads it once from huggingface.co; the default large-v3-turbo is about 1.6 GB.
 3. Click Transcribe. The transcript appears in the preview, and the files are saved next to the input.
 
-File Explorer integration: right-click one or more audio/video files and choose "Transcribe on Parrot" (on Windows 11, under "Show more options"). A small progress window transcribes them with the default settings.
+File Explorer integration: right-click one or more audio/video files and choose "Transcribe on Parrot" (in the main context menu on Windows 11). A small progress window transcribes them with the default settings.
 
 Models are stored in the app's private storage and removed on uninstall.
 ```

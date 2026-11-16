@@ -3,6 +3,6 @@ include README.md
 include CHANGELOG.md
 include requirements.txt
 recursive-include docs *.png
-recursive-include packaging *.py *.ps1 *.iss *.spec *.desktop *.xml *.xml.in *.json
+recursive-include packaging *.py *.ps1 *.iss *.spec *.desktop *.xml *.xml.in *.json *.cpp *.def
 recursive-include snap *.yaml *.desktop *.py *.md *.txt
 include snap/local/command-chain

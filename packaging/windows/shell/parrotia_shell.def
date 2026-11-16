@@ -1,0 +1,4 @@
+LIBRARY parrotia_shell
+EXPORTS
+    DllCanUnloadNow PRIVATE
+    DllGetClassObject PRIVATE

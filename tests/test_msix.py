@@ -32,6 +32,9 @@ NS = {
     "uap": "http://schemas.microsoft.com/appx/manifest/uap/windows10",
     "uap3": "http://schemas.microsoft.com/appx/manifest/uap/windows10/3",
     "desktop": "http://schemas.microsoft.com/appx/manifest/desktop/windows10",
+    "desktop4": "http://schemas.microsoft.com/appx/manifest/desktop/windows10/4",
+    "desktop5": "http://schemas.microsoft.com/appx/manifest/desktop/windows10/5",
+    "com": "http://schemas.microsoft.com/appx/manifest/com/windows10",
     "rescap": "http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities",
 }
 
@@ -233,22 +236,48 @@ def test_manifest_runs_frozen_app_with_full_trust():
     assert capability.get("Name") == "runFullTrust"
     family = root.find("m:Dependencies/m:TargetDeviceFamily", NS)
     assert family.get("Name") == "Windows.Desktop"
-    assert family.get("MinVersion") == "10.0.17763.0"
+    # Packaged Explorer commands need Windows 10 1903 or later.
+    assert family.get("MinVersion") == "10.0.19041.0"
     alias = root.find(".//desktop:ExecutionAlias", NS)
     assert alias.get("Alias") == "parrotia-app.exe"
+    # The Explorer command activates the app by this ID (shell_config.h).
+    assert application.get("Id") == msix_build.APPLICATION_ID
 
 
-def test_manifest_registers_every_media_type_and_explorer_verb():
+def test_manifest_offers_open_with_for_every_media_type():
     root = _manifest()
     association = root.find(".//uap3:FileTypeAssociation", NS)
     assert association.get("MultiSelectModel") == "Document"
     types = [t.text for t in association.findall(".//uap:FileType", NS)]
     assert sorted(types) == sorted({e.lower() for e in SUPPORTED_EXTENSIONS})
-    (verb,) = association.findall(".//uap3:Verb", NS)
-    assert verb.text == "Transcribe on Parrot"
-    assert verb.get("Parameters") == '--shell "%1"'
-    # One process receives the whole selection, like the Inno Setup verb.
-    assert verb.get("MultiSelectModel") == "Player"
+    # The Explorer command replaces the classic verb; both would duplicate
+    # "Transcribe on Parrot" under "Show more options".
+    assert association.find(".//uap3:Verb", NS) is None
+
+
+def test_manifest_registers_explorer_command_handler():
+    root = _manifest()
+    (item_type,) = root.findall(
+        ".//desktop4:FileExplorerContextMenus/desktop5:ItemType", NS
+    )
+    # Every file: the handler hides itself unless supported media is selected.
+    assert item_type.get("Type") == "*"
+    (verb,) = item_type.findall("desktop5:Verb", NS)
+    (com_class,) = root.findall(".//com:SurrogateServer/com:Class", NS)
+    assert verb.get("Clsid") == com_class.get("Id") == msix_build.SHELL_CLSID
+    assert com_class.get("Path") == msix_build.SHELL_DLL
+    assert com_class.get("ThreadingModel") == "STA"
+
+
+def test_shell_config_matches_manifest():
+    header = msix_build.render_shell_config([".MP3", ".wav", ".mp3"])
+    assert f'#define PARROTIA_SHELL_CLSID "{msix_build.SHELL_CLSID}"' in header
+    assert 'kTitle[] = L"Transcribe on Parrot";' in header
+    assert 'kExecutable[] = L"parrotia-gui.exe";' in header
+    assert f'kApplicationId[] = L"{msix_build.APPLICATION_ID}";' in header
+    assert 'kSupportedExtensions[] = {L".mp3", L".wav"};' in header
+    with pytest.raises(ValueError):
+        msix_build.render_shell_config(['.mp3"'])
 
 
 def test_manifest_rejects_bad_extensions():

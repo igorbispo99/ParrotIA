@@ -78,7 +78,19 @@ The owner chose to do all development work before creating the Partner Center ac
   - Revisit only if Partner Center or a tester raises it.
 
 **Still not verified:**
-- Where "Transcribe on Parrot" appears in the Windows 11 context menu: probably under "Show more options". Check by hand with the package installed.
+- Main-menu placement on Windows 11: needs a manual right-click check after installing with `test-msix.ps1 -KeepInstalled`.
+
+**Windows 11 main context menu (16 November 2026):**
+- The owner confirmed that the manifest `uap3:Verb` appears only under "Show more options".
+- The package now ships `parrotia_shell.dll`, a native `IExplorerCommand` handler (`packaging/windows/shell/`), registered with `desktop4:FileExplorerContextMenus` (ItemType `*`) and a `com:SurrogateServer` class. The CLSID `A62953B0-E72C-49CD-B8AC-09742C34D586` is fixed.
+- The handler hides itself unless the selection contains supported media.
+- It starts the app with `--shell <files>` through `IApplicationActivationManager`, using the package's AppUserModelID derived from its install folder, so the app keeps its package identity. Selections longer than one command line are split across processes, which the Explorer queue merges.
+- The `uap3:Verb` was removed to avoid a duplicate entry. The file association stays for "Open with".
+- `MinVersion` rose to 10.0.19041.0, because packaged Explorer commands need 1903 or later.
+- `msix.py` compiles the DLL with MSVC (`/W4 /WX`), found through vswhere and present on GitHub's Windows images.
+- Every build runs `shell_test.exe`. It loads the DLL as Explorer does, then checks the title, the icon, hide/show, the quoted arguments, the split of long selections, and the AppUserModelID when installed.
+- `test-msix.ps1` runs that test against the installed DLL, and also runs the smoke test through app activation.
+- This applies only to the Store package: the Inno build has no package identity, so its verb stays under "Show more options".
 - The Windows CI run of the same test (not pushed yet).
 - Background notes: sideloading needs a certificate trusted machine-wide. An unsigned package is refused (0x80073D2B), a certificate trusted only per-user is refused too (0x800B0109), and `appcert.exe` requires elevation.
 
@@ -169,7 +181,7 @@ Sources: [Prepare to package a desktop app](https://learn.microsoft.com/en-us/wi
 - `MultiSelectModel="Player"` passes every selected file to one process. `parrotia.explorer.main` already accepts `nargs="+"`.
 - `Parameters` takes `"%1"`.
 - A file type association also lists the app under **Open with** for those types. Launching through Open with currently opens an empty GUI.
-- A true Windows 11 top-level menu entry needs `desktop4:FileExplorerContextMenus` with a native C++ `IExplorerCommand` COM DLL. The docs don't say where plain `uap3:Verb` entries appear on Windows 11. The legacy Inno verbs appear under "Show more options", and the MSIX verbs probably will too; this must be tested.
+- A true Windows 11 top-level menu entry needs `desktop4:FileExplorerContextMenus` with a native C++ `IExplorerCommand` COM DLL. Plain `uap3:Verb` entries appear only under "Show more options" (confirmed 16 November 2026), so the package now uses an `IExplorerCommand` handler.
 
 ### Submission and certification
 

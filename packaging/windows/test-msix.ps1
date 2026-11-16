@@ -3,9 +3,14 @@
 # Must run elevated: Windows only installs a sideloaded package whose certificate
 # is trusted machine-wide (LocalMachine\TrustedPeople). The Store signs real
 # releases itself; this signature exists only for the duration of the test.
+#
+# -KeepInstalled leaves a passing package (and its test certificate) in place
+# for manual checks, such as the Explorer context menu, and prints the
+# commands that remove both afterwards.
 param(
     [Parameter(Mandatory = $true)][string]$Package,
-    [switch]$Wack
+    [switch]$Wack,
+    [switch]$KeepInstalled
 )
 $ErrorActionPreference = "Stop"
 $principal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
@@ -34,9 +39,49 @@ try {
 } finally { $archive.Dispose() }
 $name = $manifest.Package.Identity.Name
 $publisher = $manifest.Package.Identity.Publisher
-$extensions = @($manifest.Package.Applications.Application.Extensions.Extension.FileTypeAssociation.SupportedFileTypes.FileType)
-$verbId = $manifest.Package.Applications.Application.Extensions.Extension.FileTypeAssociation.SupportedVerbs.Verb.Id
+$application = $manifest.Package.Applications.Application
+$extensions = @($application.Extensions.Extension.FileTypeAssociation.SupportedFileTypes.FileType)
 $alias = Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps\parrotia-app.exe"
+# Built next to the DLL by msix.py; exercises the installed Explorer command.
+$shellTest = Join-Path $repoRoot "build\windows\msix\shell\shell_test.exe"
+if (-not (Test-Path -LiteralPath $shellTest)) { throw "Build the MSIX first (missing $shellTest)" }
+
+# The Explorer command launches the app through IApplicationActivationManager,
+# so the test activates it the same way.
+Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public static class ParrotIAActivation {
+    [ComImport, Guid("2e941141-7f97-4756-ba1d-9decde894a3d"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IApplicationActivationManager {
+        [PreserveSig] int ActivateApplication([MarshalAs(UnmanagedType.LPWStr)] string appUserModelId,
+            [MarshalAs(UnmanagedType.LPWStr)] string arguments, int options, out uint processId);
+    }
+    [ComImport, Guid("45BA127D-10A8-46EA-8AB7-56EA9078943C")]
+    class ApplicationActivationManager { }
+    public static uint Activate(string appUserModelId, string arguments) {
+        var manager = (IApplicationActivationManager)new ApplicationActivationManager();
+        uint processId;
+        Marshal.ThrowExceptionForHR(manager.ActivateApplication(appUserModelId, arguments, 0, out processId));
+        return processId;
+    }
+}
+"@
+
+function Invoke-PackagedSmokeTest([scriptblock]$Start, [string]$Report, [string]$How) {
+    $process = & $Start
+    $null = $process.Handle  # Keeps ExitCode readable after WaitForExit.
+    if (-not $process.WaitForExit(180000)) {
+        Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+        throw "Packaged smoke test ($How) did not finish within 3 minutes"
+    }
+    if (-not (Test-Path -LiteralPath $Report)) { throw "Packaged smoke test ($How) wrote no report" }
+    if ($process.ExitCode -ne 0) { throw "Packaged smoke test ($How) failed:`n$(Get-Content -LiteralPath $Report -Raw)" }
+    $data = Get-Content -LiteralPath $Report -Raw | ConvertFrom-Json
+    if ($data.samples -ne 1600) { throw "Packaged app ($How) did not decode audio correctly" }
+    if (-not $data.packaged) { throw "App ($How) did not detect its package identity" }
+    $data
+}
 
 if (Get-AppxPackage -Name $name) {
     throw "MSIX test refused to replace an installed $name package."
@@ -72,39 +117,41 @@ try {
     $reportDir = Join-Path $env:SystemDrive "ParrotIA-msix-test-$([guid]::NewGuid().ToString('N'))"
     New-Item -ItemType Directory -Path $reportDir | Out-Null
     $report = Join-Path $reportDir "packaged-smoke.json"
-    $smoke = Start-Process -FilePath $alias -ArgumentList @("--smoke-test", ('"' + $report + '"')) `
-        -WindowStyle Hidden -PassThru
-    $null = $smoke.Handle  # Keeps ExitCode readable after WaitForExit.
-    if (-not $smoke.WaitForExit(180000)) {
-        Stop-Process -Id $smoke.Id -Force -ErrorAction SilentlyContinue
-        throw "Packaged smoke test did not finish within 3 minutes"
+    $data = Invoke-PackagedSmokeTest -How "alias" -Report $report -Start {
+        Start-Process -FilePath $alias -ArgumentList @("--smoke-test", ('"' + $report + '"')) `
+            -WindowStyle Hidden -PassThru
     }
-    if (-not (Test-Path -LiteralPath $report)) { throw "Packaged smoke test wrote no report (exit $($smoke.ExitCode))" }
-    if ($smoke.ExitCode -ne 0) { throw "Packaged smoke test failed:`n$(Get-Content -LiteralPath $report -Raw)" }
     Copy-Item -LiteralPath $report -Destination (Join-Path $testRoot "packaged-smoke.json") -Force
-    $data = Get-Content -LiteralPath $report -Raw | ConvertFrom-Json
-    if ($data.samples -ne 1600) { throw "Packaged app did not decode audio correctly" }
-    if (-not $data.packaged) { throw "App did not detect its package identity" }
     # Models go to the package's LocalCache, which Windows deletes on uninstall.
     $packageData = Join-Path $env:LOCALAPPDATA "Packages\$($installed.PackageFamilyName)"
     $expectedCache = Join-Path $packageData "LocalCache\huggingface"
     if ($data.hf_home -ne $expectedCache) { throw "Unexpected packaged model cache: $($data.hf_home) (expected $expectedCache)" }
     if (-not (Test-Path -LiteralPath $expectedCache)) { throw "Model cache folder was not created: $expectedCache" }
 
-    # Explorer integration: every media type offers ParrotIA and the verb.
+    # "Open with": every media type lists the package.
     foreach ($extension in $extensions) {
         $openWith = Get-Item -LiteralPath "HKCU:\Software\Classes\$extension\OpenWithProgids" -ErrorAction SilentlyContinue
-        $progIds = @($openWith.Property | Where-Object { $_ -like "AppX*" })
-        $verbFound = $false
-        foreach ($progId in $progIds) {
-            if (Test-Path -LiteralPath "HKCU:\Software\Classes\$progId\Shell\$verbId") { $verbFound = $true }
+        if (-not @($openWith.Property | Where-Object { $_ -like "AppX*" })) {
+            throw "ParrotIA is not offered under Open with for $extension"
         }
-        if (-not $verbFound) {
-            $shells = ($progIds | ForEach-Object {
-                (Get-ChildItem -LiteralPath "HKCU:\Software\Classes\$_\Shell" -ErrorAction SilentlyContinue).PSChildName
-            }) -join ", "
-            throw "No '$verbId' verb registered for $extension (AppX ProgIDs: $($progIds -join ', '); verbs: $shells)"
-        }
+    }
+
+    # Explorer command: the installed DLL must target this package's app.
+    $installedDll = Join-Path $installed.InstallLocation "parrotia_shell.dll"
+    if (-not (Test-Path -LiteralPath $installedDll)) { throw "Installed package lacks parrotia_shell.dll" }
+    $shellScratch = Join-Path $reportDir "shell"
+    New-Item -ItemType Directory -Path $shellScratch | Out-Null
+    $shellOutput = & $shellTest $installedDll $shellScratch
+    $shellOutput | ForEach-Object { Write-Output "  $_" }
+    if ($LASTEXITCODE -ne 0) { throw "Explorer command checks failed against the installed DLL" }
+    $appId = "$($installed.PackageFamilyName)!$($application.Id)"
+    if (-not ($shellOutput -match [regex]::Escape("activates $appId"))) {
+        throw "Explorer command does not target $appId"
+    }
+    # ...and activating that app with arguments, as the DLL does, must reach it.
+    $activationReport = Join-Path $reportDir "activated-smoke.json"
+    $null = Invoke-PackagedSmokeTest -How "activation" -Report $activationReport -Start {
+        Get-Process -Id ([ParrotIAActivation]::Activate($appId, "--smoke-test `"$activationReport`""))
     }
 
     if ($Wack) {
@@ -124,21 +171,32 @@ try {
     $verificationFailure = $_
 } finally {
     if ($reportDir) { Remove-Item -LiteralPath $reportDir -Recurse -Force -ErrorAction SilentlyContinue }
+    $keep = $KeepInstalled -and -not $verificationFailure
     $leftover = Get-AppxPackage -Name $name
-    if ($leftover) {
+    if ($keep) {
+        Write-Output "Kept $($leftover.PackageFullName) installed. Remove it and its test certificate with (elevated):"
+        Write-Output "  Remove-AppxPackage -Package $($leftover.PackageFullName)"
+        Write-Output "  Remove-Item Cert:\LocalMachine\TrustedPeople\$($cert.Thumbprint), Cert:\CurrentUser\My\$($cert.Thumbprint)"
+    } elseif ($leftover) {
         try { Remove-AppxPackage -Package $leftover.PackageFullName } catch {
             $cleanupFailure = "Could not remove test package: $_"
         }
     }
-    foreach ($store in @("Cert:\LocalMachine\TrustedPeople", "Cert:\CurrentUser\My")) {
-        Remove-Item -LiteralPath (Join-Path $store $cert.Thumbprint) -ErrorAction SilentlyContinue
+    if (-not $keep) {
+        foreach ($store in @("Cert:\LocalMachine\TrustedPeople", "Cert:\CurrentUser\My")) {
+            Remove-Item -LiteralPath (Join-Path $store $cert.Thumbprint) -ErrorAction SilentlyContinue
+        }
     }
 }
 if ($verificationFailure) { throw $verificationFailure }
 if ($cleanupFailure) { throw $cleanupFailure }
+if ($keep) {
+    Write-Output "MSIX verified (removal not tested: -KeepInstalled)."
+    return
+}
 if (Get-AppxPackage -Name $name) { throw "Package still installed after removal" }
 if ($installed -and (Test-Path -LiteralPath (Join-Path $env:LOCALAPPDATA "Packages\$($installed.PackageFamilyName)"))) {
     throw "Uninstall left package data behind"
 }
 if (Test-Path -LiteralPath $alias) { throw "Uninstall left the app execution alias behind" }
-Write-Output "MSIX verified: install, packaged smoke test, cache redirection, Explorer verbs, clean removal."
+Write-Output "MSIX verified: install, packaged smoke tests (alias and app activation), model cache, Open with, Explorer command, clean removal."

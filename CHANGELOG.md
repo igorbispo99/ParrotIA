@@ -14,6 +14,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Certification Kit when available.
 - `parrotia-gui <file>` (and Windows "Open with") preloads the given file or
   folder.
+- In the Store package, "Transcribe on Parrot" appears in Windows 11's main
+  File Explorer context menu, through a small native `IExplorerCommand`
+  handler (`packaging/windows/shell/`). It is shown only for supported media.
 - Privacy policy (`docs/PRIVACY.md`).
 
 ### Fixed

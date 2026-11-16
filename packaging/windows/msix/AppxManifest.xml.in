@@ -3,11 +3,13 @@
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
-  xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2"
   xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+  xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap uap2 uap3 desktop rescap">
+  IgnorableNamespaces="uap uap3 desktop desktop4 desktop5 com rescap">
 
   <Identity Name="$name" Publisher="$publisher" Version="$version" ProcessorArchitecture="x64" />
 
@@ -27,7 +29,7 @@
   </Resources>
 
   <Applications>
-    <Application Id="ParrotIA" Executable="$executable" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="$application_id" Executable="$executable" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
         DisplayName="ParrotIA"
         Description="Private, local audio and video transcription with Whisper."
@@ -37,18 +39,31 @@
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" ShortName="ParrotIA" />
       </uap:VisualElements>
       <Extensions>
-        <!-- Lists ParrotIA under "Open with" (one window per file) and adds the
-             "Transcribe on Parrot" verb, which queues every selected file. -->
+        <!-- Lists ParrotIA under "Open with", one window per file. -->
         <uap3:Extension Category="windows.fileTypeAssociation">
           <uap3:FileTypeAssociation Name="parrotia.media" MultiSelectModel="Document">
             <uap:SupportedFileTypes>
 $file_types
             </uap:SupportedFileTypes>
-            <uap2:SupportedVerbs>
-              <uap3:Verb Id="Transcribe" MultiSelectModel="Player" Parameters="--shell &quot;%1&quot;">$verb_title</uap3:Verb>
-            </uap2:SupportedVerbs>
           </uap3:FileTypeAssociation>
         </uap3:Extension>
+        <!-- "Transcribe on Parrot" in File Explorer's main context menu (Windows 11)
+             and its classic menu. The handler shows itself only for supported
+             media and queues every selected file in one window. -->
+        <desktop4:Extension Category="windows.fileExplorerContextMenus">
+          <desktop4:FileExplorerContextMenus>
+            <desktop5:ItemType Type="*">
+              <desktop5:Verb Id="Transcribe" Clsid="$shell_clsid" />
+            </desktop5:ItemType>
+          </desktop4:FileExplorerContextMenus>
+        </desktop4:Extension>
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:SurrogateServer DisplayName="ParrotIA Explorer command">
+              <com:Class Id="$shell_clsid" Path="$shell_dll" ThreadingModel="STA" />
+            </com:SurrogateServer>
+          </com:ComServer>
+        </com:Extension>
         <uap3:Extension Category="windows.appExecutionAlias" Executable="$executable" EntryPoint="Windows.FullTrustApplication">
           <uap3:AppExecutionAlias>
             <desktop:ExecutionAlias Alias="$alias" />
