@@ -161,6 +161,16 @@ Validation: a Rawhide mock chain, fedora-review, and the real GUI drawn from the
 
 Copr builds 11335702, 11335704 and 11335706 succeeded on F44, F45 and Rawhide. Spec URLs point at the `v1.4.1` tag. The SRPMs are under `srpm-builds/<build id>/`.
 
+Review status (16 November 2026, evening):
+
+| Package | Status |
+| --- | --- |
+| python-darkdetect | approved (`fedora-review+`, clems.verna, 13:56 UTC) |
+| python-customtkinter | approved (`fedora-review+`, clems.verna, 17:06 UTC), after the 6.0.0 update |
+| parrotia | 1.4.1 posted, review not started |
+
+The account is still not in `packager`, so the approvals cannot be imported yet. The sponsorship ticket was updated with this status.
+
 ### Next steps
 
 1. **Answer reviewer comments** on the three bugs and post updated Spec/SRPM URLs for each change. Unanswered tickets get closed.
