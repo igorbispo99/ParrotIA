@@ -146,6 +146,21 @@ The guideline pages were read in a browser and match the process above. Reposito
 - Review swap request (15 November 2026): [Fedora Discussion topic 208370](https://discussion.fedoraproject.org/t/review-swap-parrotia-and-two-small-python-dependencies-python-darkdetect-python-customtkinter/208370), in Project Discussion (tags engineering, ai-ml-sig). The Package Review Swaps category needs `packager` membership, or another FAS group plus the FPCA, so it can't be used yet.
 - Self-introduction on devel: [thread](https://lists.fedoraproject.org/archives/list/devel@lists.fedoraproject.org/thread/LDUFT7U722BIAGLX77MIXAFYR6W7HOHF/). The account is subscribed to devel with MIME digests.
 
+### First review round (16 November 2026)
+
+Reviewer clems.verna reviewed the two libraries on 16 November 2026:
+- python-darkdetect was approved (`fedora-review+`). Two optional suggestions were applied: the no-op `%check` exclusions were dropped, and `Recommends: glib2` was added.
+- python-customtkinter needed two changes:
+  - The version moved to 6.0.0. ParrotIA's GUI and tests pass on it, so ParrotIA 1.4.1 allows `<7`.
+  - The glyph-only shapes font stays private, and the spec now explains why.
+
+  Also added: `Recommends: python3dist(pillow)` and a comment above `%check`.
+- parrotia was updated to 1.4.1.
+
+Validation: a Rawhide mock chain, fedora-review, and the real GUI drawn from the installed RPMs under Xvfb (customtkinter 6.0.0, all three fonts loaded).
+
+Copr builds 11335702, 11335704 and 11335706 succeeded on F44, F45 and Rawhide. Spec URLs point at the `v1.4.1` tag. The SRPMs are under `srpm-builds/<build id>/`.
+
 ### Next steps
 
 1. **Answer reviewer comments** on the three bugs and post updated Spec/SRPM URLs for each change. Unanswered tickets get closed.
