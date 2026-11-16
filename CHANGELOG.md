@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-11-16
+
+### Changed
+- Allow CustomTkinter 6 (`customtkinter>=5.2.2,<7`). The GUI and its tests
+  pass unchanged on 6.0.0, the version proposed for Fedora.
+
 ## [1.4.0] - 2026-11-13
 
 ### Added
@@ -116,6 +122,7 @@ First packaged release.
   package-relative.
 - Launchers (`run.bat`, `run.sh`) updated to run the package from source.
 
+[1.4.1]: https://github.com/igorbispo99/ParrotIA/releases/tag/v1.4.1
 [1.4.0]: https://github.com/igorbispo99/ParrotIA/releases/tag/v1.4.0
 [1.2.0]: https://github.com/igorbispo99/ParrotIA/releases/tag/v1.2.0
 [1.3.1]: https://github.com/igorbispo99/ParrotIA/releases/tag/v1.3.1

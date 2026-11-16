@@ -76,6 +76,7 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="1.4.1" date="2026-11-16"><description><p>Compatible with CustomTkinter 6.</p></description></release>
     <release version="1.4.0" date="2026-11-13">
       <description>
         <p>A whisper.cpp inference engine, used where faster-whisper is not available. Its speech models are pinned to fixed versions and verified after download.</p>

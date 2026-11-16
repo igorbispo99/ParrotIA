@@ -1,5 +1,5 @@
 Name:           python-customtkinter
-Version:        5.2.2
+Version:        6.0.0
 Release:        %autorelease
 Summary:        Modern, customizable widgets for Tkinter
 
@@ -28,6 +28,9 @@ Summary:        %{summary}
 Requires:       python3-tkinter
 # Roboto is unbundled in favor of Fedora's font package (see %%install).
 Requires:       google-roboto-fonts
+# CTkImage, the usual way to show images in widgets, needs Pillow, but upstream
+# does not declare it.
+Recommends:     python3dist(pillow)
 
 %description -n python3-customtkinter %_description
 
@@ -57,8 +60,17 @@ for face in Regular Medium; do
     ln -s %{_datadir}/fonts/google-roboto/Roboto-$face.ttf "$fontdir/Roboto-$face.ttf"
 done
 
+# CustomTkinter_shapes_font.otf deliberately stays inside the module instead of
+# going into %%{_fontdir}. It contains no text glyphs, only the circles,
+# checkmark and arrow shapes that CustomTkinter draws its rounded widgets with,
+# and only CustomTkinter refers to it by family name. A system-wide install
+# would put a font that cannot render text in every application's font menu,
+# and the loader would have to be patched to stop copying it into ~/.fonts.
+
 
 %check
+# Upstream's test/ directory is not in the sdist and holds manual GUI scripts
+# (windows and sleeps, no assertions), so an import smoke test is used instead.
 %pyproject_check_import
 
 
