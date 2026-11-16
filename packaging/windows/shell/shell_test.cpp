@@ -105,7 +105,10 @@ int wmain(int argc, wchar_t** argv) {
 
     HMODULE module = LoadLibraryW(dll.c_str());
     Check(module != nullptr, "DLL loads");
-    if (module == nullptr) return 1;
+    if (module == nullptr) {
+        std::printf("  LoadLibrary(%ls) failed: Windows error %lu\n", dll.c_str(), GetLastError());
+        return 1;
+    }
     using GetClassObject = HRESULT(STDAPICALLTYPE*)(REFCLSID, REFIID, void**);
     auto getClassObject = reinterpret_cast<GetClassObject>(GetProcAddress(module, "DllGetClassObject"));
     Check(getClassObject != nullptr && GetProcAddress(module, "DllCanUnloadNow") != nullptr,

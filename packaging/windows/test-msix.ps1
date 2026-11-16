@@ -139,9 +139,16 @@ try {
     # Explorer command: the installed DLL must target this package's app.
     $installedDll = Join-Path $installed.InstallLocation "parrotia_shell.dll"
     if (-not (Test-Path -LiteralPath $installedDll)) { throw "Installed package lacks parrotia_shell.dll" }
+    # Package files only execute inside their own package (a WIN://SYSAPPID
+    # condition in the folder's ACL); other processes, even elevated, may only
+    # read them. Explorer gets in through packaged COM, so test a byte-identical
+    # copy in a folder named like the install folder (the package full name).
+    $dllCopy = Join-Path $reportDir "$($installed.PackageFullName)\parrotia_shell.dll"
+    New-Item -ItemType Directory -Path (Split-Path $dllCopy) | Out-Null
+    Copy-Item -LiteralPath $installedDll -Destination $dllCopy
     $shellScratch = Join-Path $reportDir "shell"
     New-Item -ItemType Directory -Path $shellScratch | Out-Null
-    $shellOutput = & $shellTest $installedDll $shellScratch
+    $shellOutput = & $shellTest $dllCopy $shellScratch
     $shellOutput | ForEach-Object { Write-Output "  $_" }
     if ($LASTEXITCODE -ne 0) { throw "Explorer command checks failed against the installed DLL" }
     $appId = "$($installed.PackageFamilyName)!$($application.Id)"
