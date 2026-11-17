@@ -237,7 +237,7 @@ __marimo__/
 # ...but keep project docs that happen to be markdown.
 !README.md
 !CHANGELOG.md
-!docs/store-submission-plan.md
+!docs/*.md
 
 # Claude
 CLAUDE.md
