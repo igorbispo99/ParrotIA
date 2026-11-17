@@ -34,6 +34,7 @@ MANIFEST
 !packaging/ParrotIA.spec
 !packaging/fedora/*.spec
 .venv-windows/
+.venv-macos/
 .tmp/
 .tools/
 

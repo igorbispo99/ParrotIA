@@ -30,9 +30,14 @@ jobs:
     needs: ci
     uses: ./.github/workflows/linux.yml
 
+  macos:
+    name: Build macOS installers
+    needs: ci
+    uses: ./.github/workflows/macos.yml
+
   release:
     name: Publish GitHub Release
-    needs: [ci, windows, linux]
+    needs: [ci, windows, linux, macos]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,6 +55,12 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: linux-installers
+          path: dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: macos-installer-*
+          merge-multiple: true
           path: dist
 
       - name: Create GitHub Release

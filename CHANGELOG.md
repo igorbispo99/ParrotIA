@@ -4,6 +4,21 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-11-16
+
+### Added
+- macOS app bundles and drag-to-Applications DMGs for Apple Silicon and Intel,
+  with build/install smoke checks, release artifacts, and optional Developer ID
+  signing and notarization.
+- Automatic whisper.cpp selection on macOS, Metal acceleration on Apple Silicon,
+  explicit CPU/Metal device control, and CPU fallback for automatic Metal loading.
+- Bundled PyAV media decoding and CA certificates on macOS, plus a native model
+  cache under `~/Library/Application Support/parrotia/models`.
+
+### Fixed
+- Probe GUI availability in a separate process so macOS Tk is not initialized
+  and destroyed before the GUI tests start.
+
 ## [1.4.1] - 2026-11-16
 
 ### Changed

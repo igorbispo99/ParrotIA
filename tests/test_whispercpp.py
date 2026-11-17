@@ -31,6 +31,7 @@ from parrotia.transcriber import (
 )
 
 np = pytest.importorskip("numpy")
+import numpy.testing  # noqa: E402, F401 -- load before tests simulate another OS
 
 
 @pytest.fixture()
@@ -87,6 +88,7 @@ class TestDetectBackend:
     )
     def test_auto_detection(self, monkeypatch, installed, expected):
         monkeypatch.delenv("PARROTIA_BACKEND", raising=False)
+        monkeypatch.setattr("parrotia.transcriber.sys.platform", "linux")
         with patch(
             "parrotia.transcriber._module_available", side_effect=installed.__contains__
         ):
@@ -148,6 +150,7 @@ class TestModelFiles:
 
     @pytest.mark.skipif(os.name == "nt", reason="XDG layout applies to POSIX")
     def test_models_dir_xdg(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(wcpp.sys, "platform", "linux")
         monkeypatch.delenv("PARROTIA_MODELS_DIR", raising=False)
         monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
         assert wcpp.models_dir() == tmp_path / "parrotia" / "models"
@@ -258,6 +261,10 @@ class TestEnsureDownloaded:
 
 
 class TestLoadAudio:
+    @pytest.fixture(autouse=True)
+    def linux_decoder(self, monkeypatch):
+        monkeypatch.setattr(wcpp.sys, "platform", "linux")
+
     def test_missing_ffmpeg(self):
         with patch.object(wcpp.shutil, "which", return_value=None):
             with pytest.raises(RuntimeError, match="ffmpeg is required"):
@@ -431,7 +438,8 @@ class TestWhisperCppTranscription:
                 str(whispercpp_env["audio"]), model="distil-large-v3"
             )
 
-    def test_errors_are_not_retried_as_gpu_failures(self, whispercpp_env):
+    def test_errors_are_not_retried_as_gpu_failures(self, whispercpp_env, monkeypatch):
+        monkeypatch.setattr("parrotia.transcriber.metal_available", lambda: False)
         whispercpp_env["load_model"].side_effect = RuntimeError("cuda init failed")
         with pytest.raises(RuntimeError, match="cuda init failed"):
             Transcriber(backend=WHISPER_CPP).transcribe(
@@ -580,3 +588,91 @@ class TestCliBackend:
     def test_rejects_whispercpp_model_on_faster_whisper(self):
         with pytest.raises(SystemExit):
             _parse_args(["a.mp3", "--model", "large-v3-turbo-q5_0"])
+
+
+class TestMacOS:
+    def test_macos_prefers_whispercpp(self, monkeypatch):
+        monkeypatch.delenv("PARROTIA_BACKEND")
+        monkeypatch.setattr("parrotia.transcriber.sys.platform", "darwin")
+        monkeypatch.setattr("parrotia.transcriber._module_available", lambda name: True)
+        assert detect_backend() == WHISPER_CPP
+
+    @pytest.mark.parametrize(
+        "arch, devices",
+        [
+            ("arm64", ["auto", "metal", "cpu"]),
+            ("x86_64", ["auto", "cpu"]),
+        ],
+    )
+    def test_device_choices(self, monkeypatch, arch, devices):
+        monkeypatch.setattr("parrotia.transcriber.sys.platform", "darwin")
+        monkeypatch.setattr("parrotia.transcriber.platform.machine", lambda: arch)
+        assert backend_options(WHISPER_CPP).devices == devices
+
+    def test_native_model_cache(self, monkeypatch, tmp_path):
+        monkeypatch.delenv("PARROTIA_MODELS_DIR", raising=False)
+        monkeypatch.setattr(wcpp.sys, "platform", "darwin")
+        monkeypatch.setattr(wcpp.Path, "home", lambda: tmp_path)
+        assert (
+            wcpp.models_dir()
+            == tmp_path / "Library/Application Support/parrotia/models"
+        )
+
+    def test_cpu_selection_reloads_metal_model(self, whispercpp_env, monkeypatch):
+        monkeypatch.setattr("parrotia.transcriber.metal_available", lambda: True)
+        t = Transcriber(backend=WHISPER_CPP)
+        for device in ("metal", "metal", "cpu"):
+            t.transcribe(str(whispercpp_env["audio"]), model="tiny", device=device)
+        assert [
+            c.kwargs["device"] for c in whispercpp_env["load_model"].call_args_list
+        ] == ["metal", "cpu"]
+
+    def test_auto_retries_failed_metal_load_on_cpu(self, whispercpp_env, monkeypatch):
+        monkeypatch.setattr("parrotia.transcriber.metal_available", lambda: True)
+        load = whispercpp_env["load_model"]
+        load.side_effect = [RuntimeError("Metal init failed"), whispercpp_env["engine"]]
+        result = Transcriber(backend=WHISPER_CPP).transcribe(
+            str(whispercpp_env["audio"]), model="tiny"
+        )
+        assert result.segments
+        assert [c.kwargs["device"] for c in load.call_args_list] == ["metal", "cpu"]
+
+    def test_explicit_metal_failure_is_reported(self, whispercpp_env, monkeypatch):
+        monkeypatch.setattr("parrotia.transcriber.metal_available", lambda: True)
+        whispercpp_env["load_model"].side_effect = RuntimeError("Metal init failed")
+        with pytest.raises(RuntimeError, match="Metal init failed"):
+            Transcriber(backend=WHISPER_CPP).transcribe(
+                str(whispercpp_env["audio"]), model="tiny", device="metal"
+            )
+        assert whispercpp_env["load_model"].call_count == 1
+
+    def test_cpu_context_disables_gpu(self, monkeypatch):
+        import sys
+        import types
+
+        calls = []
+
+        def model(path, context_params=None, **kwargs):
+            calls.append(context_params)
+
+        monkeypatch.setitem(
+            sys.modules, "pywhispercpp.model", types.SimpleNamespace(Model=model)
+        )
+        monkeypatch.setitem(
+            sys.modules,
+            "_pywhispercpp",
+            types.SimpleNamespace(
+                whisper_print_system_info=lambda: "MTL : EMBED_LIBRARY = 1"
+            ),
+        )
+        wcpp.load_model(Path("model.bin"), 5, device="cpu")
+        wcpp.load_model(Path("model.bin"), 5, device="metal")
+        assert calls == [{"use_gpu": False}, {"use_gpu": True}]
+
+    def test_macos_decodes_without_ffmpeg(self, monkeypatch, silent_wav):
+        pytest.importorskip("av")
+        monkeypatch.setattr(wcpp.sys, "platform", "darwin")
+        with patch.object(wcpp.shutil, "which", return_value=None):
+            samples = wcpp.load_audio(str(silent_wav))
+        assert samples.dtype == np.float32
+        assert len(samples) == 8000

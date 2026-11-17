@@ -25,6 +25,7 @@
 - **Headless CLI** — same engine, scriptable for batch jobs
 - **Model benchmarking** — time several models on one file and compare their transcription speed (CLI)
 - **Windows installer** — includes Python and the app's dependencies, with a parrot icon and desktop/Start menu shortcuts
+- **macOS app** — drag to Applications; bundled Python and codecs, with Metal acceleration on Apple Silicon and CPU support on Intel
 - **Linux installers** — `.deb` and `.rpm` packages with bundled Python, an application-menu entry, and the same parrot icon
 - **Explorer transcription** — right-click one or several audio/video files, then choose **Transcribe on Parrot** to save text beside each file
 
@@ -39,6 +40,7 @@
 ## Requirements
 
 - **Windows installer:** 64-bit Windows 10 (1809 or later) or Windows 11. Python and FFmpeg are included; models download on first use.
+- **macOS app:** macOS 14 Sonoma or later, Apple Silicon or Intel (separate downloads). Models download on first use.
 - **Linux installers:** x86-64 Linux with glibc 2.35 or newer (Ubuntu 22.04+, Debian 12+, current Fedora, or RHEL 10+), and an X11/XWayland desktop.
 - **Install from Python/source:** Python 3.9 or later and pip.
 
@@ -76,6 +78,29 @@ the default model downloads approximately 1.6 GB; subsequent runs use the local
 model cache. Uninstalling through Windows Settings removes the app, shortcuts,
 and its Explorer entries, while preserving your transcripts and downloaded models.
 
+### macOS app (recommended)
+
+For releases containing macOS builds, download the DMG matching your Mac from
+[Releases](https://github.com/igorbispo99/ParrotIA/releases):
+
+- **Apple Silicon (M1 or newer):** `ParrotIA-<version>-macos-arm64.dmg`
+- **Intel:** `ParrotIA-<version>-macos-x86_64.dmg`
+
+Open the disk image, drag **ParrotIA** to **Applications**, eject the image, and
+launch ParrotIA from Applications. Python, Tk, the inference engine and media
+codecs are included; Homebrew and FFmpeg are unnecessary. Leave **Device → auto**
+to use Metal on Apple Silicon or CPU on Intel. Select **cpu** to disable GPU use.
+The first model download needs internet; subsequent transcription runs offline.
+`large-v3-turbo-q5_0` offers a smaller download (about 575 MB).
+
+Builds without a Developer ID signature and notarization may require opening
+**System Settings → Privacy & Security → Open Anyway** after the first launch
+attempt. Only approve builds from a source you trust. Release maintainers can
+produce signed, notarized DMGs using the build options below.
+
+To uninstall, move ParrotIA from Applications to the Trash. Transcripts and the
+model cache in `~/Library/Application Support/parrotia/models` are preserved.
+
 ### Linux installers
 
 Download the v1.4.1 `.deb` or `.rpm` from
@@ -102,7 +127,7 @@ Transcripts and the model cache in your home folder are preserved.
 Install the package (provides the `parrotia` and `parrotia-gui` commands):
 
 ```bash
-pip install parrotia
+python3 -m pip install parrotia
 ```
 
 Or install from a checkout of this repository:
@@ -115,6 +140,12 @@ pip install -e .
 
 > Prefer not to install? You can still run straight from the source tree with
 > `pip install -r requirements.txt` and the launchers below.
+
+On macOS, use Python **3.10 or newer** for the whisper.cpp/Metal backend (a
+native ARM Python on Apple Silicon). A source install also needs Python's Tk
+support; the macOS app above includes it. Python 3.9 keeps the faster-whisper
+CPU backend. Intel pip installations compile pywhispercpp from source and need
+Xcode Command Line Tools; use the DMG to avoid build tools.
 
 The first time you use a model it is downloaded automatically (a few hundred MB to ~1.5 GB depending on the model) and cached for offline use afterwards.
 
@@ -130,21 +161,23 @@ The app discovers these automatically at startup. Set **Device → cuda** in the
 
 ### Inference backends
 
-ParrotIA runs Whisper through one of two engines and picks one automatically:
+ParrotIA runs Whisper through one of two engines and picks one automatically (whisper.cpp is preferred on macOS):
 
 | Backend | Used when | Notes |
 |---------|-----------|-------|
-| [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (CTranslate2) | installed (the default for pip and the Windows/Linux installers) | CPU or NVIDIA GPU; all models in the guide below |
-| [whisper.cpp](https://github.com/ggml-org/whisper.cpp) via [pywhispercpp](https://github.com/absadiki/pywhispercpp) | faster-whisper is not installed (e.g. the native Fedora package) | CPU; adds `large-v3-turbo-q5_0`, a faster quantized turbo; no `distil-large-v3` |
+| [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (CTranslate2) | installed (the default outside macOS) | CPU or NVIDIA GPU; all models in the guide below |
+| [whisper.cpp](https://github.com/ggml-org/whisper.cpp) via [pywhispercpp](https://github.com/absadiki/pywhispercpp) | macOS, or faster-whisper is not installed (e.g. native Fedora) | Apple Silicon Metal or CPU; adds `large-v3-turbo-q5_0`, a faster quantized turbo; no `distil-large-v3` |
 
 To use whisper.cpp from a pip install, run `pip install pywhispercpp` and make
-sure `ffmpeg` is on your `PATH` (it decodes the audio). Then select it with
+sure `ffmpeg` is on your `PATH` on Linux/Windows (macOS uses bundled PyAV). Then select it with
 `--backend whisper.cpp` or by setting `PARROTIA_BACKEND=whisper.cpp`.
 
 whisper.cpp models are downloaded from Hugging Face on first use. Each file is
 pinned to an exact repository revision and checked against its SHA-256, and an
 interrupted download resumes where it stopped. Models go in
-`~/.local/share/parrotia/models` (`%LOCALAPPDATA%\parrotia\models` on Windows).
+`~/Library/Application Support/parrotia/models` on macOS,
+`~/.local/share/parrotia/models` on Linux, and `%LOCALAPPDATA%\parrotia\models`
+on Windows.
 To use a different folder, such as one copied to an offline machine, set
 `PARROTIA_MODELS_DIR`.
 
@@ -189,7 +222,7 @@ options:
   --backend             faster-whisper | whisper.cpp (default: detected)
   --model               Whisper model to use (default: large-v3-turbo)
   --language            Language code, e.g. en, pt (omit to auto-detect)
-  --device              cpu | cuda | auto (default: auto)
+  --device              cpu | cuda | metal | auto (backend/platform dependent; default: auto)
   --compute             int8 | float16 | float32 | auto (default: auto)
   --formats             One or more output formats: txt md srt vtt json
   --outdir              Output folder (defaults to the source file's folder)
@@ -285,15 +318,15 @@ print(WRITERS["srt"][1](result))   # render SRT subtitles as a string
 ## Releases
 
 Tagged versions are built into a wheel, source distribution, Windows `.exe`, and
-Linux `.deb` / `.rpm` installers and published as a
+Linux `.deb` / `.rpm` installers, and macOS `.dmg` apps and published as a
 [GitHub Release](https://github.com/igorbispo99/ParrotIA/releases) automatically
 by the `Release` workflow. To cut a release, bump `__version__` in
 [`src/parrotia/__init__.py`](src/parrotia/__init__.py), update
 [`CHANGELOG.md`](CHANGELOG.md), then push a matching tag:
 
 ```bash
-git tag v1.4.1
-git push origin v1.4.1
+git tag v1.5.0
+git push origin v1.5.0
 ```
 
 ### Build the Windows installer locally
@@ -336,6 +369,48 @@ For diagnosing policies that track the installer's temporary helper path, compil
 `dist/installer-check/ParrotIA-InstallerCheck.exe`, with companion `.bin` files
 that must stay beside it. It uses Inno's `UseSetupLdr=no` debug mode; the release
 installer is still a single EXE. Any Windows allowance is a manual user action.
+
+### Build the macOS app
+
+Build on each target architecture using native Python 3.12 with Tk support and
+Xcode Command Line Tools (macOS 14 or newer):
+
+```bash
+python3.12 -m venv .venv-macos
+source .venv-macos/bin/activate
+# Compile a portable runtime with embedded Metal kernels.
+CMAKE_ARGS="-DGGML_METAL=ON -DGGML_METAL_EMBED_LIBRARY=ON -DGGML_NATIVE=OFF" \
+  MACOSX_DEPLOYMENT_TARGET=14.0 pip install --no-binary pywhispercpp 'pywhispercpp==1.5.1'
+pip install '.[macos-build]'
+python packaging/macos/build.py
+python packaging/macos/test_installer.py
+```
+
+For an Intel CPU build, use `-DGGML_METAL=OFF` instead.
+
+The build produces `dist/ParrotIA.app` and an architecture-specific DMG under
+`dist/installer/`. It smoke-tests native imports, audio decoding and GUI startup
+without a model download, and requires a Metal-enabled runtime for ARM builds.
+For an additional frozen CPU/Metal inference check, set `PARROTIA_SMOKE_MODEL`
+to an existing GGML model file before building; optionally set
+`PARROTIA_SMOKE_AUDIO` to a short English speech recording. Results are included
+in `build/macos/smoke-test.json`.
+The installer check mounts the DMG, copies the app into a temporary folder,
+ejects the image, and tests that copy. The **macOS installers** workflow builds
+both architectures and releases attach both DMGs.
+
+For distribution without Gatekeeper overrides, sign and notarize with your own
+Apple Developer ID and a `notarytool` profile already stored in Keychain:
+
+```bash
+python packaging/macos/build.py \
+  --sign-identity "Developer ID Application: Your Name (TEAMID)" \
+  --notary-profile "parrotia-notary"
+```
+
+This signs the app and DMG, submits the DMG to Apple, staples the ticket and
+checks Gatekeeper acceptance. Without these options the app is ad-hoc signed
+for local use; CI artifacts are unsigned by Developer ID and unnotarized.
 
 ### Build the Linux installers
 

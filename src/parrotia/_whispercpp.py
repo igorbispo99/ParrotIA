@@ -17,6 +17,8 @@ import hashlib
 import os
 import shutil
 import subprocess
+import ssl
+import sys
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
@@ -131,6 +133,8 @@ def models_dir() -> Path:
         return Path(override).expanduser()
     if os.name == "nt":
         base = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
+    elif sys.platform == "darwin":
+        base = str(Path.home() / "Library" / "Application Support")
     else:
         base = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
     return Path(base) / "parrotia" / "models"
@@ -189,7 +193,13 @@ def ensure_downloaded(
         request = urllib.request.Request(spec.url, headers={"User-Agent": "ParrotIA"})
         if done:
             request.add_header("Range", f"bytes={done}-")
-        with urllib.request.urlopen(request, timeout=60) as response:
+        options = {}
+        if sys.platform == "darwin":
+            import certifi
+
+            # Frozen apps cannot rely on the build machine's OpenSSL CA paths.
+            options["context"] = ssl.create_default_context(cafile=certifi.where())
+        with urllib.request.urlopen(request, timeout=60, **options) as response:
             if done and response.status != 206:
                 # Server ignored the range request: start over.
                 done = 0
@@ -220,6 +230,11 @@ def ensure_downloaded(
 def load_audio(path: str):
     """Decode any ffmpeg-readable media file to 16 kHz mono float32 samples."""
     import numpy as np
+
+    if sys.platform == "darwin":
+        from ._audio import decode_audio
+
+        return decode_audio(path)
 
     ffmpeg = shutil.which("ffmpeg")
     if ffmpeg is None:
@@ -258,12 +273,26 @@ def _thread_count() -> int:
     return max(1, min(8, os.cpu_count() or 4))
 
 
-def load_model(path: Path, beam_size: int):
+def load_model(path: Path, beam_size: int, *, device: str = "auto"):
     """Create a pywhispercpp model for the GGML file at ``path``."""
     from pywhispercpp.model import Model  # imported lazily: native extension
 
+    if device == "metal":
+        import _pywhispercpp as native
+
+        if "MTL" not in str(native.whisper_print_system_info()):
+            raise RuntimeError(
+                "This whisper.cpp runtime was built without Metal support."
+            )
+    context = {}
+    if "context_params" in _explicit_parameters(Model):
+        context["context_params"] = {"use_gpu": device != "cpu"}
+    elif sys.platform == "darwin" or device == "metal":
+        raise RuntimeError("Install pywhispercpp >= 1.5.1 for macOS device selection.")
+
     return Model(
         str(path),
+        **context,
         # Silence whisper.cpp's verbose native logging on stderr.
         redirect_whispercpp_logs_to=None,
         params_sampling_strategy=1 if beam_size > 1 else 0,

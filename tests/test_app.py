@@ -11,17 +11,21 @@ are skipped automatically.
 from __future__ import annotations
 
 import threading
+import subprocess
+import sys
 
 import pytest
 
-# Guard: skip the entire module if a display is unavailable.
+# Probe in a child process: destroying a probe root before CTk starts can
+# crash macOS Tk when the real app processes its first idle events.
 try:
-    import tkinter as tk
-
-    _root = tk.Tk()
-    _root.destroy()
-    _HAS_DISPLAY = True
-except Exception:  # no tkinter module, or Tk can't reach a display
+    probe = subprocess.run(
+        [sys.executable, "-c", "import tkinter as tk; r = tk.Tk(); r.destroy()"],
+        capture_output=True,
+        timeout=20,
+    )
+    _HAS_DISPLAY = probe.returncode == 0
+except (OSError, subprocess.TimeoutExpired):
     _HAS_DISPLAY = False
 
 pytestmark = pytest.mark.skipif(

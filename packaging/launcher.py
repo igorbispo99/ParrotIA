@@ -16,11 +16,7 @@ def _smoke_test(report: Path) -> None:
     import wave
 
     import av
-    import ctranslate2
     import customtkinter
-    import tokenizers
-    from faster_whisper.audio import decode_audio
-    from faster_whisper.vad import get_vad_model
 
     from parrotia import __version__
     from parrotia.app import TranscriberApp
@@ -32,8 +28,48 @@ def _smoke_test(report: Path) -> None:
         audio.setframerate(16000)
         audio.writeframes(b"\0\0" * 1600)
     stream.seek(0)
-    samples = decode_audio(stream)
-    get_vad_model()  # Loads the bundled Silero ONNX model and native runtime.
+    details = {}
+    if sys.platform == "darwin":
+        import tempfile
+        import _pywhispercpp as native
+        from pywhispercpp.model import Model
+        from parrotia._audio import decode_audio
+        from parrotia.transcriber import detect_backend
+
+        with tempfile.TemporaryDirectory() as tmp:
+            wav = Path(tmp) / "test.wav"
+            wav.write_bytes(stream.getvalue())
+            samples = decode_audio(str(wav))
+        details.update(
+            backend=detect_backend(),
+            gpu_supported="MTL" in str(native.whisper_print_system_info()),
+        )
+        Model.system_info()  # Exercise the native library without a model download.
+        model_path = os.environ.get("PARROTIA_SMOKE_MODEL")
+        if model_path:
+            from parrotia import _whispercpp
+            from parrotia.transcriber import metal_available
+
+            audio_path = os.environ.get("PARROTIA_SMOKE_AUDIO")
+            speech = decode_audio(audio_path) if audio_path else samples
+            devices = ["cpu", "metal"] if metal_available() else ["cpu"]
+            details["inference"] = {}
+            for device in devices:
+                model = _whispercpp.load_model(Path(model_path), 1, device=device)
+                segments = model.transcribe(speech, language="en")
+                details["inference"][device] = " ".join(s.text for s in segments)
+                del model
+    else:
+        import ctranslate2
+        import tokenizers
+        from faster_whisper.audio import decode_audio
+        from faster_whisper.vad import get_vad_model
+
+        samples = decode_audio(stream)
+        get_vad_model()
+        details.update(
+            ctranslate2=ctranslate2.__version__, tokenizers=tokenizers.__version__
+        )
     app = TranscriberApp()
     app.withdraw()
     app.update()
@@ -44,10 +80,9 @@ def _smoke_test(report: Path) -> None:
                 "version": __version__,
                 "samples": len(samples),
                 "av": av.__version__,
-                "ctranslate2": ctranslate2.__version__,
                 "customtkinter": customtkinter.__version__,
-                "tokenizers": tokenizers.__version__,
                 "tk": tkinter.TkVersion,
+                **details,
             },
             indent=2,
         ),

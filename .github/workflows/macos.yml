@@ -1,0 +1,50 @@
+name: macOS installers
+
+on:
+  workflow_dispatch: {}
+  workflow_call: {}
+  push:
+    branches: [main, master]
+    paths: ["src/**", "packaging/**", "pyproject.toml", ".github/workflows/macos.yml"]
+  pull_request:
+    paths: ["src/**", "packaging/**", "pyproject.toml", ".github/workflows/macos.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            arch: arm64
+            metal: "ON"
+          - os: macos-15-intel
+            arch: x86_64
+            metal: "OFF"
+    runs-on: ${{ matrix.os }}
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "14.0"
+      # Embed Metal kernels so the app needs no compiler or SDK at runtime.
+      CMAKE_ARGS: "-DGGML_METAL=${{ matrix.metal }} -DGGML_METAL_EMBED_LIBRARY=ON -DGGML_NATIVE=OFF"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build native whisper.cpp runtime
+        # Source build makes the Metal/portable CPU flags explicit on each architecture.
+        run: python -m pip install --no-binary pywhispercpp 'pywhispercpp==1.5.1'
+      - name: Install application and build dependencies
+        run: python -m pip install '.[macos-build]'
+      - name: Build and smoke-test app and DMG
+        run: python packaging/macos/build.py
+      - name: Verify drag-install from disk image
+        run: python packaging/macos/test_installer.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer-${{ matrix.arch }}
+          path: dist/installer/*.dmg
+          if-no-files-found: error

@@ -5,10 +5,9 @@ a :class:`Transcriber` that loads models lazily, caches them, reports progress
 through a callback, and supports cooperative cancellation. The GUI imports this;
 it could equally be driven from a script or a test.
 
-Two inference backends are supported. faster-whisper is the default wherever it
-is installed (pip, Windows/Linux installers). whisper.cpp, through
-``pywhispercpp``, is used where faster-whisper is unavailable — notably the
-native Fedora package. ``PARROTIA_BACKEND`` forces a choice.
+Two inference backends are supported. whisper.cpp is preferred on macOS for
+Apple Silicon Metal acceleration. faster-whisper is preferred elsewhere when
+installed. ``PARROTIA_BACKEND`` forces a choice.
 """
 
 from __future__ import annotations
@@ -16,6 +15,8 @@ from __future__ import annotations
 import glob
 import importlib.util
 import os
+import platform
+import sys
 import site
 import threading
 from dataclasses import dataclass, field
@@ -138,7 +139,7 @@ def _module_available(name: str) -> bool:
 def detect_backend() -> str:
     """Pick the inference backend: ``PARROTIA_BACKEND``, else what's installed.
 
-    faster-whisper wins when both are installed. If neither is, faster-whisper
+    whisper.cpp wins on macOS; faster-whisper wins elsewhere. If neither is, faster-whisper
     is returned so the eventual import error names the default dependency.
     """
     requested = os.environ.get("PARROTIA_BACKEND", "").strip().lower()
@@ -148,11 +149,21 @@ def detect_backend() -> str:
                 f"PARROTIA_BACKEND={requested!r} is not one of: {', '.join(BACKENDS)}"
             )
         return requested
+    if sys.platform == "darwin" and _module_available("pywhispercpp"):
+        return WHISPER_CPP
     if _module_available("faster_whisper"):
         return FASTER_WHISPER
     if _module_available("pywhispercpp"):
         return WHISPER_CPP
     return FASTER_WHISPER
+
+
+def metal_available() -> bool:
+    """Whether this process can use the Apple Silicon Metal backend."""
+    return sys.platform == "darwin" and platform.machine().lower() in (
+        "arm64",
+        "aarch64",
+    )
 
 
 def backend_options(backend: Optional[str] = None) -> BackendOptions:
@@ -169,8 +180,8 @@ def backend_options(backend: Optional[str] = None) -> BackendOptions:
             name=WHISPER_CPP,
             models=list(_whispercpp.AVAILABLE_MODELS),
             model_sizes=dict(_whispercpp.MODEL_SIZES),
-            # whisper.cpp runs on the CPU here; precision is fixed by the model file.
-            devices=["auto", "cpu"],
+            # Precision is fixed by the GGML model file.
+            devices=["auto", "metal", "cpu"] if metal_available() else ["auto", "cpu"],
             compute_types=["auto"],
         )
     if backend == FASTER_WHISPER:
@@ -407,7 +418,14 @@ class Transcriber:
     ) -> TranscriptionResult:
         if self.backend == WHISPER_CPP:
             return self._transcribe_whispercpp(
-                path, model, language, beam_size, vad_filter, report, check_cancel
+                path,
+                model,
+                language,
+                device,
+                beam_size,
+                vad_filter,
+                report,
+                check_cancel,
             )
         downloading = not self.is_model_cached(model, FASTER_WHISPER)
         if downloading:
@@ -462,16 +480,16 @@ class Transcriber:
         )
 
     # ------------------------------------------------------- whisper.cpp ---
-    def _load_whispercpp(self, model: str, beam_size: int):
+    def _load_whispercpp(self, model: str, beam_size: int, device: str):
         from . import _whispercpp
 
         # Beam search vs greedy is fixed when the whisper.cpp model is created.
-        key = (WHISPER_CPP, model, beam_size > 1)
+        key = (WHISPER_CPP, model, beam_size > 1, device)
         with self._lock:
             if key == self._model_key and self._model is not None:
                 return self._model
             path = _whispercpp.model_path(_whispercpp.MODEL_FILES[model])
-            self._model = _whispercpp.load_model(path, beam_size)
+            self._model = _whispercpp.load_model(path, beam_size, device=device)
             self._model_key = key
             return self._model
 
@@ -480,6 +498,7 @@ class Transcriber:
         path: Path,
         model: str,
         language: Optional[str],
+        device: str,
         beam_size: int,
         vad_filter: bool,
         report,
@@ -487,6 +506,13 @@ class Transcriber:
     ) -> TranscriptionResult:
         from . import _whispercpp
 
+        if device not in backend_options(WHISPER_CPP).devices:
+            raise ValueError(
+                f"Device {device!r} is unavailable for whisper.cpp on this machine"
+            )
+        resolved_device = "metal" if device == "auto" and metal_available() else device
+        if resolved_device == "auto":
+            resolved_device = "cpu"
         spec = _whispercpp.MODEL_FILES.get(model)
         if spec is None:
             raise ValueError(
@@ -514,7 +540,13 @@ class Transcriber:
 
         report(0.0, f"Loading model '{model}'…")
         check_cancel()
-        whisper = self._load_whispercpp(model, beam_size)
+        try:
+            whisper = self._load_whispercpp(model, beam_size, resolved_device)
+        except RuntimeError:
+            if device != "auto" or resolved_device != "metal":
+                raise
+            report(0.0, "Metal unavailable — falling back to CPU…")
+            whisper = self._load_whispercpp(model, beam_size, "cpu")
 
         vad_model: Optional[Path] = None
         if vad_filter and _whispercpp.supports_vad(whisper):
