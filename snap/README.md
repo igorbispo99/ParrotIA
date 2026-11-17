@@ -181,11 +181,16 @@ Store status (17 November 2026):
   and GUI transcription. This revision fixes the Ubuntu 26.04 UTM rendering issue.
   Original Snap SHA-256:
   `6ca0060c578054bd648946f2e033499beeffac922582155cf24f335fa28fe559`.
-- **AMD64:** revision **2**, version **1.4.0**, remains on `stable` and `edge`.
-  Its store download is byte-identical to the CI artifact from run 43559661381
-  (sha256 `678d89d7…115fd4`). Revision 1 (1.3.1, devel grade) was the first edge upload.
+- **AMD64:** revision **5**, version **1.5.3**, released to `stable`, `candidate`
+  and `edge`. Built from the same `b43bdcc` source commit in
+  [native AMD64 build and strict package QA run 44192768523](https://github.com/igorbispo99/ParrotIA/actions/runs/44192768523/job/134426603048).
+  [Signed Store delivery QA run 44198614133](https://github.com/igorbispo99/ParrotIA/actions/runs/44198614133)
+  verified byte identity, model download/offline reuse, visible text/shape glyphs,
+  and GUI transcription. Original Snap SHA-256:
+  `bd1974782f269be1ecdd0bb18ccd0dbbab84bef75e23bb09a430705f82b2ff4c`.
 
-Ubuntu ARM64 users can install the stable Store-signed package with
+
+Ubuntu AMD64 and ARM64 users can install the stable Store-signed package with
 `sudo snap install parrotia` and launch it with `parrotia.gui`.
 
 Official references:
