@@ -128,6 +128,8 @@ Add the ParrotIA repository as a custom tap, then install the app:
 
 ```bash
 brew tap igorbispo99/parrotia https://github.com/igorbispo99/ParrotIA
+# If Homebrew requires explicit trust (Homebrew 7+):
+brew trust --cask igorbispo99/parrotia/parrotia
 brew install --cask igorbispo99/parrotia/parrotia
 ```
 
