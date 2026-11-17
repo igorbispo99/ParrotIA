@@ -28,6 +28,7 @@ source-code: https://github.com/igorbispo99/ParrotIA
 website: https://github.com/igorbispo99/ParrotIA
 platforms:
   amd64:
+  arm64:
 
 apps:
   parrotia:

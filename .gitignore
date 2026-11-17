@@ -36,6 +36,7 @@ MANIFEST
 !packaging/fedora/*.spec
 .venv-windows/
 .venv-macos/
+.venv-linux-arm64/
 .tmp/
 .tools/
 

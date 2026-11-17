@@ -54,7 +54,8 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: linux-installers
+          pattern: linux-installers-*
+          merge-multiple: true
           path: dist
 
       - uses: actions/download-artifact@v4

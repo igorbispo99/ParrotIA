@@ -13,7 +13,11 @@ permissions:
 
 jobs:
   source-tests:
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,7 +37,15 @@ jobs:
           HF_HUB_OFFLINE=1 xvfb-run -a python -m pytest
   build:
     needs: source-tests
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            arch: amd64
+          - os: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Validate desktop entry and shell launcher
@@ -47,6 +59,7 @@ jobs:
         id: snapcraft
         with:
           snapcraft-channel: latest/stable
+          snapcraft-args: --platform=${{ matrix.arch }}
       - name: Install strictly confined package
         env:
           SNAP_FILE: ${{ steps.snapcraft.outputs.snap }}
@@ -71,13 +84,13 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: parrotia-snap-qa
+          name: parrotia-snap-qa-${{ matrix.arch }}
           path: dist/snap-review/
       - name: Preserve package for review
         if: ${{ always() && steps.snapcraft.outputs.snap != '' }}
         uses: actions/upload-artifact@v4
         with:
-          name: parrotia-snap-amd64
+          name: parrotia-snap-${{ matrix.arch }}
           path: ${{ steps.snapcraft.outputs.snap }}
           if-no-files-found: error
       - name: Remove test installation

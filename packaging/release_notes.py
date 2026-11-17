@@ -44,8 +44,10 @@ def render_release_notes(changelog: str, tag: str, assets: list[str]) -> str:
         ("macOS · Apple Silicon", lambda n: n.endswith("-macos-arm64.dmg")),
         ("macOS · Intel", lambda n: n.endswith("-macos-x86_64.dmg")),
         ("Windows · x64", lambda n: n.endswith(".exe")),
-        ("Linux · Debian / Ubuntu", lambda n: n.endswith(".deb")),
-        ("Linux · Fedora / RPM", lambda n: n.endswith(".rpm")),
+        ("Linux · Debian / Ubuntu · x86-64", lambda n: n.endswith("_amd64.deb")),
+        ("Linux · Debian / Ubuntu · ARM64", lambda n: n.endswith("_arm64.deb")),
+        ("Linux · Fedora / RPM · x86-64", lambda n: n.endswith(".x86_64.rpm")),
+        ("Linux · Fedora / RPM · ARM64", lambda n: n.endswith(".aarch64.rpm")),
         ("Python package", lambda n: n.endswith(".whl")),
         ("Source archive", lambda n: n.endswith(".tar.gz")),
     ]

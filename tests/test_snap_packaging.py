@@ -127,16 +127,25 @@ def test_staging_includes_source_and_inventory_without_workspace_secrets(
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Run POSIX launcher checks on Linux")
-def test_launcher_uses_persistent_cache_and_preserves_arguments(tmp_path):
+@pytest.mark.parametrize("triplet", ["x86_64-linux-gnu", "aarch64-linux-gnu"])
+def test_launcher_uses_persistent_cache_and_preserves_arguments(tmp_path, triplet):
     common = tmp_path / "common with spaces"
-    env = dict(os.environ, SNAP=str(tmp_path / "snap"), SNAP_USER_COMMON=str(common))
+    snap = tmp_path / "snap"
+    native = snap / "usr/lib" / triplet
+    native.mkdir(parents=True)
+    env = dict(
+        os.environ,
+        SNAP=str(snap),
+        SNAP_USER_COMMON=str(common),
+        LD_LIBRARY_PATH="/inherited/library",
+    )
     result = subprocess.run(
         [
             "sh",
             str(ROOT / "snap/local/command-chain"),
             "/bin/sh",
             "-c",
-            'printf "%s\\n" "$HF_HUB_CACHE" "$HF_HUB_DISABLE_TELEMETRY" "$PYTHONNOUSERSITE" "$1"',
+            'printf "%s\\n" "$HF_HUB_CACHE" "$HF_HUB_DISABLE_TELEMETRY" "$PYTHONNOUSERSITE" "$1" "$LD_LIBRARY_PATH"',
             "check",
             "audio with spaces.wav",
         ],
@@ -150,5 +159,6 @@ def test_launcher_uses_persistent_cache_and_preserves_arguments(tmp_path):
         "1",
         "1",
         "audio with spaces.wav",
+        f"{snap}/usr/lib:{native}:/inherited/library",
     ]
     assert (common / "huggingface/hub").is_dir()

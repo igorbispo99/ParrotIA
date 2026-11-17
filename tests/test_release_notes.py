@@ -56,3 +56,22 @@ def test_no_installer_links_are_invented():
 def test_empty_artifacts_fail():
     with pytest.raises(ValueError, match="No downloadable"):
         render(CHANGELOG, "v2.0.0", [])
+
+
+def test_linux_downloads_identify_architecture():
+    assets = [
+        "parrotia_2.0.0_amd64.deb",
+        "parrotia_2.0.0_arm64.deb",
+        "parrotia-2.0.0-1.x86_64.rpm",
+        "parrotia-2.0.0-1.aarch64.rpm",
+    ]
+    body = render(CHANGELOG, "2.0.0", assets)
+    for label in (
+        "Debian / Ubuntu · x86-64",
+        "Debian / Ubuntu · ARM64",
+        "Fedora / RPM · x86-64",
+        "Fedora / RPM · ARM64",
+    ):
+        assert label in body
+    for asset in assets:
+        assert body.count(f"/{asset})") == 1

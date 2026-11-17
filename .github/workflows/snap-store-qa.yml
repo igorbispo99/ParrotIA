@@ -1,21 +1,37 @@
 name: Snap Store delivery QA
 
 on:
-  push:
-    branches: [codex/snap-store]
-    paths: [".github/workflows/snap-store-qa.yml"]
   workflow_dispatch:
+    inputs:
+      architecture:
+        description: Architecture of the Store revision
+        type: choice
+        options: [arm64, amd64]
+        default: arm64
+        required: true
+      revision:
+        description: Exact Store revision to install from edge
+        type: string
+        required: true
+      sha256:
+        description: SHA-256 of the reviewed original Snap artifact
+        type: string
+        required: true
 
 permissions:
   contents: read
 
 jobs:
   store-delivery:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     env:
-      EXPECTED_REVISION: "1"
-      EXPECTED_SHA256: "11262300cc5757d24304a44d208f693002712a5c880084ef1106a9f6c87d0c2e"
+      EXPECTED_REVISION: ${{ inputs.revision }}
+      EXPECTED_SHA256: ${{ inputs.sha256 }}
     steps:
+      - name: Validate requested artifact identity
+        run: |
+          [[ "$EXPECTED_REVISION" =~ ^[0-9]+$ ]]
+          [[ "$EXPECTED_SHA256" =~ ^[0-9a-f]{64}$ ]]
       - name: Install desktop test tools
         run: |
           sudo apt-get update -qq
@@ -44,7 +60,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: snap-store-delivery-qa
+          name: snap-store-delivery-qa-${{ inputs.architecture }}
           path: review/
       - name: Remove test installation
         if: always()

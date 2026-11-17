@@ -94,12 +94,12 @@ for local use; CI artifacts are unsigned by Developer ID and unnotarized.
 
 ## Build the Linux installers
 
-Build on x86-64 Ubuntu 22.04 to keep the glibc baseline at 2.35:
+Build natively on x86-64 or ARM64 Ubuntu 22.04 to keep the glibc baseline at 2.35:
 
 ```bash
-sudo apt install rpm python3-tk xvfb xauth desktop-file-utils
-python -m venv .venv
-. .venv/bin/activate
+sudo apt install binutils rpm python3-venv python3-tk xvfb xauth desktop-file-utils
+python3 -m venv .venv-linux-arm64
+. .venv-linux-arm64/bin/activate
 pip install '.[linux-build]'
 xvfb-run -a python packaging/linux/build.py
 ```
@@ -108,7 +108,21 @@ The shared [`packaging/ParrotIA.spec`](../packaging/ParrotIA.spec) and launcher 
 the same self-contained desktop app on Windows and Linux. Linux packages install
 under `/opt/parrotia`, with a `parrotia-gui` launcher and application-menu entry.
 Outputs are `dist/installer/parrotia_<version>_amd64.deb` and
-`dist/installer/parrotia-<version>-1.x86_64.rpm`. Linux installers require no
-separate Python installation. The **Linux installers** CI workflow verifies both
+`dist/installer/parrotia-<version>-1.x86_64.rpm` on x86-64; ARM64 builds produce
+`parrotia_<version>_arm64.deb` and `parrotia-<version>-1.aarch64.rpm`. Linux
+installers require no separate Python installation. The **Linux installers** CI workflow verifies both
 packages by installing, running the frozen app, and uninstalling on an Ubuntu
-runner and in a clean Fedora container before release.
+runner and in a clean Fedora container on each architecture before release.
+
+On Apple Silicon with OrbStack, create a native build machine and run the same
+commands above inside it (the repository is accessible through the shared macOS
+path):
+
+```bash
+orb create -a arm64 ubuntu:22.04 parrotia-arm64
+orb -m parrotia-arm64
+cd /Users/<you>/path/to/ParrotIA  # use your checkout path
+```
+
+Keep the Linux virtual environment separate from macOS environments. Build on
+Ubuntu 22.04 rather than a newer distribution to retain glibc 2.35 compatibility.

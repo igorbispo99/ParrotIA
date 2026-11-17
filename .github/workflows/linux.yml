@@ -23,20 +23,30 @@ permissions:
 jobs:
   installers:
     # Build on the oldest supported glibc rather than linking against the latest.
-    runs-on: ubuntu-22.04
+    name: Linux installers (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            arch: amd64
+            rpm-arch: x86_64
+            python-arch: x64
+          - os: ubuntu-22.04-arm
+            arch: arm64
+            rpm-arch: aarch64
+            python-arch: arm64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          architecture: x64
+          architecture: ${{ matrix.python-arch }}
       - name: Check runner tools and install Python build dependencies
         run: |
-          # The Ubuntu 22.04 hosted image already contains these tools and Tk.
-          # Avoid unnecessary distro updates and dependence on mirror availability.
-          command -v rpmbuild
-          command -v dpkg-deb
-          command -v xvfb-run
+          sudo apt-get update -qq -o Acquire::Retries=3
+          sudo apt-get install -y binutils rpm xvfb xauth python3-tk desktop-file-utils
           python -c "import tkinter; print('Tk', tkinter.TkVersion)"
           python -m pip install ".[linux-build]"
       - name: Build and smoke-test standalone app, then DEB and RPM packages
@@ -46,11 +56,13 @@ jobs:
           if command -v desktop-file-validate >/dev/null; then
             desktop-file-validate packaging/linux/parrotia.desktop
           fi
+          test "$(dpkg-deb -f dist/installer/*.deb Architecture)" = "${{ matrix.arch }}"
+          test "$(rpm -qp --qf '%{ARCH}' dist/installer/*.rpm)" = "${{ matrix.rpm-arch }}"
           dpkg-deb --info dist/installer/*.deb
           rpm -qip dist/installer/*.rpm
       - uses: actions/upload-artifact@v4
         with:
-          name: linux-installers
+          name: linux-installers-${{ matrix.arch }}
           path: |
             dist/installer/*.deb
             dist/installer/*.rpm

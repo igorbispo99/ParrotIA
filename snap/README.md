@@ -1,18 +1,18 @@
 # ParrotIA Snap
 
-Status: stable-grade package for amd64 on core24. Strict confinement, CPU inference.
+Status: stable-grade package for amd64 and arm64 on core24. Strict confinement, CPU inference.
 CI builds the snap but never uploads it; store uploads are done manually with `snapcraft upload`.
-The snap version follows `parrotia.__version__` (1.4.1 on `main`). The snap bundles
+The snap version follows `parrotia.__version__` (currently 1.5.2). The snap bundles
 faster-whisper, so it uses the default backend; the whisper.cpp backend is used only
 where faster-whisper is missing, such as the Fedora package.
 
 ## Build
 
-Use a clean checkout on amd64 Linux with Snapcraft and its LXD build provider:
+Use a clean checkout on native amd64 or arm64 Linux with Snapcraft and its LXD build provider:
 
 ```sh
 sudo snap install snapcraft --classic
-snapcraft
+snapcraft --platform=arm64  # use amd64 on x86-64
 sudo snap install --dangerous ./parrotia_*.snap
 parrotia --help
 parrotia.gui
@@ -21,11 +21,12 @@ parrotia.check
 
 The `Snap package` GitHub Actions workflow builds the package, installs it under
 strict confinement, exercises decoding/Silero/native libraries and the GUI, then
-uploads a review artifact. It does not need store credentials or publish anything.
+uploads architecture-specific review artifacts. It does not need store credentials or publish anything.
 `grade: stable` allows the reviewed revision to be released to the stable channel.
 The version is read from the literal `__version__` in `src/parrotia/__init__.py`.
 
 `snap/requirements.txt` hashes the complete bootstrap Python dependency set.
+Both architecture wheel hashes are retained; pip selects the native wheel.
 The final PyAV 18.1.0, CTranslate2 4.9.0 and NumPy 2.5.4 wheels are rebuilt from
 `snap/native-sources.json`, with separately hashed build tools. Their bootstrap
 wheel files and private native-library bundles are removed before staging.
@@ -44,6 +45,18 @@ build commands, configure/CMake output and upstream notices under
 checks actual library versions, configuration/license strings, source hashes and
 the absence of the three original wheel-native bundles inside the installed Snap.
 Ubuntu package revisions remain recorded by Snapcraft's build manifest.
+
+For a local ARM64 build on Apple Silicon, create an Ubuntu 24.04 OrbStack machine
+(`orb create -a arm64 ubuntu:24.04 parrotia-snap-arm64`). Inside that expendable
+machine, use `snapcraft --destructive-mode --platform=arm64`. This mode installs
+build packages on the VM. OrbStack reports partial Snap confinement; the native
+GitHub ARM runner performs the strict-confinement and refresh/revert QA before
+Store publication. Do not treat an OrbStack-only check as confinement validation.
+
+The Store uses the same `parrotia` listing and channels for both architectures.
+Upload the tested ARM64 artifact to edge first, verify signed delivery on an ARM64
+Ubuntu host, then promote that exact revision to stable after QA. Architecture
+selection is automatic for users running `sudo snap install parrotia`.
 
 ## Files, privacy and models
 

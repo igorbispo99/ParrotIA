@@ -31,7 +31,7 @@ the default `large-v3-turbo` download is about 1.6 GB. Smaller models are availa
 | --- | --- | --- |
 | Windows | `windows-x64-setup.exe` | 64-bit Windows 10 (1809+) or Windows 11 |
 | macOS | `macos-arm64.dmg` or `macos-x86_64.dmg` | macOS 14+, Apple Silicon or Intel |
-| Linux | `.deb` or `.rpm` | x86-64, glibc 2.35+, X11/XWayland |
+| Linux | `.deb` or `.rpm` | x86-64 or ARM64, glibc 2.35+, X11/XWayland |
 
 On macOS, open the DMG and drag **ParrotIA** to **Applications**. On Windows, run
 the setup wizard. On Linux, install the package with `apt` or `dnf`.

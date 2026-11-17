@@ -1,4 +1,4 @@
-"""Build self-contained Linux x86-64 DEB and RPM desktop packages.
+"""Build self-contained Linux x86-64 / ARM64 DEB and RPM desktop packages.
 
 Build on Ubuntu 22.04 (glibc 2.35) for compatibility with newer distributions.
 Requires dpkg-deb, rpmbuild, and an X display (xvfb-run on CI).
@@ -16,6 +16,20 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from parrotia import __version__  # noqa: E402
+
+
+def package_architectures(machine: str) -> tuple[str, str]:
+    """Return Debian and RPM architecture names for a native build."""
+    architectures = {
+        "x86_64": ("amd64", "x86_64"),
+        "amd64": ("amd64", "x86_64"),
+        "aarch64": ("arm64", "aarch64"),
+        "arm64": ("arm64", "aarch64"),
+    }
+    try:
+        return architectures[machine.lower()]
+    except KeyError:
+        raise ValueError(f"Unsupported Linux architecture: {machine}") from None
 
 
 def stage_package(bundle: Path, stage: Path) -> None:
@@ -39,14 +53,14 @@ def stage_package(bundle: Path, stage: Path) -> None:
     shutil.copy2(ROOT / "LICENSE", docs / "copyright")
 
 
-def build_deb(stage: Path, output: Path) -> None:
+def build_deb(stage: Path, output: Path, architecture: str) -> None:
     control = stage / "DEBIAN"
     control.mkdir()
     size = sum(p.stat().st_size for p in stage.rglob("*") if p.is_file()) // 1024
     (control / "control").write_text(
         "Package: parrotia\n"
         f"Version: {__version__}\n"
-        "Section: sound\nPriority: optional\nArchitecture: amd64\n"
+        f"Section: sound\nPriority: optional\nArchitecture: {architecture}\n"
         "Maintainer: Igor Bispo <igor.rabbit99@gmail.com>\n"
         f"Installed-Size: {size}\n"
         "Depends: libc6 (>= 2.35), libgcc-s1, libstdc++6, libgomp1, "
@@ -66,13 +80,13 @@ def build_deb(stage: Path, output: Path) -> None:
             "-Zxz",
             "-z3",
             str(stage),
-            str(output / f"parrotia_{__version__}_amd64.deb"),
+            str(output / f"parrotia_{__version__}_{architecture}.deb"),
         ],
         check=True,
     )
 
 
-def build_rpm(stage: Path, output: Path, work: Path) -> None:
+def build_rpm(stage: Path, output: Path, work: Path, architecture: str) -> None:
     top = work / "rpmbuild"
     for directory in ("BUILD", "BUILDROOT", "RPMS", "SOURCES", "SPECS", "SRPMS"):
         (top / directory).mkdir(parents=True, exist_ok=True)
@@ -84,7 +98,7 @@ def build_rpm(stage: Path, output: Path, work: Path) -> None:
         "Summary: Local audio and video transcription with Whisper\n"
         "License: AGPL-3.0-or-later\n"
         "URL: https://github.com/igorbispo99/ParrotIA\n"
-        f"Source0: {Path(archive).name}\nBuildArch: x86_64\n"
+        f"Source0: {Path(archive).name}\nBuildArch: {architecture}\n"
         # Private bundled libraries satisfy each other's ELF dependencies.
         # Auto-generation would incorrectly require them from system packages.
         "AutoReqProv: no\n"
@@ -119,19 +133,25 @@ def build_rpm(stage: Path, output: Path, work: Path) -> None:
         ],
         check=True,
     )
-    packages = list((top / "RPMS").rglob("*.rpm"))
+    packages = list(
+        (top / "RPMS" / architecture).glob(f"parrotia-{__version__}-1.*.rpm")
+    )
     if len(packages) != 1:
         raise RuntimeError(f"Expected one RPM, found {len(packages)}")
     shutil.copy2(packages[0], output)
 
 
 def main() -> None:
-    if sys.platform != "linux" or platform.machine() != "x86_64":
-        raise SystemExit("Build on x86-64 Linux (Ubuntu 22.04 recommended).")
-    for command in ("dpkg-deb", "rpmbuild"):
+    if sys.platform != "linux":
+        raise SystemExit("Build on Linux (Ubuntu 22.04 recommended).")
+    try:
+        deb_arch, rpm_arch = package_architectures(platform.machine())
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
+    for command in ("dpkg-deb", "rpmbuild", "objdump"):
         if shutil.which(command) is None:
             raise SystemExit(f"Required build tool is missing: {command}")
-    work = ROOT / "build/linux"
+    work = ROOT / "build/linux" / rpm_arch
     work.mkdir(parents=True, exist_ok=True)
     subprocess.run(
         [
@@ -172,8 +192,8 @@ def main() -> None:
         output = ROOT / "dist/installer"
         output.mkdir(parents=True, exist_ok=True)
         # Build RPM before adding Debian-only control metadata to the payload.
-        build_rpm(stage, output, work)
-        build_deb(stage, output)
+        build_rpm(stage, output, work, rpm_arch)
+        build_deb(stage, output, deb_arch)
     print(f"Linux installers: {output}")
 
 

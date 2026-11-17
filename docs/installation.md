@@ -6,7 +6,7 @@
 
 - **Windows installer:** 64-bit Windows 10 (1809 or later) or Windows 11. Python and FFmpeg are included; models download on first use.
 - **macOS app:** macOS 14 Sonoma or later, Apple Silicon or Intel (separate downloads). Models download on first use.
-- **Linux installers:** x86-64 Linux with glibc 2.35 or newer (Ubuntu 22.04+, Debian 12+, current Fedora, or RHEL 10+), and an X11/XWayland desktop.
+- **Linux installers:** x86-64 or ARM64 (AArch64) Linux with glibc 2.35 or newer (Ubuntu 22.04+, Debian 12+, current Fedora, or RHEL 10+), and an X11/XWayland desktop.
 - **Install from Python/source:** Python 3.9 or later and pip.
 
 ## Windows installer (recommended)
@@ -61,8 +61,12 @@ distribution's package manager so desktop-library dependencies are resolved
 ```bash
 # Debian / Ubuntu
 sudo apt install ./parrotia_1.5.2_amd64.deb
+# Debian / Ubuntu on ARM64
+sudo apt install ./parrotia_1.5.2_arm64.deb
 # Fedora / compatible RPM distributions
 sudo dnf install ./parrotia-1.5.2-1.x86_64.rpm
+# Fedora / compatible RPM distributions on ARM64
+sudo dnf install ./parrotia-1.5.2-1.aarch64.rpm
 ```
 
 Open **ParrotIA** from the applications menu, or run `parrotia-gui`. Both packages
@@ -72,6 +76,19 @@ the Explorer right-click action is specific to Windows.
 
 Remove the app with `sudo apt remove parrotia` or `sudo dnf remove parrotia`.
 Transcripts and the model cache in your home folder are preserved.
+
+## Snap Store (Ubuntu and other Snap-enabled distributions)
+
+```bash
+sudo snap install parrotia
+parrotia.gui
+```
+
+The Store selects the package for your CPU architecture. ARM64 publication and
+channel availability follow the [Snap release process](../snap/README.md).
+The Snap uses CPU inference and strict confinement. Models download on first use.
+To allow access to external drives, run `sudo snap connect parrotia:removable-media`.
+For scripts use `parrotia`; for package diagnostics use `parrotia.check`.
 
 ## Homebrew (macOS)
 

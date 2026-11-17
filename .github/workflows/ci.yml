@@ -23,6 +23,9 @@ jobs:
         # Ubuntu's latest image no longer provides our supported Python 3.9.
         os: [ubuntu-22.04, windows-latest, macos-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12"]
+        include:
+          - os: ubuntu-22.04-arm
+            python-version: "3.12"
 
     steps:
       - uses: actions/checkout@v4
