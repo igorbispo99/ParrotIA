@@ -2,7 +2,7 @@
 
 Status: stable-grade package for amd64 and arm64 on core24. Strict confinement, CPU inference.
 CI builds the snap but never uploads it; store uploads are done manually with `snapcraft upload`.
-The snap version follows `parrotia.__version__` (currently 1.5.2). The snap bundles
+The snap version follows `parrotia.__version__` (currently 1.5.3). The snap bundles
 faster-whisper, so it uses the default backend; the whisper.cpp backend is used only
 where faster-whisper is missing, such as the Fedora package.
 
@@ -173,13 +173,14 @@ There is no automated upload and no credential is stored in the repository.
 
 Store status (17 November 2026):
 
-- **ARM64:** revision **3**, version **1.5.2**, released to `stable`, `candidate`
-  and `edge`. Built from commit `a78c19a` in
-  [native build and strict package QA run 44105877105](https://github.com/igorbispo99/ParrotIA/actions/runs/44105877105).
-  [Signed Store delivery QA run 44109551810](https://github.com/igorbispo99/ParrotIA/actions/runs/44109551810)
-  verified byte identity, model download/offline reuse, and GUI transcription.
+- **ARM64:** revision **4**, version **1.5.3**, released to `stable`, `candidate`
+  and `edge`. Built from commit `b43bdcc` in
+  [native ARM64 build and strict package QA run 44192768523](https://github.com/igorbispo99/ParrotIA/actions/runs/44192768523/job/134426602934).
+  [Signed Store delivery QA run 44195761961](https://github.com/igorbispo99/ParrotIA/actions/runs/44195761961)
+  verified byte identity, model download/offline reuse, visible text/shape glyphs,
+  and GUI transcription. This revision fixes the Ubuntu 26.04 UTM rendering issue.
   Original Snap SHA-256:
-  `fc47cbf0e2361829af91b8890f91f753d0e2e54639695963aa3b744a90ff281d`.
+  `6ca0060c578054bd648946f2e033499beeffac922582155cf24f335fa28fe559`.
 - **AMD64:** revision **2**, version **1.4.0**, remains on `stable` and `edge`.
   Its store download is byte-identical to the CI artifact from run 43559661381
   (sha256 `678d89d7…115fd4`). Revision 1 (1.3.1, devel grade) was the first edge upload.
