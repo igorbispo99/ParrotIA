@@ -286,6 +286,25 @@ class Transcriber:
         self._model_key: Optional[tuple] = None
         self._lock = threading.Lock()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self.close()
+
+    def close(self) -> None:
+        """Release cached native resources before interpreter shutdown.
+
+        Call only after active transcription has stopped.
+        """
+        with self._lock:
+            model, self._model = self._model, None
+            self._model_key = None
+            if model is not None and self.backend == WHISPER_CPP:
+                from . import _whispercpp
+
+                _whispercpp.release_model(model)
+
     @staticmethod
     def is_model_cached(model_name: str, backend: Optional[str] = None) -> bool:
         """Return True if the model files are already downloaded locally."""
@@ -489,6 +508,10 @@ class Transcriber:
             if key == self._model_key and self._model is not None:
                 return self._model
             path = _whispercpp.model_path(_whispercpp.MODEL_FILES[model])
+            if self._model is not None:
+                _whispercpp.release_model(self._model)
+                self._model = None
+                self._model_key = None
             self._model = _whispercpp.load_model(path, beam_size, device=device)
             self._model_key = key
             return self._model

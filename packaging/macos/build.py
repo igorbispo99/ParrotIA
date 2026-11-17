@@ -74,6 +74,17 @@ def main() -> None:
             "The Apple Silicon app must bundle a Metal-enabled whisper.cpp runtime"
         )
 
+    if os.environ.get("PARROTIA_SMOKE_MODEL_NAME"):
+        for scenario in ("complete", "active"):
+            run(
+                str(app / "Contents/MacOS/parrotia-gui"),
+                "--lifecycle-smoke-test",
+                str(generated / f"lifecycle-{scenario}.json"),
+                scenario,
+                env=env,
+                timeout=60,
+            )
+
     output = ROOT / "dist/installer"
     output.mkdir(parents=True, exist_ok=True)
     dmg = output / f"ParrotIA-{__version__}-macos-{arch}.dmg"

@@ -130,6 +130,8 @@ def benchmark_models(
                     error=str(exc),
                 )
             )
+        finally:
+            engine.close()
     return runs
 
 

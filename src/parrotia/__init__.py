@@ -8,7 +8,8 @@ Typical programmatic use::
 
     from parrotia import Transcriber, WRITERS
 
-    result = Transcriber().transcribe("talk.mp3", model="large-v3-turbo")
+    with Transcriber() as engine:
+        result = engine.transcribe("talk.mp3", model="large-v3-turbo")
     print(WRITERS["txt"][1](result))
 """
 
@@ -16,7 +17,7 @@ from __future__ import annotations
 
 # Single source of truth for the version. Kept as a plain string literal so the
 # build backend can read it without importing the package (and its heavy deps).
-__version__ = "1.5.2"
+__version__ = "1.5.3"
 
 # Engine API is import-light (the inference backend is loaded lazily on first use), so
 # it is safe to re-export here. The GUI (parrotia.app) is intentionally *not*

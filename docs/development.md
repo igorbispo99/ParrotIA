@@ -47,7 +47,8 @@ The transcription engine is UI-agnostic and importable:
 ```python
 from parrotia import Transcriber, WRITERS
 
-result = Transcriber().transcribe("talk.mp3", model="large-v3-turbo", language="en")
+with Transcriber() as engine:
+    result = engine.transcribe("talk.mp3", model="large-v3-turbo", language="en")
 print(WRITERS["srt"][1](result))   # render SRT subtitles as a string
 ```
 

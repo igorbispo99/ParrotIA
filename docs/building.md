@@ -71,6 +71,12 @@ For an additional frozen CPU/Metal inference check, set `PARROTIA_SMOKE_MODEL`
 to an existing GGML model file before building; optionally set
 `PARROTIA_SMOKE_AUDIO` to a short English speech recording. Results are included
 in `build/macos/smoke-test.json`.
+
+To exercise the actual GUI worker, put a downloaded `tiny` GGML model in
+`PARROTIA_MODELS_DIR` and set `PARROTIA_SMOKE_MODEL_NAME=tiny` before building.
+The build then tests completed transcription and quitting during decoding in
+fresh frozen processes, checks GUI heartbeat gaps, and verifies worker cleanup.
+CI runs these model lifecycle checks on both Mac architectures.
 The installer check mounts the DMG, copies the app into a temporary folder,
 ejects the image, and tests that copy. The **macOS installers** workflow builds
 both architectures and releases attach both DMGs. The release also includes

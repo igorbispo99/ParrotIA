@@ -681,3 +681,29 @@ class TestMacOS:
             samples = wcpp.load_audio(str(silent_wav))
         assert samples.dtype == np.float32
         assert len(samples) == 8000
+
+
+class TestModelLifetime:
+    def test_release_context_once_and_break_callback_reference(self, monkeypatch):
+        import sys
+        from types import SimpleNamespace
+
+        free = MagicMock()
+        monkeypatch.setitem(
+            sys.modules, "_pywhispercpp", SimpleNamespace(whisper_free=free)
+        )
+        context = object()
+        model = SimpleNamespace(_ctx=context, _new_segment_callback=lambda: None)
+        wcpp.release_model(model)
+        wcpp.release_model(model)
+        free.assert_called_once_with(context)
+        assert model._ctx is None and model._new_segment_callback is None
+
+    def test_transcriber_releases_cached_model(self, whispercpp_env):
+        engine = Transcriber(backend=WHISPER_CPP)
+        engine.transcribe(str(whispercpp_env["audio"]), model="tiny")
+        with patch.object(wcpp, "release_model") as release:
+            engine.close()
+            engine.close()
+        release.assert_called_once_with(whispercpp_env["engine"])
+        assert engine._model is None and engine._model_key is None

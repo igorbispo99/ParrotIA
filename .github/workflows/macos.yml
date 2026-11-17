@@ -41,8 +41,16 @@ jobs:
           python -c 'from pywhispercpp.model import Model; print(Model.system_info())'
       - name: Install application and build dependencies
         run: python -m pip install '.[macos-build]'
+      - name: Download verified tiny model for lifecycle checks
+        run: |
+          python -c 'from parrotia import _whispercpp as w; w.ensure_downloaded(w.MODEL_FILES["tiny"])'
+        env:
+          PARROTIA_MODELS_DIR: ${{ runner.temp }}/parrotia-models
       - name: Build and smoke-test app and DMG
         run: python packaging/macos/build.py
+        env:
+          PARROTIA_MODELS_DIR: ${{ runner.temp }}/parrotia-models
+          PARROTIA_SMOKE_MODEL_NAME: tiny
       - name: Verify drag-install from disk image
         run: python packaging/macos/test_installer.py
       - uses: actions/upload-artifact@v4

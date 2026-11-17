@@ -302,6 +302,18 @@ def load_model(path: Path, beam_size: int, *, device: str = "auto"):
     )
 
 
+def release_model(model) -> None:
+    """Free a pywhispercpp context once, without relying on cyclic GC at exit."""
+    context = getattr(model, "_ctx", None)
+    if context is None:
+        return
+    import _pywhispercpp as native
+
+    native.whisper_free(context)
+    model._ctx = None  # Model.__del__ must not free the context a second time.
+    model._new_segment_callback = None
+
+
 def detect_language(model, audio):
     """Return ``(language_code, probability)`` for the opening of ``audio``."""
     (code, probability), _ = model.auto_detect_language(

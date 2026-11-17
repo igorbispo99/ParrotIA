@@ -157,14 +157,18 @@ def main(argv=None) -> int:
         bar = "█" * int(fraction * 30)
         print(f"\r[{bar:<30}] {fraction:5.0%}  {message:<28}", end="", flush=True)
 
-    result = Transcriber(backend=args.backend).transcribe(
-        str(audio),
-        model=args.model,
-        language=args.language,
-        device=args.device,
-        compute_type=args.compute,
-        progress_callback=progress,
-    )
+    engine = Transcriber(backend=args.backend)
+    try:
+        result = engine.transcribe(
+            str(audio),
+            model=args.model,
+            language=args.language,
+            device=args.device,
+            compute_type=args.compute,
+            progress_callback=progress,
+        )
+    finally:
+        engine.close()
     print()  # finish the progress line
 
     outdir = Path(args.outdir) if args.outdir else audio.parent

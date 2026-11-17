@@ -6,6 +6,7 @@ Run with:  parrotia-gui   (or:  python -m parrotia.app)
 from __future__ import annotations
 
 import queue
+import sys
 import threading
 import traceback
 from pathlib import Path
@@ -77,7 +78,12 @@ class TranscriberApp(ctk.CTk):
         self.minsize(740, 680)
         self.configure(fg_color=WINDOW_BG)
 
-        self._transcriber = Transcriber()
+        if sys.platform == "darwin":
+            from ._inference_process import ProcessTranscriber
+
+            self._transcriber = ProcessTranscriber()
+        else:
+            self._transcriber = Transcriber()
         # Models/devices offered depend on the installed inference backend.
         # (Not ``_options``: that would shadow tkinter.Misc._options.)
         self._backend_opts = backend_options(self._transcriber.backend)
@@ -87,10 +93,14 @@ class TranscriberApp(ctk.CTk):
         self._result: Optional[TranscriptionResult] = None
         self._total_jobs = 0
         self._downloading = False
+        self._closing = False
+        self._shutdown_complete = threading.Event()
 
         self._build_ui()
-        self.after(100, self._drain_events)
+        self._event_poll = self.after(100, self._drain_events)
         self.protocol("WM_DELETE_WINDOW", self._on_close)
+        if sys.platform == "darwin":
+            self.createcommand("::tk::mac::Quit", self._on_close)
 
     # ----------------------------------------------------------------- UI ---
     def _build_ui(self) -> None:
@@ -357,7 +367,7 @@ class TranscriberApp(ctk.CTk):
             self.outdir_entry.insert(0, path)
 
     def _start_transcription(self) -> None:
-        if self._worker and self._worker.is_alive():
+        if self._closing or (self._worker and self._worker.is_alive()):
             return
 
         raw_path = self.file_entry.get().strip().strip('"')
@@ -443,7 +453,7 @@ class TranscriberApp(ctk.CTk):
         selected_formats: "list[str]",
         outdir_raw: str,
     ) -> None:
-        """Transcribe every file in ``jobs`` in turn, on this daemon thread.
+        """Transcribe every file in ``jobs`` in turn, on this worker thread.
 
         Progress is reported as an overall fraction across all files; a
         per-file failure is collected and the batch continues. Output files are
@@ -509,13 +519,17 @@ class TranscriberApp(ctk.CTk):
         return written
 
     def _drain_events(self) -> None:
+        self._event_poll = None
+        if self._closing:
+            return
         try:
-            while True:
+            while not self._closing:
                 event = self._events.get_nowait()
                 self._handle_event(event)
         except queue.Empty:
             pass
-        self.after(100, self._drain_events)
+        if not self._closing:
+            self._event_poll = self.after(100, self._drain_events)
 
     def _handle_event(self, event: tuple) -> None:
         kind = event[0]
@@ -601,7 +615,36 @@ class TranscriberApp(ctk.CTk):
         self.preview.configure(state="disabled")
 
     def _on_close(self) -> None:
+        if self._closing:
+            return
+        self._closing = True
         self._cancel_event.set()
+        self.transcribe_btn.configure(state="disabled")
+        self.cancel_btn.configure(state="disabled")
+        self.progress.stop()
+        self._set_status("Closing — cancelling transcription…")
+
+        def shutdown() -> None:
+            try:
+                if getattr(self._transcriber, "isolated", False):
+                    self._transcriber.close()
+                if self._worker is not None:
+                    self._worker.join()
+                if not getattr(self._transcriber, "isolated", False):
+                    self._transcriber.close()
+            finally:
+                self._shutdown_complete.set()
+
+        threading.Thread(target=shutdown, name="ParrotIA shutdown", daemon=True).start()
+        self.after(50, self._finish_close)
+
+    def _finish_close(self) -> None:
+        if not self._shutdown_complete.is_set():
+            self.after(50, self._finish_close)
+            return
+        if self._event_poll is not None:
+            self.after_cancel(self._event_poll)
+            self._event_poll = None
         self.destroy()
 
 
@@ -611,4 +654,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    import multiprocessing
+
+    multiprocessing.freeze_support()
     main()

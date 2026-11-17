@@ -4,13 +4,25 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.5.3] - 2026-11-17
+
+### Fixed
+- Keep the macOS GUI responsive during native model loading, language detection,
+  and transcription by running inference in a managed child process.
+- Cancel and reap inference workers before closing the window, including Command-Q;
+  release cached Metal models explicitly before shutdown and model replacement.
+- Allow cancellation to recover from unresponsive native work and restart a failed
+  inference worker for the next job.
+- Release native models after CLI transcription and benchmarking; support using
+  `Transcriber` as a context manager for library callers.
 
 ### Added
 - Native Linux ARM64 desktop installers (DEB and RPM), with architecture-specific
   build, installation checks, and release downloads alongside x86-64.
 - ARM64 Snap Store distribution, with hash-pinned dependencies, native CI
   package QA, signed delivery verification, and portable runtime library discovery.
+- Frozen macOS GUI checks with a real tiny model: complete transcription, quit
+  during decoding, GUI responsiveness, and worker cleanup on both architectures.
 
 ## [1.5.2] - 2026-11-16
 
