@@ -63,6 +63,9 @@ jobs:
           merge-multiple: true
           path: dist
 
+      - name: Generate Homebrew cask from release DMGs
+        run: python packaging/macos/update_cask.py --artifacts dist --output dist/parrotia.rb
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

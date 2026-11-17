@@ -4,7 +4,17 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.5.0] - 2026-11-16
+## [1.5.1] - 2026-11-16
+
+### Fixed
+- Include the macOS PyInstaller spec in Git checkouts and source distributions.
+- Simulate the macOS data directory independently of the test host OS.
+
+### Added
+- Generate a Homebrew cask with architecture-specific SHA-256 checksums from
+  the release DMGs.
+
+## [1.5.0] - 2026-11-16 (unpublished)
 
 ### Added
 - macOS app bundles and drag-to-Applications DMGs for Apple Silicon and Intel,

@@ -32,6 +32,7 @@ MANIFEST
 *.manifest
 *.spec
 !packaging/ParrotIA.spec
+!packaging/macos/*.spec
 !packaging/fedora/*.spec
 .venv-windows/
 .venv-macos/

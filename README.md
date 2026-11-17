@@ -122,6 +122,21 @@ the Explorer right-click action is specific to Windows.
 Remove the app with `sudo apt remove parrotia` or `sudo dnf remove parrotia`.
 Transcripts and the model cache in your home folder are preserved.
 
+### Homebrew (macOS)
+
+Add the ParrotIA repository as a custom tap, then install the app:
+
+```bash
+brew tap igorbispo99/parrotia https://github.com/igorbispo99/ParrotIA
+brew install --cask igorbispo99/parrotia/parrotia
+```
+
+Homebrew selects the Apple Silicon or Intel DMG and checks its SHA-256 before
+installing. Launch **ParrotIA** from Applications. Upgrade with
+`brew update && brew upgrade --cask parrotia`; remove with
+`brew uninstall --cask parrotia`. The model cache and transcripts are preserved.
+The same Gatekeeper requirements as the DMG apply to unnotarized builds.
+
 ### Python installation
 
 Install the package (provides the `parrotia` and `parrotia-gui` commands):
@@ -325,8 +340,8 @@ by the `Release` workflow. To cut a release, bump `__version__` in
 [`CHANGELOG.md`](CHANGELOG.md), then push a matching tag:
 
 ```bash
-git tag v1.5.0
-git push origin v1.5.0
+git tag v1.5.1
+git push origin v1.5.1
 ```
 
 ### Build the Windows installer locally
@@ -397,7 +412,11 @@ to an existing GGML model file before building; optionally set
 in `build/macos/smoke-test.json`.
 The installer check mounts the DMG, copies the app into a temporary folder,
 ejects the image, and tests that copy. The **macOS installers** workflow builds
-both architectures and releases attach both DMGs.
+both architectures and releases attach both DMGs. The release also includes
+a generated `parrotia.rb` Homebrew cask with hashes of those exact DMGs.
+After publishing, copy that file into `Casks/parrotia.rb` on `main` and commit
+it to update the tap. To regenerate locally, place both release DMGs in
+`dist/installer/` and run `python packaging/macos/update_cask.py`.
 
 For distribution without Gatekeeper overrides, sign and notarize with your own
 Apple Developer ID and a `notarytool` profile already stored in Keychain:

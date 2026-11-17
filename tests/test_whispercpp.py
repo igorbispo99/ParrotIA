@@ -611,6 +611,11 @@ class TestMacOS:
 
     def test_native_model_cache(self, monkeypatch, tmp_path):
         monkeypatch.delenv("PARROTIA_MODELS_DIR", raising=False)
+        from types import SimpleNamespace
+
+        monkeypatch.setattr(
+            wcpp, "os", SimpleNamespace(name="posix", environ=os.environ)
+        )
         monkeypatch.setattr(wcpp.sys, "platform", "darwin")
         monkeypatch.setattr(wcpp.Path, "home", lambda: tmp_path)
         assert (
