@@ -28,7 +28,7 @@ jobs:
     env:
       MACOSX_DEPLOYMENT_TARGET: "14.0"
       # Embed Metal kernels so the app needs no compiler or SDK at runtime.
-      CMAKE_ARGS: "-DGGML_METAL=${{ matrix.metal }} -DGGML_METAL_EMBED_LIBRARY=ON -DGGML_NATIVE=OFF"
+      CMAKE_ARGS: "-DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }} -DGGML_METAL=${{ matrix.metal }} -DGGML_METAL_EMBED_LIBRARY=ON -DGGML_NATIVE=OFF"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,7 +36,9 @@ jobs:
           python-version: "3.12"
       - name: Build native whisper.cpp runtime
         # Source build makes the Metal/portable CPU flags explicit on each architecture.
-        run: python -m pip install --no-binary pywhispercpp 'pywhispercpp==1.5.1'
+        run: |
+          python -m pip install --no-binary pywhispercpp 'pywhispercpp==1.5.1'
+          python -c 'from pywhispercpp.model import Model; print(Model.system_info())'
       - name: Install application and build dependencies
         run: python -m pip install '.[macos-build]'
       - name: Build and smoke-test app and DMG

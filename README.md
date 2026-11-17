@@ -159,8 +159,9 @@ pip install -e .
 On macOS, use Python **3.10 or newer** for the whisper.cpp/Metal backend (a
 native ARM Python on Apple Silicon). A source install also needs Python's Tk
 support; the macOS app above includes it. Python 3.9 keeps the faster-whisper
-CPU backend. Intel pip installations compile pywhispercpp from source and need
-Xcode Command Line Tools; use the DMG to avoid build tools.
+CPU backend. Intel Python installations use faster-whisper on the CPU. The DMG bundles
+whisper.cpp on both architectures. To build whisper.cpp yourself, follow the
+static runtime build instructions below; use the DMG to avoid build tools.
 
 The first time you use a model it is downloaded automatically (a few hundred MB to ~1.5 GB depending on the model) and cached for offline use afterwards.
 
@@ -340,8 +341,8 @@ by the `Release` workflow. To cut a release, bump `__version__` in
 [`CHANGELOG.md`](CHANGELOG.md), then push a matching tag:
 
 ```bash
-git tag v1.5.1
-git push origin v1.5.1
+git tag v1.5.2
+git push origin v1.5.2
 ```
 
 ### Build the Windows installer locally
@@ -394,7 +395,7 @@ Xcode Command Line Tools (macOS 14 or newer):
 python3.12 -m venv .venv-macos
 source .venv-macos/bin/activate
 # Compile a portable runtime with embedded Metal kernels.
-CMAKE_ARGS="-DGGML_METAL=ON -DGGML_METAL_EMBED_LIBRARY=ON -DGGML_NATIVE=OFF" \
+CMAKE_ARGS="-DBUILD_SHARED_LIBS=OFF -DGGML_METAL=ON -DGGML_METAL_EMBED_LIBRARY=ON -DGGML_NATIVE=OFF" \
   MACOSX_DEPLOYMENT_TARGET=14.0 pip install --no-binary pywhispercpp 'pywhispercpp==1.5.1'
 pip install '.[macos-build]'
 python packaging/macos/build.py
