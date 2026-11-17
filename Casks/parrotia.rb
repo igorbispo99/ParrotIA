@@ -1,9 +1,9 @@
 cask "parrotia" do
   arch arm: "arm64", intel: "x86_64"
 
-  version "1.5.2"
-  sha256 arm:   "ac73f89f62cb0f8547c4091cbdeeeee6958dc8c8dcc4d8d464b16ac757914663",
-         intel: "58465f4b8218784da8851e3603541352b12e85c123161a2c3d3c983ed53536a9"
+  version "1.5.3"
+  sha256 arm:   "c8ce2588c471e901d4bb6b5585b55b14a6a1b12e6be6e4cd0eaf010394223a45",
+         intel: "de7f8b048c56276b7ead5736d2db57b047d17d1276ebd5954f66029c6c40d7c4"
 
   url "https://github.com/igorbispo99/ParrotIA/releases/download/v#{version}/ParrotIA-#{version}-macos-#{arch}.dmg"
   name "ParrotIA"
