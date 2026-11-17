@@ -18,6 +18,8 @@ for directory in "$SNAP"/usr/lib/*-linux-gnu; do
 done
 export LD_LIBRARY_PATH="$native_libraries${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export XDG_CACHE_HOME="$SNAP_USER_COMMON/cache"
+export FONTCONFIG_PATH="$SNAP/etc/fonts"
+export FONTCONFIG_FILE="$FONTCONFIG_PATH/parrotia.conf"
 export TCL_LIBRARY="$SNAP/usr/share/tcltk/tcl8.6"
 export TK_LIBRARY="$SNAP/usr/share/tcltk/tk8.6"
 mkdir -p "$HF_HUB_CACHE" "$XDG_CACHE_HOME"

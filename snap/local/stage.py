@@ -86,6 +86,9 @@ def stage(source: Path, install: Path) -> None:
     launcher.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source / "snap/local/command-chain", launcher)
     launcher.chmod(0o755)
+    fontconfig = install / "etc/fonts/parrotia.conf"
+    fontconfig.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source / "snap/local/fonts.conf", fontconfig)
     desktop = install / "usr/share/applications/parrotia.desktop"
     desktop.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source / "snap/gui/parrotia.desktop", desktop)

@@ -72,6 +72,15 @@ jobs:
           HF_HUB_OFFLINE=1 parrotia.check
           timeout 120s xvfb-run -a -s "-screen 0 1280x1024x24 -ac" env XAUTHORITY= parrotia.check --gui
           test -f /var/lib/snapd/desktop/applications/parrotia_parrotia.desktop
+      - name: Check bundled fonts at normal and high DPI with no server font paths
+        run: |
+          mkdir -p dist/snap-review
+          for dpi in 96 192; do
+            FONTCONFIG_FILE=/missing-host-fonts.conf FONTCONFIG_PATH=/missing-host-fonts \
+              timeout 120s xvfb-run -a -s "-screen 0 1920x1600x24 -dpi $dpi -fp built-ins -ac" \
+              env XAUTHORITY= parrotia.check --gui | tee "dist/snap-review/fonts-$dpi.json"
+            cp "$HOME/snap/parrotia/common/qa-fonts.png" "dist/snap-review/fonts-$dpi.png"
+          done
       - name: Exercise CPU inference and offline model reuse
         run: |
           timeout 600s parrotia.check --model tiny

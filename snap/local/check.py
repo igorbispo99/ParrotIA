@@ -15,6 +15,66 @@ import wave
 from pathlib import Path
 
 
+def font_rendering(app) -> dict:
+    """Require real text/shape fonts and visible glyphs, not just Tk startup."""
+    import tkinter as tk
+    from tkinter import font
+    from PIL import ImageGrab
+
+    samples = {
+        "Roboto": "ParrotIA Aa 0123",
+        "DejaVu Sans": "Readable text 0123",
+        "CustomTkinter_shapes_font": "A",
+    }
+    available = set(font.families(app))
+    missing = set(samples) - available
+    if missing:
+        raise RuntimeError(f"Required bundled fonts are unavailable: {sorted(missing)}")
+    probe = tk.Toplevel(app)
+    probe.geometry("+0+0")
+    probe.configure(background="white")
+    labels = []
+    fonts = []  # Keep Tk font objects alive until after the capture.
+    try:
+        for family, text in samples.items():
+            selected = font.Font(root=app, family=family, size=-32)
+            if selected.actual("family") != family:
+                raise RuntimeError(f"Font unexpectedly substituted: {family}")
+            fonts.append(selected)
+            label = tk.Label(
+                probe,
+                text=text,
+                font=selected,
+                foreground="black",
+                background="white",
+                padx=10,
+                pady=10,
+            )
+            label.pack()
+            labels.append((family, label))
+        probe.lift()
+        app.update()
+        result = {}
+        for family, label in labels:
+            x, y = label.winfo_rootx(), label.winfo_rooty()
+            pixels = ImageGrab.grab(
+                bbox=(x, y, x + label.winfo_width(), y + label.winfo_height())
+            ).convert("RGB")
+            ink = sum(max(pixel) < 128 for pixel in pixels.getdata())
+            if ink < 30:
+                raise RuntimeError(
+                    f"Font rendered no readable glyphs: {family} ({ink})"
+                )
+            result[family] = {"ink_pixels": ink}
+        x, y = probe.winfo_rootx(), probe.winfo_rooty()
+        ImageGrab.grab(
+            bbox=(x, y, x + probe.winfo_width(), y + probe.winfo_height())
+        ).save(Path(os.environ["SNAP_USER_COMMON"]) / "qa-fonts.png")
+        return result
+    finally:
+        probe.destroy()
+
+
 def exercise_gui(audio: Path) -> dict:
     """Drive real GUI controls and worker threads under the test display."""
     from parrotia.app import TranscriberApp
@@ -24,6 +84,7 @@ def exercise_gui(audio: Path) -> dict:
     output.mkdir(exist_ok=True)
     dialogs = []
     app = TranscriberApp()
+    fonts = font_rendering(app)
     app.model_var.set("tiny")
     app.language_var.set(next(k for k, v in LANGUAGES.items() if v == "en"))
     app.device_var.set("cpu")
@@ -89,6 +150,7 @@ def exercise_gui(audio: Path) -> dict:
             wait()
             assert "cancel" in app.status.cget("text").lower(), app.status.cget("text")
             return {
+                "fonts": fonts,
                 "transcription": transcript,
                 "formats": 5,
                 "cancellation": "ok",
@@ -177,6 +239,7 @@ def main() -> None:
         from parrotia.app import TranscriberApp
 
         app = TranscriberApp()
+        report["fonts"] = font_rendering(app)
         app.withdraw()
         app.update()
         app.destroy()

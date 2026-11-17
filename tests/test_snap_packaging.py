@@ -118,6 +118,10 @@ def test_staging_includes_source_and_inventory_without_workspace_secrets(
     assert records[0]["name"] == "demo"
     with tarfile.open(install / "share/doc/parrotia/parrotia-source.tar.gz") as archive:
         names = archive.getnames()
+    assert (install / "etc/fonts/parrotia.conf").read_bytes() == (
+        source / "snap/local/fonts.conf"
+    ).read_bytes()
+    assert "snap/local/fonts.conf" in names
     assert "snap/snapcraft.yaml" in names
     assert "src/parrotia/transcriber.py" in names
     assert ".env" not in names
@@ -138,6 +142,8 @@ def test_launcher_uses_persistent_cache_and_preserves_arguments(tmp_path, triple
         SNAP=str(snap),
         SNAP_USER_COMMON=str(common),
         LD_LIBRARY_PATH="/inherited/library",
+        FONTCONFIG_FILE="/broken/host/fonts.conf",
+        FONTCONFIG_PATH="/broken/host/fonts",
     )
     result = subprocess.run(
         [
@@ -145,7 +151,7 @@ def test_launcher_uses_persistent_cache_and_preserves_arguments(tmp_path, triple
             str(ROOT / "snap/local/command-chain"),
             "/bin/sh",
             "-c",
-            'printf "%s\\n" "$HF_HUB_CACHE" "$HF_HUB_DISABLE_TELEMETRY" "$PYTHONNOUSERSITE" "$1" "$LD_LIBRARY_PATH"',
+            'printf "%s\\n" "$HF_HUB_CACHE" "$HF_HUB_DISABLE_TELEMETRY" "$PYTHONNOUSERSITE" "$1" "$LD_LIBRARY_PATH" "$FONTCONFIG_FILE" "$FONTCONFIG_PATH"',
             "check",
             "audio with spaces.wav",
         ],
@@ -160,5 +166,7 @@ def test_launcher_uses_persistent_cache_and_preserves_arguments(tmp_path, triple
         "1",
         "audio with spaces.wav",
         f"{snap}/usr/lib:{native}:/inherited/library",
+        f"{snap}/etc/fonts/parrotia.conf",
+        f"{snap}/etc/fonts",
     ]
     assert (common / "huggingface/hub").is_dir()
