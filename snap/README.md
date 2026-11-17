@@ -51,7 +51,9 @@ For a local ARM64 build on Apple Silicon, create an Ubuntu 24.04 OrbStack machin
 machine, use `snapcraft --destructive-mode --platform=arm64`. This mode installs
 build packages on the VM. OrbStack reports partial Snap confinement; the native
 GitHub ARM runner performs the strict-confinement and refresh/revert QA before
-Store publication. Do not treat an OrbStack-only check as confinement validation.
+Store publication. OrbStack’s resolver symlink under `/opt/orbstack-guest` can
+also prevent confined model downloads. Do not treat an OrbStack-only check as
+confinement or network validation.
 
 The Store uses the same `parrotia` listing and channels for both architectures.
 Upload the tested ARM64 artifact to edge first, verify signed delivery on an ARM64
@@ -157,9 +159,21 @@ Once installed-package QA and the license/source gates pass:
 The publisher must provide support and maintain dependencies/source availability.
 There is no automated upload and no credential is stored in the repository.
 
-Store status (14 November 2026): revision 2 (1.4.0, `grade: stable`) is released to
-`stable` and `edge`. Its store download is byte-identical to the CI artifact from run
-43559661381 (sha256 `678d89d7…115fd4`). Revision 1 (1.3.1, devel grade) was the first edge upload.
+Store status (17 November 2026):
+
+- **ARM64:** revision **3**, version **1.5.2**, released to `stable`, `candidate`
+  and `edge`. Built from commit `a78c19a` in
+  [native build and strict package QA run 44105877105](https://github.com/igorbispo99/ParrotIA/actions/runs/44105877105).
+  [Signed Store delivery QA run 44109551810](https://github.com/igorbispo99/ParrotIA/actions/runs/44109551810)
+  verified byte identity, model download/offline reuse, and GUI transcription.
+  Original Snap SHA-256:
+  `fc47cbf0e2361829af91b8890f91f753d0e2e54639695963aa3b744a90ff281d`.
+- **AMD64:** revision **2**, version **1.4.0**, remains on `stable` and `edge`.
+  Its store download is byte-identical to the CI artifact from run 43559661381
+  (sha256 `678d89d7…115fd4`). Revision 1 (1.3.1, devel grade) was the first edge upload.
+
+Ubuntu ARM64 users can install the stable Store-signed package with
+`sudo snap install parrotia` and launch it with `parrotia.gui`.
 
 Official references:
 - https://ubuntu.com/docs/snapcraft/9/how-to/publishing/publish-a-snap/

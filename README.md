@@ -36,6 +36,9 @@ the default `large-v3-turbo` download is about 1.6 GB. Smaller models are availa
 On macOS, open the DMG and drag **ParrotIA** to **Applications**. On Windows, run
 the setup wizard. On Linux, install the package with `apt` or `dnf`.
 
+On Ubuntu (AMD64 or ARM64), you can also use `sudo snap install parrotia` from
+the [Snap Store](https://snapcraft.io/parrotia), then launch `parrotia.gui`.
+
 For Homebrew, Python/source installation, NVIDIA setup, and first-launch help,
 see the [installation guide](https://github.com/igorbispo99/ParrotIA/blob/main/docs/installation.md).
 

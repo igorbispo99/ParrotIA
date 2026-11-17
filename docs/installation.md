@@ -84,8 +84,8 @@ sudo snap install parrotia
 parrotia.gui
 ```
 
-The Store selects the package for your CPU architecture. ARM64 publication and
-channel availability follow the [Snap release process](../snap/README.md).
+Stable AMD64 and ARM64 packages are available. The Store selects the package
+for your CPU architecture; see the [Snap guide](../snap/README.md) for release details.
 The Snap uses CPU inference and strict confinement. Models download on first use.
 To allow access to external drives, run `sudo snap connect parrotia:removable-media`.
 For scripts use `parrotia`; for package diagnostics use `parrotia.check`.

@@ -9,8 +9,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 - Native Linux ARM64 desktop installers (DEB and RPM), with architecture-specific
   build, installation checks, and release downloads alongside x86-64.
-- ARM64 Snap builds with hash-pinned dependencies, native CI package QA, and
-  architecture-independent runtime library discovery.
+- ARM64 Snap Store distribution, with hash-pinned dependencies, native CI
+  package QA, signed delivery verification, and portable runtime library discovery.
 
 ## [1.5.2] - 2026-11-16
 
