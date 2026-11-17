@@ -89,6 +89,18 @@ no microphone, camera, server/network-bind or classic-confinement permission.
 The GUI uses X11/XWayland, so native Wayland-only sessions need XWayland available.
 NVIDIA runtime wheels are not installed; CPU use is the supported configuration.
 
+## Desktop fonts and rendering
+
+The launcher selects the Snap's own Fontconfig configuration and writable font
+cache. It reads the bundled DejaVu, Roboto and CustomTkinter shape fonts directly.
+Xft uses its core software drawing path: this avoids blank text and broken rounded
+controls seen with server-side XRender glyph compositing on Ubuntu 26.04 ARM64
+under UTM/Wayland. The workaround was confirmed on the affected desktop.
+
+Package QA checks the actual font families and visible glyph pixels at 96 and
+192 DPI, with X server font directories disabled and an invalid inherited font
+configuration. Screenshots and reports are retained alongside the package QA.
+
 ## Checks
 
 ```sh

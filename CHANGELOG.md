@@ -8,7 +8,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Configure bundled Snap text and shape fonts independently of the host desktop,
-  and verify visible glyphs at normal and high DPI during package QA.
+  use software font drawing for virtualized XWayland displays, and verify
+  visible glyphs at normal and high DPI during package QA.
 
 ## [1.5.3] - 2026-11-17
 

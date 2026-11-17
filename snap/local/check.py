@@ -60,7 +60,7 @@ def font_rendering(app) -> dict:
             pixels = ImageGrab.grab(
                 bbox=(x, y, x + label.winfo_width(), y + label.winfo_height())
             ).convert("RGB")
-            ink = sum(max(pixel) < 128 for pixel in pixels.getdata())
+            ink = sum(pixels.convert("L").histogram()[:128])
             if ink < 30:
                 raise RuntimeError(
                     f"Font rendered no readable glyphs: {family} ({ink})"
