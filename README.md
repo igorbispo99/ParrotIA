@@ -338,7 +338,9 @@ print(WRITERS["srt"][1](result))   # render SRT subtitles as a string
 Tagged versions are built into a wheel, source distribution, Windows `.exe`, and
 Linux `.deb` / `.rpm` installers, and macOS `.dmg` apps and published as a
 [GitHub Release](https://github.com/igorbispo99/ParrotIA/releases) automatically
-by the `Release` workflow. To cut a release, bump `__version__` in
+by the `Release` workflow. Release pages show direct download links first and
+only that version's changelog section; the complete history stays in
+`CHANGELOG.md`. To cut a release, bump `__version__` in
 [`src/parrotia/__init__.py`](src/parrotia/__init__.py), update
 [`CHANGELOG.md`](CHANGELOG.md), then push a matching tag:
 

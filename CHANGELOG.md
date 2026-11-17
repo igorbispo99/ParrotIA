@@ -6,6 +6,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.5.2] - 2026-11-16
 
+### Added
+- macOS installers for Apple Silicon and Intel, with Python and media codecs included.
+- Automatic Metal acceleration on Apple Silicon, with CPU fallback and an explicit CPU option.
+- Homebrew cask distribution with architecture-specific installer checksums.
+
 ### Fixed
 - Statically link the macOS whisper.cpp runtime so frozen apps include all
   required native code, with an import check before packaging.
