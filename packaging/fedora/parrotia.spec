@@ -1,7 +1,7 @@
 %global app_id io.github.igorbispo99.ParrotIA
 
 Name:           parrotia
-Version:        1.4.1
+Version:        1.5.3
 Release:        %autorelease
 Summary:        Private, local audio and video transcription with Whisper
 
