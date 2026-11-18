@@ -171,6 +171,19 @@ Review status (16 November 2026, evening):
 
 The account is still not in `packager`, so the approvals cannot be imported yet. The sponsorship ticket was updated with this status.
 
+### parrotia moved to 1.5.3 (18 November 2026)
+
+Upstream reached 1.5.3 while the parrotia review was pending, so the review request was moved to it before the reviewer started. The 1.5.x changes are almost all for macOS. On Linux the only change is that the CLI frees the whisper.cpp model explicitly. The new `pyproject.toml` dependencies are macOS-only, and the `%prep` sed still matches. The spec change is the `Version` only (commit c412e86).
+
+Validation on Rawhide:
+- mock chain build;
+- fedora-review: rpmlint 0 errors, plus the expected tkinter, pillow-tk and man-page warnings;
+- `%check`: 244 passed, 18 skipped;
+- the GUI under Xvfb;
+- a real CLI transcription with python3-pywhispercpp 1.5.0.
+
+Copr build 11351598 succeeded on F44, F45 and Rawhide.
+
 ### Next steps
 
 1. **Answer reviewer comments** on the three bugs and post updated Spec/SRPM URLs for each change. Unanswered tickets get closed.
