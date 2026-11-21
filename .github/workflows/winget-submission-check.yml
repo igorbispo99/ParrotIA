@@ -1,0 +1,37 @@
+name: Validate ParrotIA WinGet submission
+on:
+  push:
+    branches: [codex/winget-1.5.3-check]
+permissions:
+  contents: read
+jobs:
+  install:
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate, install, smoke test, and uninstall the released installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifest = 'packaging/winget/IgorBispo.ParrotIA/1.5.3'
+          $wingetVersion = winget --version
+          if ($LASTEXITCODE -ne 0 -or [version]($wingetVersion.TrimStart('v')) -lt [version]'1.28') {
+            Install-Module Microsoft.WinGet.Client -Force -Scope CurrentUser
+            Repair-WinGetPackageManager -Latest -Force
+          }
+          winget --version
+          winget settings --enable LocalManifestFiles
+          if ($LASTEXITCODE) { throw 'Could not enable local manifests' }
+          winget validate --manifest $manifest
+          if ($LASTEXITCODE) { throw 'Manifest validation failed' }
+          winget install --manifest $manifest --silent --accept-source-agreements --accept-package-agreements --disable-interactivity
+          if ($LASTEXITCODE) { throw 'Installation failed' }
+          $report = Join-Path $env:RUNNER_TEMP 'parrotia-smoke.json'
+          $app = Join-Path $env:LOCALAPPDATA 'Programs/ParrotIA/parrotia-gui.exe'
+          $process = Start-Process $app -ArgumentList '--smoke-test', $report -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw 'Installed app failed to start' }
+          $result = Get-Content $report -Raw | ConvertFrom-Json
+          if ($result.samples -ne 1600 -or $result.version -ne '1.5.3') { throw 'Smoke test failed' }
+          winget uninstall --manifest $manifest --silent --disable-interactivity
+          if ($LASTEXITCODE -or (Test-Path $app)) { throw 'Uninstall failed' }
