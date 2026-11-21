@@ -25,8 +25,16 @@ jobs:
           if ($LASTEXITCODE) { throw 'Could not enable local manifests' }
           winget validate --manifest $manifest
           if ($LASTEXITCODE) { throw 'Manifest validation failed' }
-          winget install --manifest $manifest --silent --accept-source-agreements --accept-package-agreements --disable-interactivity
-          if ($LASTEXITCODE) { throw 'Installation failed' }
+          $log = Join-Path $env:RUNNER_TEMP 'parrotia-install.log'
+          $install = Start-Process winget -ArgumentList "install --manifest $manifest --silent --log $log --accept-source-agreements --accept-package-agreements --disable-interactivity --verbose-logs" -PassThru -NoNewWindow
+          if (-not $install.WaitForExit(150000) -or $install.ExitCode -ne 0) {
+            Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'parrot|setup|winget|consent|smartscreen' } | Select-Object Name,SessionId,CommandLine | Format-List
+            Get-Process | Where-Object MainWindowTitle | Select-Object Name,MainWindowTitle
+            if (Test-Path $log) { Get-Content $log -Tail 25 }
+            $diag = Get-ChildItem "$env:LOCALAPPDATA/Packages/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe/LocalState/DiagOutputDir" -Filter '*.log' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+            if ($diag) { Get-Content $diag.FullName -Tail 35 }
+            throw 'WinGet install failed or timed out'
+          }
           $report = Join-Path $env:RUNNER_TEMP 'parrotia-smoke.json'
           $app = Join-Path $env:LOCALAPPDATA 'Programs/ParrotIA/parrotia-gui.exe'
           $process = Start-Process $app -ArgumentList '--smoke-test', $report -Wait -PassThru
