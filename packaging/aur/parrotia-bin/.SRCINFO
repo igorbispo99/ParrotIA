@@ -1,0 +1,32 @@
+pkgbase = parrotia-bin
+	pkgdesc = Transcribe local audio and video files with Whisper
+	pkgver = 1.5.3
+	pkgrel = 1
+	url = https://github.com/igorbispo99/ParrotIA
+	arch = x86_64
+	arch = aarch64
+	license = AGPL-3.0-or-later
+	depends = glibc
+	depends = libgcc
+	depends = libstdc++
+	depends = libgomp
+	depends = libx11
+	depends = libxext
+	depends = libxrender
+	depends = libxft
+	depends = libxcb
+	depends = fontconfig
+	depends = freetype2
+	depends = expat
+	depends = zlib
+	depends = hicolor-icon-theme
+	provides = parrotia=1.5.3
+	conflicts = parrotia
+	options = !strip
+	options = !debug
+	source_x86_64 = https://github.com/igorbispo99/ParrotIA/releases/download/v1.5.3/parrotia_1.5.3_amd64.deb
+	sha256sums_x86_64 = 0ddbc7cd5f4bbf214e5d5b7aaae26016a4721c0faa289751f2ba36ddc101bad8
+	source_aarch64 = https://github.com/igorbispo99/ParrotIA/releases/download/v1.5.3/parrotia_1.5.3_arm64.deb
+	sha256sums_aarch64 = 0905f9764fc54fc6c3e63de0fbbbac4f9b69ac1c2a6c418b91cd6c68983dfc44
+
+pkgname = parrotia-bin

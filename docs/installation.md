@@ -77,6 +77,18 @@ the Explorer right-click action is specific to Windows.
 Remove the app with `sudo apt remove parrotia` or `sudo dnf remove parrotia`.
 Transcripts and the model cache in your home folder are preserved.
 
+### Arch Linux
+
+Download the [ParrotIA 1.5.3 package for x86-64](https://github.com/igorbispo99/ParrotIA/releases/download/v1.5.3/parrotia-bin-1.5.3-1-x86_64.pkg.tar.zst).
+In the directory containing the download, run:
+
+```bash
+sudo pacman -U ./parrotia-bin-1.5.3-1-x86_64.pkg.tar.zst
+```
+
+Launch **ParrotIA** from the applications menu or run `parrotia-gui`.
+To remove it, run `sudo pacman -R parrotia-bin`.
+
 ## Snap Store (Ubuntu and other Snap-enabled distributions)
 
 ```bash

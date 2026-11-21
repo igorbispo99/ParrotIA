@@ -1,0 +1,25 @@
+# Maintainer: Igor Bispo <igor.rabbit99@gmail.com>
+pkgname=parrotia-bin
+pkgver=1.5.3
+pkgrel=1
+pkgdesc='Transcribe local audio and video files with Whisper'
+arch=('x86_64' 'aarch64')
+url='https://github.com/igorbispo99/ParrotIA'
+license=('AGPL-3.0-or-later')
+depends=('glibc' 'libgcc' 'libstdc++' 'libgomp' 'libx11' 'libxext' 'libxrender'
+         'libxft' 'libxcb' 'fontconfig' 'freetype2' 'expat' 'zlib' 'hicolor-icon-theme')
+provides=("parrotia=$pkgver")
+conflicts=('parrotia')
+# Preserve the upstream PyInstaller bundle and its native shared libraries.
+options=('!strip' '!debug')
+_release="$url/releases/download/v$pkgver"
+source_x86_64=("$_release/parrotia_${pkgver}_amd64.deb")
+source_aarch64=("$_release/parrotia_${pkgver}_arm64.deb")
+sha256sums_x86_64=('0ddbc7cd5f4bbf214e5d5b7aaae26016a4721c0faa289751f2ba36ddc101bad8')
+sha256sums_aarch64=('0905f9764fc54fc6c3e63de0fbbbac4f9b69ac1c2a6c418b91cd6c68983dfc44')
+
+package() {
+  bsdtar -xf "$srcdir/data.tar.xz" -C "$pkgdir"
+  # Use Arch's fontconfig to read the host desktop's current font rules.
+  rm "$pkgdir/opt/parrotia/_internal/libfontconfig.so.1"
+}

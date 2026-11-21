@@ -29,6 +29,8 @@ requires a model download; subsequent transcription can run offline.
 
 - [Development and releases](development.md): setup, checks, source map, Python API, and publishing.
 - [Building installers](building.md): native packages, frozen-app checks, signing, and notarization.
+- [Mac App Store roadmap](mac-app-store-roadmap.md): feasibility, sandboxing, signing, beta testing, and launch gates.
 - [Snap packaging](../snap/README.md): Snap-specific build and verification instructions.
 - [Changelog](../CHANGELOG.md): the complete release history.
 - [Store submission plan](store-submission-plan.md): distribution research and planned work.
+- [Distribution channels and launch kit](distribution-channels.md): where ParrotIA is listed, what each submission is waiting for, and announcement drafts.
