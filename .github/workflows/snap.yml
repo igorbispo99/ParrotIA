@@ -51,7 +51,7 @@ jobs:
       - name: Validate desktop entry and shell launcher
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y desktop-file-utils xvfb xauth espeak-ng ffmpeg squashfs-tools
+          sudo apt-get install -y desktop-file-utils xvfb xauth espeak-ng ffmpeg squashfs-tools dbus-x11 python3-dbus python3-gi
           sed 's|${SNAP}|/snap/parrotia/current|g' snap/gui/parrotia.desktop > /tmp/parrotia.desktop
           desktop-file-validate /tmp/parrotia.desktop
           sh -n snap/local/command-chain
@@ -85,6 +85,15 @@ jobs:
         run: |
           timeout 600s parrotia.check --model tiny
           HF_HUB_OFFLINE=1 timeout 120s parrotia.check --model tiny
+      - name: Verify desktop identity and live system appearance
+        run: |
+          test "$(find /var/lib/snapd/desktop/applications -maxdepth 1 -name 'parrotia_*.desktop' | wc -l)" -eq 1
+          review="$HOME/Documents/ParrotIA Desktop QA"
+          timeout 120s xvfb-run -a -s "-screen 0 1280x1024x24 -ac" env XAUTHORITY= \
+            python3 snap/local/desktop_qa.py "$review" parrotia.check
+          cp "$review/desktop.json" dist/snap-review/desktop.json
+          cp "$HOME/snap/parrotia/common/qa-desktop-dark.png" dist/snap-review/
+          cp "$HOME/snap/parrotia/common/qa-desktop-light.png" dist/snap-review/
       - name: Exercise real speech, confinement, GUI workflow and refresh/revert
         env:
           SNAP_FILE: ${{ steps.snapcraft.outputs.snap }}

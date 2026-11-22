@@ -39,11 +39,11 @@ apps:
     command: bin/python3 $SNAP/share/parrotia/launcher.py
     command-chain: [bin/parrotia-env]
     desktop: usr/share/applications/parrotia.desktop
-    plugs: [home, network, removable-media, x11]
+    plugs: [home, network, removable-media, x11, desktop]
   check:
     command: bin/python3 $SNAP/share/parrotia/check.py
     command-chain: [bin/parrotia-env]
-    plugs: [home, network, x11]
+    plugs: [home, network, x11, desktop]
 
 parts:
   native-runtime:
@@ -66,6 +66,7 @@ parts:
     stage-packages:
       - python3-tk
       - libfontconfig1
+      - libglib2.0-bin
       - fonts-dejavu-core
     override-build: |
       craftctl default

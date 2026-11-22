@@ -76,9 +76,16 @@ _AUDIO_FILETYPES = [
 
 class TranscriberApp(ctk.CTk):
     def __init__(self) -> None:
-        # The Tk class name becomes the X11/XWayland WM_CLASS instance, letting
-        # desktops match the window to the installed launcher of the same ID.
-        super().__init__(className=APP_ID)
+        initial_appearance = None
+        if sys.platform == "linux":
+            from ._desktop import linux_appearance
+
+            initial_appearance = linux_appearance()
+            ctk.set_appearance_mode(initial_appearance or "Light")
+        # Use Tk's normalized X11 class explicitly so it stays consistent with
+        # StartupWMClass across Tk versions. Keep the canonical ID elsewhere.
+        window_class = APP_ID.capitalize() if sys.platform == "linux" else APP_ID
+        super().__init__(className=window_class)
 
         self.title("ParrotIA — Local Audio & Video Transcriber")
         set_window_icon(self)
@@ -105,6 +112,13 @@ class TranscriberApp(ctk.CTk):
         self._shutdown_complete = threading.Event()
 
         self._build_ui()
+        self._appearance_watcher = None
+        if sys.platform == "linux":
+            from ._desktop import AppearanceWatcher
+
+            self._appearance_watcher = AppearanceWatcher(
+                lambda mode: self._events.put(("appearance", mode)), initial_appearance
+            )
         self._event_poll = self.after(100, self._drain_events)
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         if sys.platform == "darwin":
@@ -572,7 +586,9 @@ class TranscriberApp(ctk.CTk):
 
     def _handle_event(self, event: tuple) -> None:
         kind = event[0]
-        if kind == "progress":
+        if kind == "appearance":
+            ctk.set_appearance_mode(event[1])
+        elif kind == "progress":
             _, fraction, message = event
             if self._downloading and fraction > 0:
                 # Model download/load complete — switch to normal progress.
@@ -657,6 +673,9 @@ class TranscriberApp(ctk.CTk):
         if self._closing:
             return
         self._closing = True
+        watcher = getattr(self, "_appearance_watcher", None)
+        if watcher is not None:
+            watcher.stop()
         self._cancel_event.set()
         self.transcribe_btn.configure(state="disabled")
         self.cancel_btn.configure(state="disabled")
@@ -685,6 +704,12 @@ class TranscriberApp(ctk.CTk):
             self.after_cancel(self._event_poll)
             self._event_poll = None
         self.destroy()
+
+    def destroy(self) -> None:
+        watcher = getattr(self, "_appearance_watcher", None)
+        if watcher is not None:
+            watcher.stop()
+        super().destroy()
 
 
 def main() -> None:

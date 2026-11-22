@@ -7,6 +7,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Fixed
+- Match GNOME's launcher to Tk's actual window class so the running Snap groups
+  under its existing icon, and follow the desktop portal's dark/light preference.
 - Configure bundled Snap text and shape fonts independently of the host desktop,
   use software font drawing for virtualized XWayland displays, and verify
   visible glyphs at normal and high DPI during package QA.

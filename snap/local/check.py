@@ -15,6 +15,54 @@ import wave
 from pathlib import Path
 
 
+def desktop_identity(app) -> dict:
+    from configparser import ConfigParser
+
+    desktop = ConfigParser(interpolation=None)
+    desktop.read(Path(os.environ["SNAP"]) / "meta/gui/parrotia.desktop")
+    expected = desktop["Desktop Entry"]["StartupWMClass"]
+    actual = app.winfo_class()
+    if actual != expected:
+        raise RuntimeError(f"GNOME desktop identity mismatch: {actual} != {expected}")
+    return {"wm_class": actual, "startup_wm_class": expected}
+
+
+def exercise_desktop(mode_file: Path) -> dict:
+    """Use an isolated test portal; never change the host's appearance settings."""
+    import customtkinter as ctk
+    from PIL import ImageGrab
+    from parrotia.app import TranscriberApp, WINDOW_BG
+
+    app = TranscriberApp()
+    result = {"identity": desktop_identity(app), "fonts": font_rendering(app)}
+    try:
+        for value, expected, background in (
+            (1, "Dark", WINDOW_BG[1]),
+            (2, "Light", WINDOW_BG[0]),
+            (1, "Dark", WINDOW_BG[1]),
+        ):
+            mode_file.write_text(str(value))
+            deadline = time.monotonic() + 12
+            while ctk.get_appearance_mode() != expected and time.monotonic() < deadline:
+                app.update()
+                time.sleep(0.02)
+            app.update()
+            assert ctk.get_appearance_mode() == expected, ctk.get_appearance_mode()
+            actual = app.tk.call(app._w, "cget", "-background")
+            assert app.winfo_rgb(actual) == app.winfo_rgb(background), actual
+            x, y = app.winfo_rootx(), app.winfo_rooty()
+            ImageGrab.grab(
+                bbox=(x, y, x + app.winfo_width(), y + app.winfo_height())
+            ).save(
+                Path(os.environ["SNAP_USER_COMMON"])
+                / f"qa-desktop-{expected.lower()}.png"
+            )
+        result["appearance_transitions"] = ["Dark", "Light", "Dark"]
+        return result
+    finally:
+        app.destroy()
+
+
 def font_rendering(app) -> dict:
     """Require real text/shape fonts and visible glyphs, not just Tk startup."""
     import tkinter as tk
@@ -84,6 +132,7 @@ def exercise_gui(audio: Path) -> dict:
     output.mkdir(exist_ok=True)
     dialogs = []
     app = TranscriberApp()
+    identity = desktop_identity(app)
     fonts = font_rendering(app)
     app.model_var.set("tiny")
     app.language_var.set(next(k for k, v in LANGUAGES.items() if v == "en"))
@@ -151,6 +200,7 @@ def exercise_gui(audio: Path) -> dict:
             assert "cancel" in app.status.cget("text").lower(), app.status.cget("text")
             return {
                 "fonts": fonts,
+                "desktop": identity,
                 "transcription": transcript,
                 "formats": 5,
                 "cancellation": "ok",
@@ -199,6 +249,9 @@ def main() -> None:
     parser.add_argument("--gui", action="store_true", help="Also construct the GUI")
     parser.add_argument("--model", help="Download/load a model and transcribe silence")
     parser.add_argument(
+        "--exercise-desktop", type=Path, help="Use the isolated QA portal"
+    )
+    parser.add_argument(
         "--exercise-gui",
         type=Path,
         help="Test real GUI transcription and cancellation on a speech fixture",
@@ -233,12 +286,15 @@ def main() -> None:
         "model_cache": str(cache),
     }
     report["native_provenance"] = provenance()
+    if args.exercise_desktop:
+        report["desktop"] = exercise_desktop(args.exercise_desktop)
     if args.exercise_gui:
         report["gui_workflow"] = exercise_gui(args.exercise_gui)
     if args.gui:
         from parrotia.app import TranscriberApp
 
         app = TranscriberApp()
+        report["desktop"] = desktop_identity(app)
         report["fonts"] = font_rendering(app)
         app.withdraw()
         app.update()

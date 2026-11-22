@@ -8,4 +8,4 @@ Terminal=false
 Categories=AudioVideo;Audio;
 Keywords=transcription;audio;video;whisper;speech;
 StartupNotify=true
-StartupWMClass=io.github.igorbispo99.ParrotIA
+StartupWMClass=Io.github.igorbispo99.parrotia

@@ -51,6 +51,21 @@ def app():
 
 
 class TestAppInit:
+    @pytest.mark.skipif(sys.platform != "linux", reason="X11 desktop identity")
+    def test_window_class_matches_linux_desktop_entries(self, app):
+        from configparser import ConfigParser
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[1]
+        for relative in (
+            "snap/gui/parrotia.desktop",
+            "packaging/linux/parrotia.desktop",
+            "packaging/linux/io.github.igorbispo99.ParrotIA.desktop",
+        ):
+            desktop = ConfigParser(interpolation=None)
+            desktop.read(root / relative)
+            assert app.winfo_class() == desktop["Desktop Entry"]["StartupWMClass"]
+
     def test_window_title(self, app):
         assert "ParrotIA" in app.title()
 

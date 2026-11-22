@@ -91,6 +91,17 @@ NVIDIA runtime wheels are not installed; CPU use is the supported configuration.
 
 ## Desktop fonts and rendering
 
+GNOME associates the running window with the launcher using Tk's actual window
+class, `Io.github.igorbispo99.parrotia`. All Linux desktop entries declare that
+exact value. The Snap exposes one application-menu entry.
+
+On Linux the GUI reads the desktop Settings portal's color-scheme preference
+and watches for changes in a background thread. This works under confinement
+through the `desktop` interface and the bundled `gdbus` client. Older desktops
+fall back to GNOME settings when the portal is unavailable. Package QA uses a
+private D-Bus portal to verify dark/light/dark transitions and rendered colors;
+it does not change the test host's own desktop preferences.
+
 The launcher selects the Snap's own Fontconfig configuration and writable font
 cache. It reads the bundled DejaVu, Roboto and CustomTkinter shape fonts directly.
 Xft uses its core software drawing path: this avoids blank text and broken rounded
