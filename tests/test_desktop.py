@@ -3,6 +3,7 @@
 import queue
 import subprocess
 import threading
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -52,7 +53,7 @@ def test_snap_uses_its_bundled_portal_client(monkeypatch):
     result = subprocess.CompletedProcess([], 0, "(<uint32 1>,)", "")
     with patch("parrotia._desktop.subprocess.run", return_value=result) as run:
         assert linux_appearance() == "Dark"
-    assert run.call_args.args[0][0] == "/snap/parrotia/123/usr/bin/gdbus"
+    assert Path(run.call_args.args[0][0]) == Path("/snap/parrotia/123/usr/bin/gdbus")
 
 
 def test_watcher_publishes_changes_off_ui_thread_and_stops():
