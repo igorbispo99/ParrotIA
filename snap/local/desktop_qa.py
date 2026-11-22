@@ -88,8 +88,28 @@ def main() -> None:
         (directory / "desktop.json").open("w") as report,
         (directory / "desktop.log").open("w") as log,
     ):
+        command = sys.argv[2:]
+        environment = dict(os.environ)
+        if command == ["parrotia.check"]:
+            # Let snap run perform its normal cgroup tracking before switching
+            # the test client to our isolated portal bus inside confinement.
+            environment.pop("DBUS_SESSION_BUS_ADDRESS", None)
+            command = [
+                "snap",
+                "run",
+                "--shell",
+                "parrotia.check",
+                "-c",
+                'export DBUS_SESSION_BUS_ADDRESS="$PARROTIA_DESKTOP_QA_BUS"; '
+                'exec "$SNAP/bin/parrotia-env" "$SNAP/bin/python3" '
+                '"$SNAP/share/parrotia/check.py" "$@"',
+                "desktop-qa",
+            ]
         process = subprocess.Popen(
-            [*sys.argv[2:], "--exercise-desktop", str(mode)], stdout=report, stderr=log
+            [*command, "--exercise-desktop", str(mode)],
+            stdout=report,
+            stderr=log,
+            env=environment,
         )
 
         def finished():
