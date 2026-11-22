@@ -182,24 +182,29 @@ Once installed-package QA and the license/source gates pass:
 The publisher must provide support and maintain dependencies/source availability.
 There is no automated upload and no credential is stored in the repository.
 
-Store status (17 November 2026):
+Store status (21 November 2026):
 
-- **ARM64:** revision **4**, version **1.5.3**, released to `stable`, `candidate`
-  and `edge`. Built from commit `b43bdcc` in
-  [native ARM64 build and strict package QA run 44192768523](https://github.com/igorbispo99/ParrotIA/actions/runs/44192768523/job/134426602934).
-  [Signed Store delivery QA run 44195761961](https://github.com/igorbispo99/ParrotIA/actions/runs/44195761961)
-  verified byte identity, model download/offline reuse, visible text/shape glyphs,
-  and GUI transcription. This revision fixes the Ubuntu 26.04 UTM rendering issue.
-  Original Snap SHA-256:
-  `6ca0060c578054bd648946f2e033499beeffac922582155cf24f335fa28fe559`.
-- **AMD64:** revision **5**, version **1.5.3**, released to `stable`, `candidate`
-  and `edge`. Built from the same `b43bdcc` source commit in
-  [native AMD64 build and strict package QA run 44192768523](https://github.com/igorbispo99/ParrotIA/actions/runs/44192768523/job/134426603048).
-  [Signed Store delivery QA run 44198614133](https://github.com/igorbispo99/ParrotIA/actions/runs/44198614133)
-  verified byte identity, model download/offline reuse, visible text/shape glyphs,
-  and GUI transcription. Original Snap SHA-256:
-  `bd1974782f269be1ecdd0bb18ccd0dbbab84bef75e23bb09a430705f82b2ff4c`.
+- **ARM64:** revision **6**, version **1.5.3**, released to `stable`, `candidate`
+  and `edge`. Original Snap SHA-256:
+  `7310532b911dfb6cef94ee37ee8db5f03babfaf84225a0677c5ade6b114e39c5`.
+  [Signed Store delivery and full release QA run 44978965076](https://github.com/igorbispo99/ParrotIA/actions/runs/44978965076)
+  passed.
+- **AMD64:** revision **7**, version **1.5.3**, released to `stable`, `candidate`
+  and `edge`. Original Snap SHA-256:
+  `e5e4124d4aa381417d6f9b1819d788fa1f633de95ddf699157b6cc746f1686b9`.
+  [Signed Store delivery and full release QA run 44979351032](https://github.com/igorbispo99/ParrotIA/actions/runs/44979351032)
+  passed.
 
+Both artifacts were built from `a2ecb8c` in
+[native build run 44977613372](https://github.com/igorbispo99/ParrotIA/actions/runs/44977613372).
+The build jobs passed source tests, runtime/inference checks, font pixel probes
+and the single-launcher check, then stopped at a host-side private-bus/cgroup
+interaction in the new desktop QA harness. The corrected harness in `e58f8aa`
+verified the exact Store-signed bytes on both native architectures, including
+one exported launcher, matching window class, dark/light/dark rendered colors,
+real GUI transcription, six media formats, file-access confinement, and local
+refresh/revert with offline model-cache reuse. These revisions retain the earlier
+Ubuntu 26.04 UTM software-rendering fix and add GNOME grouping and system appearance.
 
 Ubuntu AMD64 and ARM64 users can install the stable Store-signed package with
 `sudo snap install parrotia` and launch it with `parrotia.gui`.
