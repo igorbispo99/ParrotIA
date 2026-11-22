@@ -77,21 +77,45 @@ downloaded model.
   one. Prepare a short justification: a desktop application that reads and writes
   user-selected audio, video and transcript files.
 
+## Store Policies read on 22 November 2026
+
+From [Microsoft Store Policies](https://learn.microsoft.com/en-us/windows/apps/publish/store-policies)
+version 7.20 (published 15 September 2026, effective 22 October 2026). Sections
+10.1 to 10.13 were read in full; later sections, including section 11, were only
+read in summary, so treat those points as secondhand.
+
+| Policy | What it means for ParrotIA |
+| --- | --- |
+| 10.5.1 Privacy | A privacy policy URL is required when a product accesses or transmits personal information, and the text names Desktop Bridge and Win32 products as types that must have one. Plan to provide one at submission. Whether recorded speech counts as personal information is an inference, not stated. |
+| 10.2.4 Dependencies | Dependencies on software the app does not integrate must be disclosed at the start of the description. State the first-use model download from Hugging Face there. |
+| 10.2.2 Dynamic code | Downloading a model is data, not code, but the description should say what is downloaded and why. |
+| 10.2.7 Uninstall | A clean uninstall must be possible. A packaged app removes its files and redirected AppData. |
+| 10.6 Capabilities | Declared capabilities must relate to the product's function. `runFullTrust` is not mentioned by name; the package requests only that one. |
+| 10.1.1 Title | The title must be unique and not contain marketing or descriptive text. "ParrotIA" is a bare name. Trademark clearance was not checked. |
+| 11.1 and 11.11 Rating | The IARC questionnaire is completed at submission. Content must not exceed PEGI 12 or ESRB Everyone 10+. |
+| 11.16 Generative AI | Products that generate output dynamically in response to input must disclose live generative AI use. It is unclear whether Whisper speech-to-text counts; read the section and answer the Partner Center disclosure question carefully. |
+
+No policy text mentions GPL, AGPL or copyleft, but the policies are not the only
+terms: the [App Developer Agreement](https://go.microsoft.com/fwlink/?linkid=528905)
+(version 8.11 in the file found) is a PDF that was not read.
+
 ## Not yet verified
 
-- Whether the AGPL-3.0 license and the Microsoft Store App Developer Agreement
-  and Store Policies are compatible. This is the same kind of question as the
-  [Mac App Store license review](mac-app-store-roadmap.md) and has not been
-  checked. Do not submit until it is resolved.
-- Whether certification requires a privacy policy URL for an app that accesses
-  the internet (it downloads models). Plan to provide the
+- Whether the AGPL-3.0 license is compatible with the App Developer Agreement
+  and the end-user terms the Store applies. The agreement's license grant and
+  open-source clauses have not been read; read them in full before submitting.
+  This is the same kind of question as the
+  [Mac App Store license review](mac-app-store-roadmap.md).
+- Where to host the privacy policy. The
   [privacy section of the signing policy](code-signing-policy.md#privacy-policy)
-  once it is public.
-- Whether the justification for `runFullTrust` is required, and its wording.
+  is public, but a standalone privacy page is a better listing link.
+- Whether `runFullTrust` needs a written justification at submission.
 - The exact logo and screenshot sizes Partner Center wants. The source icon is
   256×256, which is enough for the package logos but probably too small for
   the larger listing artwork.
 - Package size limits, and whether the Store accepts a package this large.
+- Whether Partner Center accepts the unsigned package that `msix.py` produces. If
+  it asks for a signature, sign with a self-signed certificate whose subject is
+  exactly the publisher value above.
 - Fee status in practice: Microsoft's pages describe no registration fee for
-  individuals, but some older pages still mention a one-time charge. If
-  Partner Center asks for payment, stop and check.
+  individuals. If Partner Center asks for payment, stop and check.
