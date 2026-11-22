@@ -32,5 +32,6 @@ requires a model download; subsequent transcription can run offline.
 - [Mac App Store roadmap](mac-app-store-roadmap.md): feasibility, sandboxing, signing, beta testing, and launch gates.
 - [Snap packaging](../snap/README.md): Snap-specific build and verification instructions.
 - [Changelog](../CHANGELOG.md): the complete release history.
+- [Code signing setup](code-signing.md) and [public signing policy](code-signing-policy.md): Windows (SignPath) and macOS (Developer ID, notarization) release signing.
 - [Store submission plan](store-submission-plan.md): distribution research and planned work.
 - [Distribution channels and launch kit](distribution-channels.md): where ParrotIA is listed, what each submission is waiting for, and announcement drafts.

@@ -24,6 +24,7 @@ jobs:
     name: Build Windows installer
     needs: ci
     uses: ./.github/workflows/windows.yml
+    secrets: inherit
 
   linux:
     name: Build Linux installers
@@ -34,6 +35,7 @@ jobs:
     name: Build macOS installers
     needs: ci
     uses: ./.github/workflows/macos.yml
+    secrets: inherit
 
   release:
     name: Publish GitHub Release

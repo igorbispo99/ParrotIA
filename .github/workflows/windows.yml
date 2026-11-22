@@ -33,8 +33,91 @@ jobs:
         run: python -m pip install ".[windows-build]"
       - name: Install installer compiler
         run: choco install innosetup --yes --no-progress
-      - name: Build and smoke-test standalone app, then compile installer
-        run: python packaging/windows/build.py
+      # Signing is requested only for version tags, and only once the SignPath
+      # secret and variable exist (see docs/code-signing.md). Pull requests and
+      # forks never reach the signing service.
+      - name: Check signing configuration
+        id: signing
+        shell: pwsh
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          IS_RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/v') && github.event_name != 'pull_request' }}
+        run: |
+          $enabled = [bool]$env:SIGNPATH_API_TOKEN -and [bool]$env:SIGNPATH_ORGANIZATION_ID -and $env:IS_RELEASE_TAG -eq 'true'
+          "enabled=$($enabled.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          "version=$(python -c 'import parrotia; print(parrotia.__version__)')" >> $env:GITHUB_OUTPUT
+          if (-not $enabled) { Write-Host 'Code signing is not enabled for this run.' }
+      - name: Build and smoke-test standalone app
+        run: python packaging/windows/build.py --bundle-only
+      - name: Upload unsigned application executable
+        id: unsigned-app
+        if: steps.signing.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-parrotia-gui
+          path: dist/ParrotIA/parrotia-gui.exe
+          if-no-files-found: error
+      - name: Sign application executable
+        if: steps.signing.outputs.enabled == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'ParrotIA' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_APP_CONFIGURATION_SLUG || 'app-exe' }}
+          github-artifact-id: ${{ steps.unsigned-app.outputs.artifact-id }}
+          wait-for-completion: true
+          # Each request waits for manual approval in SignPath; the default is 10 minutes.
+          wait-for-completion-timeout-in-seconds: 7200
+          output-artifact-directory: build/signed/app
+          parameters: |
+            version: "${{ steps.signing.outputs.version }}"
+      - name: Use signed application executable
+        if: steps.signing.outputs.enabled == 'true'
+        shell: pwsh
+        run: |
+          Copy-Item build/signed/app/parrotia-gui.exe dist/ParrotIA/parrotia-gui.exe -Force
+          $signature = Get-AuthenticodeSignature dist/ParrotIA/parrotia-gui.exe
+          if ($signature.Status -ne 'Valid') { throw "parrotia-gui.exe signature is $($signature.Status)" }
+          $signature.SignerCertificate.Subject
+      - name: Smoke-test the bundle and compile installer
+        run: python packaging/windows/build.py --installer-only
+      - name: Upload unsigned installer
+        id: unsigned-installer
+        if: steps.signing.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-parrotia-setup
+          path: dist/installer/*-setup.exe
+          if-no-files-found: error
+      - name: Sign installer
+        if: steps.signing.outputs.enabled == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'ParrotIA' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_INSTALLER_CONFIGURATION_SLUG || 'installer-exe' }}
+          github-artifact-id: ${{ steps.unsigned-installer.outputs.artifact-id }}
+          wait-for-completion: true
+          # Each request waits for manual approval in SignPath; the default is 10 minutes.
+          wait-for-completion-timeout-in-seconds: 7200
+          output-artifact-directory: build/signed/installer
+          parameters: |
+            version: "${{ steps.signing.outputs.version }}"
+      - name: Use signed installer
+        if: steps.signing.outputs.enabled == 'true'
+        shell: pwsh
+        run: |
+          $signed = Get-ChildItem build/signed/installer -Filter '*-setup.exe' | Select-Object -First 1
+          if (-not $signed) { throw 'SignPath returned no installer.' }
+          Copy-Item $signed.FullName "dist/installer/$($signed.Name)" -Force
+          $signature = Get-AuthenticodeSignature "dist/installer/$($signed.Name)"
+          if ($signature.Status -ne 'Valid') { throw "Installer signature is $($signature.Status)" }
+          $signature.SignerCertificate.Subject
       - name: Verify shortcuts, Explorer registration, and uninstall
         shell: pwsh
         run: |

@@ -4,6 +4,12 @@ AppId={{3C24D663-19B6-4987-88D3-D8045741D871}
 AppName=ParrotIA
 AppVersion={#AppVersion}
 AppPublisher=Igor Bispo
+; Version resource of Setup itself; code-signing policies check these fields.
+VersionInfoCompany=Igor Bispo
+VersionInfoDescription=ParrotIA Setup
+VersionInfoProductName=ParrotIA
+VersionInfoProductVersion={#AppVersion}
+VersionInfoVersion={#AppVersion}.0
 AppPublisherURL=https://github.com/igorbispo99/ParrotIA
 AppSupportURL=https://github.com/igorbispo99/ParrotIA/issues
 DefaultDirName={localappdata}\Programs\ParrotIA

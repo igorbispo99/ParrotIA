@@ -71,6 +71,7 @@ for batch jobs, Windows Explorer integration, CLI options, and benchmarking.
 | [Models and acceleration](https://github.com/igorbispo99/ParrotIA/blob/main/docs/models.md) | Model choices, Metal/CUDA, inference backends, and offline caches |
 | [Development and releases](https://github.com/igorbispo99/ParrotIA/blob/main/docs/development.md) | Local setup, checks, Python API, and publishing |
 | [Building installers](https://github.com/igorbispo99/ParrotIA/blob/main/docs/building.md) | Windows, macOS, Linux, signing, and packaging checks |
+| [Code signing policy](https://github.com/igorbispo99/ParrotIA/blob/main/docs/code-signing-policy.md) | What is signed, by whom, and the privacy statement |
 
 ## Contributing
 

@@ -29,11 +29,17 @@ def main() -> None:
     parser.add_argument(
         "--notary-profile", help="xcrun notarytool Keychain profile (requires signing)"
     )
+    parser.add_argument(
+        "--notary-keychain",
+        help="Keychain file holding the notary profile (default: the user's keychains)",
+    )
     args = parser.parse_args()
     if sys.platform != "darwin":
         parser.error("Build on macOS using a native Python with Tk support.")
     if args.notary_profile and not args.sign_identity:
         parser.error("--notary-profile requires --sign-identity")
+    if args.notary_keychain and not args.notary_profile:
+        parser.error("--notary-keychain requires --notary-profile")
     arch = platform.machine()
     if arch not in ("arm64", "x86_64"):
         parser.error(f"Unsupported architecture: {arch}")
@@ -50,6 +56,8 @@ def main() -> None:
     env.pop("PARROTIA_BACKEND", None)
     if args.sign_identity:
         env["PARROTIA_SIGN_IDENTITY"] = args.sign_identity
+        # A bundle that PyInstaller failed to sign must stop the build, not ship.
+        env["PYINSTALLER_STRICT_BUNDLE_CODESIGN_ERROR"] = "1"
     else:
         env.pop("PARROTIA_SIGN_IDENTITY", None)
     run(
@@ -63,6 +71,9 @@ def main() -> None:
         env=env,
     )
     app = ROOT / "dist/ParrotIA.app"
+    if args.sign_identity:
+        # Every Mach-O file needs a valid Developer ID signature to be notarized.
+        run("codesign", "--verify", "--deep", "--strict", "--verbose=2", str(app))
     report = generated / "smoke-test.json"
     report.unlink(missing_ok=True)
     run(str(app / "Contents/MacOS/parrotia-gui"), "--smoke-test", str(report), env=env)
@@ -116,6 +127,7 @@ def main() -> None:
             str(dmg),
             "--keychain-profile",
             args.notary_profile,
+            *(["--keychain", args.notary_keychain] if args.notary_keychain else []),
             "--wait",
         )
         run("xcrun", "stapler", "staple", str(dmg))

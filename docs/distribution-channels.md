@@ -21,6 +21,7 @@ been posted.
 | AUR (`parrotia-bin`) | Recipe tested; **not published** | An AUR account (registration was reported closed on 21 November) | Re-check registration, add the SSH key, push `packaging/aur/parrotia-bin` |
 | Arch package on GitHub | `parrotia-bin-1.5.3-1-x86_64.pkg.tar.zst` is attached to the 1.5.3 release | — | Documented in [installation](installation.md#arch-linux) |
 | Flathub | Not started | A human maintainer | See below |
+| Code signing | Workflows and policy prepared, **not enabled**; SignPath application submitted 21 November 2026 | SignPath Foundation decision (Windows) and an Apple Developer ID (macOS) | Follow [code signing setup](code-signing.md) |
 | Microsoft Store | Deferred | Trusted code signing of the installer and every bundled executable | Revisit with a signing certificate |
 | Mac App Store | Planning only | Developer account, rights review, sandbox prototype | [Roadmap](mac-app-store-roadmap.md) |
 

@@ -60,18 +60,8 @@ def find_compiler() -> str:
     )
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--iscc", help="Path to the Inno Setup 6 compiler.")
-    parser.add_argument("--bundle-only", action="store_true")
-    args = parser.parse_args()
-    if sys.platform != "win32" or sys.maxsize <= 2**32:
-        parser.error("Build with 64-bit Python on Windows.")
-    compiler = None if args.bundle_only else (args.iscc or find_compiler())
-    generated = ROOT / "build/windows"
-    generated.mkdir(parents=True, exist_ok=True)
-    registry = generated / "file-associations.iss"
-    registry.write_text(registry_entries(), encoding="utf-8")
+def build_bundle(generated: Path) -> None:
+    """Freeze the app into dist/ParrotIA with the version resource that signing checks."""
     version = tuple(int(part) for part in __version__.split(".")) + (0,)
     (generated / "version-info.txt").write_text(
         "VSVersionInfo(ffi=FixedFileInfo("
@@ -102,6 +92,38 @@ def main() -> None:
         cwd=ROOT,
         check=True,
     )
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--iscc", help="Path to the Inno Setup 6 compiler.")
+    stages = parser.add_mutually_exclusive_group()
+    stages.add_argument(
+        "--bundle-only",
+        action="store_true",
+        help="Build and smoke-test the frozen app, but do not compile the installer.",
+    )
+    stages.add_argument(
+        "--installer-only",
+        action="store_true",
+        help=(
+            "Reuse dist/ParrotIA (for example after signing parrotia-gui.exe), "
+            "re-run the smoke test on it, and compile the installer."
+        ),
+    )
+    args = parser.parse_args()
+    if sys.platform != "win32" or sys.maxsize <= 2**32:
+        parser.error("Build with 64-bit Python on Windows.")
+    compiler = None if args.bundle_only else (args.iscc or find_compiler())
+    generated = ROOT / "build/windows"
+    generated.mkdir(parents=True, exist_ok=True)
+    registry = generated / "file-associations.iss"
+    registry.write_text(registry_entries(), encoding="utf-8")
+    if args.installer_only:
+        if not (ROOT / "dist/ParrotIA/parrotia-gui.exe").is_file():
+            parser.error("--installer-only needs a bundle from --bundle-only first.")
+    else:
+        build_bundle(generated)
     # Check the actual frozen executable, not the developer's Python environment.
     report = generated / "smoke-test.json"
     result = subprocess.run(

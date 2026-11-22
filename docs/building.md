@@ -98,6 +98,9 @@ This signs the app and DMG, submits the DMG to Apple, staples the ticket and
 checks Gatekeeper acceptance. Without these options the app is ad-hoc signed
 for local use; CI artifacts are unsigned by Developer ID and unnotarized.
 
+Release tags can sign and notarize in CI once the Apple secrets exist, and sign
+the Windows installer through SignPath. See [Code signing setup](code-signing.md).
+
 ## Build the Linux installers
 
 Build natively on x86-64 or ARM64 Ubuntu 22.04 to keep the glibc baseline at 2.35:

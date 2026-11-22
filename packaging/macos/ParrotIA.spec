@@ -28,13 +28,24 @@ a = Analysis(
     excludes=["faster_whisper", "ctranslate2", "onnxruntime", "torch", "tensorflow", "matplotlib", "pytest"],
 )
 pyz = PYZ(a.pure)
+# BUNDLE inherits its signing settings from COLLECT, so the identity must reach
+# COLLECT as well as EXE; otherwise only the launcher is signed and notarization
+# rejects every bundled library.
+sign_identity = os.environ.get("PARROTIA_SIGN_IDENTITY") or None
+entitlements = (
+    str(root / "packaging/macos/entitlements.plist") if sign_identity else None
+)
 exe = EXE(
     pyz, a.scripts, [], exclude_binaries=True,
     name="parrotia-gui", console=False, strip=False, upx=False,
-    codesign_identity=os.environ.get("PARROTIA_SIGN_IDENTITY"),
-    entitlements_file=str(root / "packaging/macos/entitlements.plist") if os.environ.get("PARROTIA_SIGN_IDENTITY") else None,
+    codesign_identity=sign_identity,
+    entitlements_file=entitlements,
 )
-coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name="ParrotIA")
+coll = COLLECT(
+    exe, a.binaries, a.datas, strip=False, upx=False, name="ParrotIA",
+    codesign_identity=sign_identity,
+    entitlements_file=entitlements,
+)
 app = BUNDLE(
     coll,
     name="ParrotIA.app",

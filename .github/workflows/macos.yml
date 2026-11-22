@@ -46,13 +46,65 @@ jobs:
           python -c 'from parrotia import _whispercpp as w; w.ensure_downloaded(w.MODEL_FILES["tiny"])'
         env:
           PARROTIA_MODELS_DIR: ${{ runner.temp }}/parrotia-models
+      # Signing and notarization run only for version tags, and only once the
+      # Apple secrets exist (see docs/code-signing.md). Pull requests and forks
+      # never receive them.
+      - name: Check signing configuration
+        id: signing
+        env:
+          APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          APPLE_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY }}
+          IS_RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/v') && github.event_name != 'pull_request' }}
+        run: |
+          if [ -n "$APPLE_CERTIFICATE_P12" ] && [ -n "$APPLE_NOTARY_KEY" ] && [ "$IS_RELEASE_TAG" = "true" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Developer ID signing is not enabled for this run."
+          fi
+      - name: Import Developer ID certificate and notary credentials
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY }}
+          APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+        run: |
+          keychain="$RUNNER_TEMP/parrotia-signing.keychain-db"
+          password="$(uuidgen)"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          echo "$APPLE_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security import "$RUNNER_TEMP/certificate.p12" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
+          rm -f "$RUNNER_TEMP/certificate.p12"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$password" "$keychain" > /dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          identity="$(security find-identity -v -p codesigning "$keychain" | awk '/Developer ID Application/ {print $2; exit}')"
+          if [ -z "$identity" ]; then echo "No Developer ID Application identity in the certificate." >&2; exit 1; fi
+          printf '%s\n' "$APPLE_NOTARY_KEY" > "$RUNNER_TEMP/AuthKey.p8"
+          xcrun notarytool store-credentials parrotia-notary \
+            --key "$RUNNER_TEMP/AuthKey.p8" --key-id "$APPLE_NOTARY_KEY_ID" \
+            --issuer "$APPLE_NOTARY_ISSUER_ID" --keychain "$keychain"
+          rm -f "$RUNNER_TEMP/AuthKey.p8"
+          echo "PARROTIA_SIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
+          echo "PARROTIA_NOTARY_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
       - name: Build and smoke-test app and DMG
-        run: python packaging/macos/build.py
+        run: |
+          args=()
+          if [ -n "${PARROTIA_SIGN_IDENTITY:-}" ]; then
+            args+=(--sign-identity "$PARROTIA_SIGN_IDENTITY" --notary-profile parrotia-notary --notary-keychain "$PARROTIA_NOTARY_KEYCHAIN")
+          fi
+          python packaging/macos/build.py ${args[@]+"${args[@]}"}
         env:
           PARROTIA_MODELS_DIR: ${{ runner.temp }}/parrotia-models
           PARROTIA_SMOKE_MODEL_NAME: tiny
       - name: Verify drag-install from disk image
         run: python packaging/macos/test_installer.py
+      - name: Remove signing keychain
+        if: always() && steps.signing.outputs.enabled == 'true'
+        run: security delete-keychain "$PARROTIA_NOTARY_KEYCHAIN" || true
       - uses: actions/upload-artifact@v4
         with:
           name: macos-installer-${{ matrix.arch }}
