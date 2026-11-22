@@ -2,10 +2,11 @@
 
 [Documentation](README.md) · [Distribution channels](distribution-channels.md) · [Code signing setup](code-signing.md)
 
-Prepared **22 November 2026** against ParrotIA **1.5.3**. Status: a test MSIX
-builds, installs and passes the app's smoke test under package identity in CI
-(see *Prototype status*); nothing has been reserved, uploaded or submitted, and
-no Partner Center account exists yet.
+Prepared **22 November 2026** against ParrotIA **1.5.3**. Status: the product
+name **ParrotIA** is reserved in Partner Center (22 November 2026, kept for three
+months unless a submission is made), a test MSIX builds, installs and passes the
+app's smoke test under package identity in CI, and nothing has been uploaded or
+submitted yet.
 
 Publishing as MSIX removes the need for a code signing certificate: after
 certification the Store re-signs the package with a Microsoft certificate.
@@ -13,6 +14,20 @@ Submitting the existing Inno Setup `.exe` instead would require the project's
 own trusted signature, so it is not the plan. The Store would add a search
 listing and automatic updates, and a Microsoft-signed package avoids the
 unsigned-installer warning. It does not replace the direct download.
+
+## Reserved product
+
+| Field | Value |
+| --- | --- |
+| Product | ParrotIA (MSIX or PWA app), status *draft* |
+| Store ID | `9NXSSCQKW2XR` |
+| Identity name | `IgorBispo.ParrotIA` |
+| Publisher | `CN=8D013184-D3B0-4A06-98A9-CD149E2D2315` |
+| Publisher display name | Igor Bispo |
+| Package family name | `IgorBispo.ParrotIA_rnmjmj8qbbenr` |
+
+These values appear in every published package, so they are not secrets. The
+reservation lapses on **22 February 2027** if no submission has been made.
 
 ## Prototype status
 
@@ -36,8 +51,8 @@ downloaded model.
 
 | # | Step | Owner | Notes |
 | --- | --- | --- | --- |
-| 1 | Register a Partner Center account | Project owner | Individual accounts have no registration fee under the new flow. Start at [storedeveloper.microsoft.com](https://storedeveloper.microsoft.com), sign in with a personal Microsoft account, then verify with a government ID and a selfie taken on a phone. The country cannot be changed later and an individual account cannot become a company account. Verification time is not published. |
-| 2 | Reserve the product name | Project owner | Partner Center → New product → MSIX → check availability. A reservation lasts three months. Copy the *Product identity* values (Name, Publisher, Publisher display name). |
+| 1 | Register a Partner Center account (**done**) | Project owner | Individual accounts have no registration fee under the new flow. Start at [storedeveloper.microsoft.com](https://storedeveloper.microsoft.com), sign in with a personal Microsoft account, then verify with a government ID and a selfie taken on a phone. The country cannot be changed later and an individual account cannot become a company account. Verification time is not published. |
+| 2 | Reserve the product name (**done**: ParrotIA) | Project owner | Partner Center → New product → MSIX → check availability. A reservation lasts three months. Copy the *Product identity* values (Name, Publisher, Publisher display name). |
 | 3 | Build the submission package | Developer | `python packaging/windows/msix.py --identity-name … --publisher … --publisher-display-name …` with the Partner Center values. The version is `major.minor.patch.0`; the Store reserves the last part. |
 | 4 | Test the package | Developer | Run the workflow, then install on a real Windows 10/11 machine and exercise a full transcription (model download, folder input, export beside the source). |
 | 5 | Complete the listing | Project owner | Pricing (free), properties, age rating (IARC questionnaire), packages, description, screenshots and logos, and notes for certification. |
