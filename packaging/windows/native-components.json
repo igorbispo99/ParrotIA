@@ -1,0 +1,221 @@
+{
+  "description": "Native libraries inside the PyAV Windows wheel that ships with ParrotIA. Sources and hashes come from PyAV's pyav-ffmpeg build recipe at the tag below; license texts were extracted from those exact archives into packaging/windows/licenses/.",
+  "pyav_version": "18.1.1",
+  "build_recipe": "https://github.com/PyAV-Org/pyav-ffmpeg/tree/8.1.3-1",
+  "ffmpeg_configuration_flags": [
+    "--enable-amf",
+    "--enable-libdav1d",
+    "--enable-libmp3lame",
+    "--enable-libopus",
+    "--enable-libsvtav1",
+    "--enable-libvmaf",
+    "--enable-libvpl",
+    "--enable-libvpx",
+    "--enable-libwebp",
+    "--enable-libx264",
+    "--enable-libx265",
+    "--enable-mediafoundation",
+    "--enable-nvdec",
+    "--enable-nvenc",
+    "--enable-shared",
+    "--enable-version3",
+    "--enable-zlib"
+  ],
+  "components": [
+    {
+      "name": "FFmpeg",
+      "version": "8.1.3",
+      "directory": "ffmpeg",
+      "license": "LGPL-3.0-or-later (the libraries report \"LGPL version 3 or later\")",
+      "dlls": [
+        "avcodec-62",
+        "avdevice-62",
+        "avfilter-11",
+        "avformat-62",
+        "avutil-60",
+        "swresample-6",
+        "swscale-9"
+      ],
+      "source": "https://ffmpeg.org/releases/ffmpeg-8.1.3.tar.xz",
+      "sha256": "7138d28c96d9d3e3af4ee3d8cad72741f8ffb40da90c1112235dea3ecd3178a3",
+      "license_files": [
+        "LICENSE.md",
+        "COPYING.LGPLv3",
+        "COPYING.LGPLv2.1",
+        "COPYING.GPLv3",
+        "COPYING.GPLv2"
+      ]
+    },
+    {
+      "name": "x264",
+      "version": "git b35605ace3ddf7c1a5d67a2eb553f034aef41d55",
+      "directory": "x264",
+      "license": "GPL-2.0 (see COPYING)",
+      "dlls": [
+        "libx264-165"
+      ],
+      "source": "https://code.videolan.org/videolan/x264/-/archive/b35605ace3ddf7c1a5d67a2eb553f034aef41d55/x264-b35605ace3ddf7c1a5d67a2eb553f034aef41d55.tar.bz2",
+      "sha256": "6eeb82934e69fd51e043bd8c5b0d152839638d1ce7aa4eea65a3fedcf83ff224",
+      "license_files": [
+        "COPYING"
+      ]
+    },
+    {
+      "name": "x265",
+      "version": "4.3",
+      "directory": "x265",
+      "license": "GPL-2.0 (see COPYING; the authors also offer a commercial license)",
+      "dlls": [
+        "libx265"
+      ],
+      "source": "https://github.com/Multicorewareinc/x265/releases/download/4.3/x265_4.3.tar.gz",
+      "sha256": "83c53e4c8bbb8f1e33ed59e10a7d621d1d7801ca853910c3eb41f038b8ffb121",
+      "license_files": [
+        "COPYING"
+      ]
+    },
+    {
+      "name": "LAME (bwlame fork)",
+      "version": "4.1.0",
+      "directory": "bwlame",
+      "license": "LGPL-2.1 (see LICENSE)",
+      "static_in": "avcodec-62",
+      "dlls": [],
+      "source": "https://github.com/basswood-io/bwlame/archive/refs/tags/v4.1.0.tar.gz",
+      "sha256": "f07647a8db7cf511cb6a82e69483bc3c1ad87355995a74193801029c368cb45c",
+      "license_files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "name": "libvpx",
+      "version": "1.17.0",
+      "directory": "libvpx",
+      "license": "BSD-3-Clause with the WebM patent grant (see LICENSE, PATENTS)",
+      "dlls": [
+        "libvpx-1"
+      ],
+      "source": "https://github.com/webmproject/libvpx/archive/refs/tags/v1.17.0.tar.gz",
+      "sha256": "1020f184046187baa2985dbde38e0691f49c44088bca7a1842b0236c6081dc0a",
+      "license_files": [
+        "LICENSE",
+        "PATENTS"
+      ]
+    },
+    {
+      "name": "libwebp",
+      "version": "1.6.0",
+      "directory": "libwebp",
+      "license": "BSD-3-Clause with the WebM patent grant (see COPYING, PATENTS)",
+      "dlls": [
+        "libwebp",
+        "libwebpmux",
+        "libsharpyuv"
+      ],
+      "source": "https://github.com/webmproject/libwebp/archive/refs/tags/v1.6.0.tar.gz",
+      "sha256": "93a852c2b3efafee3723efd4636de855b46f9fe1efddd607e1f42f60fc8f2136",
+      "license_files": [
+        "COPYING",
+        "PATENTS"
+      ]
+    },
+    {
+      "name": "Opus",
+      "version": "1.6.1",
+      "directory": "opus",
+      "license": "BSD-3-Clause (see COPYING)",
+      "dlls": [
+        "libopus-0"
+      ],
+      "source": "https://ftp.osuosl.org/pub/xiph/releases/opus/opus-1.6.1.tar.gz",
+      "sha256": "6ffcb593207be92584df15b32466ed64bbec99109f007c82205f0194572411a1",
+      "license_files": [
+        "COPYING"
+      ]
+    },
+    {
+      "name": "dav1d",
+      "version": "1.5.4",
+      "directory": "dav1d",
+      "license": "BSD-2-Clause with the AOMedia patent license (see COPYING, PATENTS)",
+      "dlls": [
+        "libdav1d"
+      ],
+      "source": "https://code.videolan.org/videolan/dav1d/-/archive/1.5.4/dav1d-1.5.4.tar.bz2",
+      "sha256": "2abfb0c89212e6e4733a54e0ae509ec00a5b845a6360946f918806e14aedb011",
+      "license_files": [
+        "COPYING",
+        "PATENTS"
+      ]
+    },
+    {
+      "name": "SVT-AV1",
+      "version": "4.3.0",
+      "directory": "SVT-AV1",
+      "license": "BSD-3-Clause-Clear with the AOMedia patent license (see LICENSE.md, PATENTS.md)",
+      "dlls": [
+        "libSvtAv1Enc"
+      ],
+      "source": "https://gitlab.com/AOMediaCodec/SVT-AV1/-/archive/v4.3.0/SVT-AV1-v4.3.0.tar.bz2",
+      "sha256": "9223ce06e6172ad41357ed23b3b00f036e03794b86b0e20ea9ccb3f648b8955d",
+      "license_files": [
+        "LICENSE.md",
+        "LICENSE-BSD2.md",
+        "PATENTS.md"
+      ]
+    },
+    {
+      "name": "libvmaf",
+      "version": "3.2.1",
+      "directory": "libvmaf",
+      "license": "BSD-2-Clause-Patent (see LICENSE)",
+      "dlls": [
+        "libvmaf"
+      ],
+      "source": "https://github.com/Netflix/vmaf/archive/refs/tags/v3.2.1.tar.gz",
+      "sha256": "5df7386911bc15fd1ca783132528748d219768ae4fc5f8e0b61184f041648092",
+      "license_files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "name": "oneVPL (libvpl dispatcher)",
+      "version": "2.17.0",
+      "directory": "libvpl",
+      "license": "MIT (see LICENSE)",
+      "dlls": [
+        "libvpl"
+      ],
+      "source": "https://github.com/intel/libvpl/archive/refs/tags/v2.17.0.tar.gz",
+      "sha256": "4de3e2faf1e8307fb282e4a43f443191810f6a6b0a484fffa7995ba1c814c6ec",
+      "license_files": [
+        "LICENSE"
+      ]
+    }
+  ],
+  "toolchain_runtime": {
+    "note": "These runtime libraries come from the MSYS2/MinGW-w64 environment that built the wheel. The wheel does not record their versions, so no pinned source or license text is included here; see the MSYS2 package sources at https://packages.msys2.org and https://github.com/msys2/MINGW-packages.",
+    "libraries": [
+      {
+        "dll": "libgcc_s_seh-1",
+        "license": "GPL-3.0-or-later with the GCC Runtime Library Exception"
+      },
+      {
+        "dll": "libstdc++-6",
+        "license": "GPL-3.0-or-later with the GCC Runtime Library Exception"
+      },
+      {
+        "dll": "libwinpthread-1",
+        "license": "MinGW-w64 winpthreads (permissive)"
+      },
+      {
+        "dll": "libiconv-2",
+        "license": "LGPL-2.1-or-later (GNU libiconv)"
+      },
+      {
+        "dll": "zlib1",
+        "license": "zlib license"
+      }
+    ]
+  }
+}

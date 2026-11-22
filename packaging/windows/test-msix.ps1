@@ -51,6 +51,35 @@ try {
     $data = Get-Content -LiteralPath $report -Raw | ConvertFrom-Json
     if ($data.samples -ne 1600) { throw "Packaged app did not decode audio correctly" }
     Write-Host "Packaged smoke test passed: $($data | ConvertTo-Json -Compress)"
+
+    # docs/privacy.md says models stay in the Hugging Face cache in the user's
+    # profile folder, which is not redirected into package storage. Verify it: a
+    # process inside the package writes a file there, and it must be visible outside.
+    # LocalAppData is probed too, for information only (the Explorer queue uses it).
+    $cmd = Join-Path $env:SystemRoot "System32\cmd.exe"
+    $packaged = @{ PackageFamilyName = $installed.PackageFamilyName; AppId = "ParrotIA"; PreventBreakaway = $true; Command = $cmd }
+    function Test-PackagedWrite([string]$Variable, [string]$Folder) {
+        $realDir = Join-Path (Get-Item "Env:$Variable").Value $Folder
+        $realFile = Join-Path $realDir "storage-probe.txt"
+        $seen = Join-Path $testRoot "probe-$Variable.txt"
+        Remove-Item -LiteralPath $realFile, $seen -ErrorAction SilentlyContinue
+        $inner = '%' + $Variable + '%\' + $Folder
+        Invoke-CommandInDesktopPackage @packaged -Args ('/c mkdir "' + $inner + '" 2>nul & echo probe> "' + $inner + '\storage-probe.txt"') | Out-Null
+        Start-Sleep -Seconds 3
+        Invoke-CommandInDesktopPackage @packaged -Args ('/c if exist "' + $inner + '\storage-probe.txt" (echo yes> "' + $seen + '") else (echo no> "' + $seen + '")') | Out-Null
+        $deadline = (Get-Date).AddSeconds(30)
+        while (-not (Test-Path -LiteralPath $seen) -and (Get-Date) -lt $deadline) { Start-Sleep -Seconds 1 }
+        if (-not (Test-Path -LiteralPath $seen)) { throw "Storage probe for $Variable did not run inside the package" }
+        $inside = (Get-Content -LiteralPath $seen -Raw).Trim()
+        $outside = Test-Path -LiteralPath $realFile
+        Write-Host "STORAGE_PROBE $Variable\$Folder inside_package=$inside outside_package=$outside"
+        Remove-Item -LiteralPath $realFile -ErrorAction SilentlyContinue
+        return @{ Inside = $inside; Outside = $outside }
+    }
+    $profileProbe = Test-PackagedWrite "USERPROFILE" ".cache\parrotia-probe"
+    if ($profileProbe.Inside -ne "yes") { throw "Packaged app could not read back a file it wrote to the profile folder" }
+    if (-not $profileProbe.Outside) { throw "Profile-folder writes are redirected into package storage; correct docs/privacy.md" }
+    Test-PackagedWrite "LOCALAPPDATA" "ParrotIA\parrotia-probe" | Out-Null
 } catch {
     $verificationFailure = $_
 } finally {

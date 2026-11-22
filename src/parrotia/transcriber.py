@@ -32,6 +32,12 @@ from typing import Callable, Dict, List, Optional
 # tolerate the duplicate and keeps the process alive.
 os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 
+# ParrotIA collects no usage data. The Hugging Face client otherwise adds
+# library and Python versions to the User-Agent of its model downloads unless
+# this is set. It must be set before huggingface_hub is imported; setting the
+# variable yourself to "0" overrides this default.
+os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
+
 # State-of-the-art, fully local and free Whisper variants. ``turbo`` and the
 # distil models trade a sliver of accuracy for large speedups; large-v3 is the
 # most accurate.

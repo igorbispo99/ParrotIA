@@ -92,6 +92,12 @@ def build_bundle(generated: Path) -> None:
         cwd=ROOT,
         check=True,
     )
+    # Licenses require notices (and a source offer for LGPL/GPL libraries) to ship
+    # with every copy, so write them into the bundle before it is packaged.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import third_party
+
+    third_party.write_notices(ROOT / "dist/ParrotIA")
 
 
 def main() -> None:

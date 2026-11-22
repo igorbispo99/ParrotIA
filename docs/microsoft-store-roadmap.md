@@ -60,13 +60,14 @@ downloaded model.
 
 ## Behaviour that changes in a packaged app
 
-- **Model cache is removed on uninstall.** The app keeps models in
-  `%LOCALAPPDATA%\ParrotIA`. For packaged apps, new files under `LocalAppData`
-  are redirected to a private per-package location, and uninstalling deletes
-  redirected files. The roughly 1.6 GB default model would be downloaded again
-  after a reinstall, whereas the Inno installer keeps it. Either explain this in
-  the listing or store the cache where it survives (a user-chosen folder), which
-  needs a code change.
+- **Where models are stored.** On Windows the models come from faster-whisper and
+  live in the Hugging Face cache in the user's profile folder
+  (`%USERPROFILE%\.cache\huggingface\hub`), not under `LocalAppData`. Packaged
+  apps redirect only new files under the AppData folders, so the cache is expected
+  to be shared and to survive uninstalling; the CI test checks that a packaged
+  process can write to the profile folder and that the file is visible outside the
+  package. Only the Windows Explorer queue file lives under `LocalAppData`, and the
+  Store edition has no Explorer action.
 - **No Explorer right-click action in the first Store edition.** The action is a
   per-user registry entry created by the Inno installer. A packaged app would
   need a different mechanism (a registered Explorer command component).
@@ -96,16 +97,61 @@ read in summary, so treat those points as secondhand.
 | 11.16 Generative AI | Products that generate output dynamically in response to input must disclose live generative AI use. It is unclear whether Whisper speech-to-text counts; read the section and answer the Partner Center disclosure question carefully. |
 
 No policy text mentions GPL, AGPL or copyleft, but the policies are not the only
-terms: the [App Developer Agreement](https://go.microsoft.com/fwlink/?linkid=528905)
-(version 8.11 in the file found) is a PDF that was not read.
+terms; see the agreement review below.
+
+## App Developer Agreement review (22 November 2026)
+
+Read from the PDF of [App Developer Agreement v8.11](https://go.microsoft.com/fwlink/?linkid=528905)
+(published 17 March 2026, effective 17 April 2026): the 52-page text was
+extracted and the main body (clauses 1 to 12, pages 1 to 25) and the US/Canada
+Standard Application License Terms (Exhibit G) were read. The tax exhibits, the
+Edge add-on and preload exhibits, and the other regional license variants were
+not read. This is a reading of the text, not legal advice.
+
+**What favours the AGPL.** The agreement defines FOSS as software under an
+OSI-approved license, which includes AGPL-3.0. The grant of rights to Microsoft
+excludes "any material subject to any FOSS licenses" (4.b). Microsoft acts as the
+developer's agent and the developer, not Microsoft, is the distributor of the app
+(4.a.i), so source-offer and notice duties under the AGPL stay with the project.
+Nothing found requires ParrotIA to be proprietary.
+
+**What has to be done or watched.**
+
+| Clause | Requirement | Action |
+| --- | --- | --- |
+| 4.i License to Customer | The developer licenses the app to customers. If no license is supplied, the Standard Application License Terms apply. Those forbid reverse engineering, copying beyond the terms, making the app available to others to copy, and transferring it, which contradict AGPL rights. A supplied license must give download and usage rights no more restrictive than the Microsoft Usage Rules. | Supply the AGPL-3.0 text, or a link to it, as the license terms in the Store listing. Do not leave the default. |
+| 4.c and 5.c FOSS and third-party rights | The developer is solely responsible for compliance with every FOSS license in the app, including source availability, and for ensuring Microsoft has the rights it needs. | Ship third-party notices and source offers for the bundled native libraries (next section). |
+| 10.c Duty to defend | The developer defends and indemnifies Microsoft and affiliates against third-party claims about infringement, the app's functionality or inability to use it, product liability and misleading advertising. The clause states no cap, and the obligation is the developer's, which on an Individual account is the person. | Read it yourself before accepting and decide whether you are comfortable as an individual; consider advice. |
+| 7.d Warranties | The developer warrants that all required third-party consents and licenses for distributing the app in the Store have been obtained. | Confirm every bundled component allows redistribution in this form. |
+| 2 Store Account | If distribution relates to the developer's business, trade or profession, the account must be a Company account. Choosing Individual is a declaration of status. | Confirm that an individual account fits how ParrotIA is run and promoted. |
+| 4.h Privacy Policy | A policy is required if the app collects or transmits personal information, and the developer must keep a prominent link to it in a reasonable place such as inside the app, plus the Store page. | Publish a privacy page and add a link in the app (code change). |
+| 3.k and 12.n Removal and changes | Microsoft may remove or suspend an app for any reason, and may update the agreement at any time. Termination is possible on 60 days' notice. | Keep the other distribution channels; do not depend on the Store. |
+| 12.f Law and venue | Washington State law; exclusive venue in King County, Washington. Claims must be filed within one year. | Note, for an individual outside the United States. |
+| 5.b Export | Controlled technology used by the app must be disclosed to Microsoft. | The app's network use is the model download; confirm with the export classification of the bundled libraries. |
+
+### Bundled native libraries need a compliance pass
+
+The Snap recompiles FFmpeg from source as an LGPL build and ships the source
+archive and notices (`snap/licenses/SOURCES.md`). The Windows bundle, and
+therefore the MSIX, instead contains the libraries from the PyAV 18.1.1 Windows
+wheel. That wheel carries `libx264-165.dll` and `libx265.dll` (GPL-licensed
+encoders) beside FFmpeg, and the installer ships only the project `LICENSE`: no
+third-party notices and no source offer. ParrotIA decodes audio and does not
+need the encoders. Before the Store submission, and ideally for the existing
+Windows installer too:
+
+1. Check which FFmpeg license the PyAV Windows wheel's build reports.
+2. Either build Windows with an LGPL-only FFmpeg, as the Snap does, or ship the
+   license texts and an offer or copy of the corresponding source for each
+   bundled GPL and LGPL library.
+3. Add the notices file to the bundle and link it from the listing.
 
 ## Not yet verified
 
-- Whether the AGPL-3.0 license is compatible with the App Developer Agreement
-  and the end-user terms the Store applies. The agreement's license grant and
-  open-source clauses have not been read; read them in full before submitting.
-  This is the same kind of question as the
-  [Mac App Store license review](mac-app-store-roadmap.md).
+- Whether the AGPL-3.0 license is acceptable to you as an individual under the
+  App Developer Agreement. The text does not forbid it (see the review above),
+  but the indemnity in 10.c and the FOSS compliance duties are yours. No legal
+  advice was taken.
 - Where to host the privacy policy. The
   [privacy section of the signing policy](code-signing-policy.md#privacy-policy)
   is public, but a standalone privacy page is a better listing link.

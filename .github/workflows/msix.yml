@@ -12,13 +12,13 @@ on:
     # msix/** are development branches for iterating on this workflow.
     branches: [main, master, "msix/**"]
     paths:
-      - "packaging/windows/msix.py"
-      - "packaging/windows/test-msix.ps1"
+      - "packaging/windows/**"
+      - "src/**"
       - ".github/workflows/msix.yml"
   pull_request:
     paths:
-      - "packaging/windows/msix.py"
-      - "packaging/windows/test-msix.ps1"
+      - "packaging/windows/**"
+      - "src/**"
       - ".github/workflows/msix.yml"
 
 permissions:
@@ -58,6 +58,8 @@ jobs:
       MSIX_IDENTITY_NAME: IgorBispo.ParrotIA
       MSIX_PUBLISHER: CN=8D013184-D3B0-4A06-98A9-CD149E2D2315
       MSIX_PUBLISHER_DISPLAY_NAME: Igor Bispo
+      # The notices must match the bundled native libraries exactly.
+      PARROTIA_STRICT_NOTICES: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

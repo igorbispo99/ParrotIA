@@ -50,6 +50,9 @@ jobs:
           if (-not $enabled) { Write-Host 'Code signing is not enabled for this run.' }
       - name: Build and smoke-test standalone app
         run: python packaging/windows/build.py --bundle-only
+        env:
+          # Release builds must ship notices that match the bundled libraries.
+          PARROTIA_STRICT_NOTICES: ${{ startsWith(github.ref, 'refs/tags/v') && '1' || '' }}
       - name: Upload unsigned application executable
         id: unsigned-app
         if: steps.signing.outputs.enabled == 'true'

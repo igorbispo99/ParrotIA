@@ -261,3 +261,8 @@ CLAUDE.md
 !snap/assets.json
 !snap/model-repositories.json
 !snap/licenses/**
+
+# Windows third-party notices inputs and Microsoft Store listing text
+!packaging/windows/native-components.json
+!packaging/windows/licenses/**/*.md
+!packaging/windows/store/listing.md

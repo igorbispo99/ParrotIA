@@ -17,7 +17,15 @@ from tkinter import filedialog, messagebox
 from PIL import Image
 
 from . import formats
-from .resources import set_window_icon
+from .resources import (
+    LICENSE_URL,
+    PRIVACY_URL,
+    PROJECT_URL,
+    bundled_notices,
+    open_path,
+    open_url,
+    set_window_icon,
+)
 from .transcriber import (
     LANGUAGES,
     SUPPORTED_EXTENSIONS,
@@ -255,7 +263,38 @@ class TranscriberApp(ctk.CTk):
         self.status = ctk.CTkLabel(
             self, text="Ready when you are.", anchor="w", text_color=MUTED
         )
-        self.status.grid(row=7, column=0, sticky="ew", padx=16, pady=(0, 12))
+        self.status.grid(row=7, column=0, sticky="ew", padx=16, pady=(0, 4))
+
+        # --- Links: privacy statement, license/source and bundled notices ---
+        footer = ctk.CTkFrame(self, fg_color="transparent")
+        footer.grid(row=8, column=0, sticky="ew", padx=12, pady=(0, 8))
+        for label, command in (
+            ("Privacy", lambda: open_url(PRIVACY_URL)),
+            ("License and source", lambda: open_url(LICENSE_URL)),
+            ("Third-party notices", self._show_notices),
+        ):
+            ctk.CTkButton(
+                footer,
+                text=label,
+                width=0,
+                height=22,
+                fg_color="transparent",
+                hover_color=("gray85", "gray25"),
+                text_color=MUTED,
+                font=ctk.CTkFont(size=11, underline=True),
+                command=command,
+            ).pack(side="left", padx=(0, 4))
+
+    def _show_notices(self) -> None:
+        notices = bundled_notices()
+        if notices is not None:
+            open_path(notices)
+        else:
+            messagebox.showinfo(
+                "Third-party notices",
+                "The installed app includes THIRD_PARTY_NOTICES.txt next to its "
+                f"executable. Source and license: {PROJECT_URL}",
+            )
 
     # --- Reusable visual building blocks (parrot-themed) --------------------
     def _build_hero(self) -> None:
