@@ -36,7 +36,7 @@ jobs:
       - name: Install desktop test tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y xvfb xauth espeak-ng dbus-x11 python3-dbus python3-gi
+          sudo apt-get install -y xvfb xauth espeak-ng ffmpeg squashfs-tools dbus-x11 python3-dbus python3-gi
       - name: Install exact signed revision from edge
         run: |
           sudo snap install parrotia --channel=latest/edge --revision="$EXPECTED_REVISION"
@@ -67,6 +67,13 @@ jobs:
           espeak-ng -v en-us -s 135 -w "$fixture" "Hello. This is a test of local audio transcription. The quick brown fox jumps over the lazy dog."
           HF_HUB_OFFLINE=1 timeout 300s xvfb-run -a -s "-screen 0 1280x1024x24 -ac" env XAUTHORITY= parrotia.check --exercise-gui "$fixture" | tee review/gui.json
           cp "$HOME/snap/parrotia/common/qa-gui.png" review/gui.png
+      - name: Verify signed codecs, confinement and refresh/revert
+        run: |
+          export SNAP_FILE="$RUNNER_TEMP/reviewed.snap"
+          sudo cp "/var/lib/snapd/snaps/parrotia_${EXPECTED_REVISION}.snap" "$SNAP_FILE"
+          sudo chmod 644 "$SNAP_FILE"
+          bash snap/local/release-qa.sh
+          cp -r dist/snap-review review/full-release
       - uses: actions/upload-artifact@v4
         if: always()
         with:
