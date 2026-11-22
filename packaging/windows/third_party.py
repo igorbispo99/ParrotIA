@@ -122,27 +122,39 @@ def check_native_libs(bundle: Path, data: dict, strict: bool) -> list[str]:
     problems = []
     libs = [d for d in bundle.rglob("av.libs") if d.is_dir()]
     if not libs:
-        problems.append("no av.libs folder in the bundle; the native list cannot be verified")
+        problems.append(
+            "no av.libs folder in the bundle; the native list cannot be verified"
+        )
     actual = {HASH_SUFFIX.sub("", p.stem) for d in libs for p in d.glob("*.dll")}
     listed = native_dll_names(data)
     if actual - listed:
-        problems.append(f"native libraries missing from native-components.json: {sorted(actual - listed)}")
+        problems.append(
+            f"native libraries missing from native-components.json: {sorted(actual - listed)}"
+        )
     if listed - actual and actual:
-        problems.append(f"documented libraries not in the bundle: {sorted(listed - actual)}")
+        problems.append(
+            f"documented libraries not in the bundle: {sorted(listed - actual)}"
+        )
     try:
         installed = metadata.version("av")
     except metadata.PackageNotFoundError:
         installed = None
     if installed and installed != data["pyav_version"]:
-        problems.append(f"bundle uses av {installed} but native-components.json describes av {data['pyav_version']}")
+        problems.append(
+            f"bundle uses av {installed} but native-components.json describes av {data['pyav_version']}"
+        )
     for problem in problems:
         print(f"third-party notices: {problem}", file=sys.stderr)
     if problems and strict:
-        raise SystemExit("Update packaging/windows/native-components.json for the bundled PyAV, then rebuild.")
+        raise SystemExit(
+            "Update packaging/windows/native-components.json for the bundled PyAV, then rebuild."
+        )
     return problems
 
 
-def render_notices(version: str, dists: list, data: dict, runtime_texts: list[tuple[str, str]]) -> str:
+def render_notices(
+    version: str, dists: list, data: dict, runtime_texts: list[tuple[str, str]]
+) -> str:
     """Build the notices text. `dists` holds (name, version, summary, [(file, text)]) tuples."""
     out = [
         f"THIRD-PARTY NOTICES - ParrotIA {version}\n",
@@ -167,15 +179,25 @@ def render_notices(version: str, dists: list, data: dict, runtime_texts: list[tu
         out.append(f"* {name} {dist_version} - {summary}\n")
     for name, dist_version, _summary, texts in dists:
         for filename, text in texts:
-            out.append(f"\n--- {name} {dist_version}: {filename} ---\n\n{text.rstrip()}\n")
-    out.append(section("2. NATIVE LIBRARIES (FFmpeg and codecs, from the PyAV Windows wheel)"))
+            out.append(
+                f"\n--- {name} {dist_version}: {filename} ---\n\n{text.rstrip()}\n"
+            )
+    out.append(
+        section("2. NATIVE LIBRARIES (FFmpeg and codecs, from the PyAV Windows wheel)")
+    )
     out.append(
         f"PyAV {data['pyav_version']} bundles these libraries. They were built by the\n"
         f"pyav-ffmpeg recipe at {data['build_recipe']}\n"
-        "with these FFmpeg options: " + " ".join(data["ffmpeg_configuration_flags"]) + "\n\n"
+        "with these FFmpeg options: "
+        + " ".join(data["ffmpeg_configuration_flags"])
+        + "\n\n"
     )
     for c in data["components"]:
-        location = f"statically linked into {c['static_in']}" if c.get("static_in") else ", ".join(c["dlls"])
+        location = (
+            f"statically linked into {c['static_in']}"
+            if c.get("static_in")
+            else ", ".join(c["dlls"])
+        )
         out.append(
             f"* {c['name']} {c['version']}\n"
             f"    License: {c['license']}\n"
@@ -185,8 +207,12 @@ def render_notices(version: str, dists: list, data: dict, runtime_texts: list[tu
         )
     for c in data["components"]:
         for filename in c["license_files"]:
-            text = (LICENSE_DIR / c["directory"] / filename).read_text(encoding="utf-8", errors="replace")
-            out.append(f"\n--- {c['name']} {c['version']}: {filename} ---\n\n{text.rstrip()}\n")
+            text = (LICENSE_DIR / c["directory"] / filename).read_text(
+                encoding="utf-8", errors="replace"
+            )
+            out.append(
+                f"\n--- {c['name']} {c['version']}: {filename} ---\n\n{text.rstrip()}\n"
+            )
     out.append(section("3. MINGW-W64 RUNTIME LIBRARIES"))
     out.append(data["toolchain_runtime"]["note"] + "\n\n")
     for entry in data["toolchain_runtime"]["libraries"]:
@@ -195,7 +221,9 @@ def render_notices(version: str, dists: list, data: dict, runtime_texts: list[tu
     for filename, text in runtime_texts:
         out.append(f"--- {filename} ---\n\n{text.rstrip()}\n\n")
     if not runtime_texts:
-        out.append("Python is licensed under the Python Software Foundation License,\nhttps://docs.python.org/3/license.html . Tcl/Tk is licensed under the\nTcl/Tk license, https://www.tcl-lang.org/software/tcltk/license.html .\n")
+        out.append(
+            "Python is licensed under the Python Software Foundation License,\nhttps://docs.python.org/3/license.html . Tcl/Tk is licensed under the\nTcl/Tk license, https://www.tcl-lang.org/software/tcltk/license.html .\n"
+        )
     out.append(section("5. EMBEDDED ASSETS"))
     for title, filename in EMBEDDED_ASSETS:
         text = (SNAP_LICENSES / filename).read_text(encoding="utf-8")
@@ -208,7 +236,10 @@ def runtime_license_texts() -> list[tuple[str, str]]:
     texts = []
     base = Path(sys.base_prefix)
     candidates = [("Python LICENSE.txt", base / "LICENSE.txt")]
-    candidates += [(f"Tcl/Tk {p.parent.name}/{p.name}", p) for p in sorted(base.glob("tcl/*/license.terms"))]
+    candidates += [
+        (f"Tcl/Tk {p.parent.name}/{p.name}", p)
+        for p in sorted(base.glob("tcl/*/license.terms"))
+    ]
     for label, path in candidates:
         if path.is_file():
             texts.append((label, path.read_text(encoding="utf-8", errors="replace")))
@@ -236,4 +267,6 @@ def write_notices(bundle: Path, strict: bool | None = None) -> Path:
 
 
 if __name__ == "__main__":
-    write_notices(Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "dist" / "ParrotIA")
+    write_notices(
+        Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "dist" / "ParrotIA"
+    )

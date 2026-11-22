@@ -19,7 +19,9 @@ def test_every_component_pins_its_source_and_has_license_files():
         assert re.fullmatch(r"[0-9a-f]{64}", c["sha256"]), c["name"]
         assert c["license_files"], c["name"]
         for filename in c["license_files"]:
-            text = (HERE / "licenses" / c["directory"] / filename).read_text(encoding="utf-8")
+            text = (HERE / "licenses" / c["directory"] / filename).read_text(
+                encoding="utf-8"
+            )
             assert len(text) > 500, f"{c['name']}/{filename} looks empty"
 
 
@@ -38,24 +40,42 @@ def bundle_with(tmp_path, dlls):
 
 
 def test_complete_bundle_has_no_problems(tmp_path, monkeypatch):
-    monkeypatch.setitem(third_party["check_native_libs"].__globals__, "metadata", _FakeMetadata(DATA["pyav_version"]))
+    monkeypatch.setitem(
+        third_party["check_native_libs"].__globals__,
+        "metadata",
+        _FakeMetadata(DATA["pyav_version"]),
+    )
     bundle = bundle_with(tmp_path, third_party["native_dll_names"](DATA))
     assert third_party["check_native_libs"](bundle, DATA, strict=True) == []
 
 
 def test_new_native_library_is_flagged_and_fatal_in_strict_mode(tmp_path, monkeypatch):
-    monkeypatch.setitem(third_party["check_native_libs"].__globals__, "metadata", _FakeMetadata(DATA["pyav_version"]))
+    monkeypatch.setitem(
+        third_party["check_native_libs"].__globals__,
+        "metadata",
+        _FakeMetadata(DATA["pyav_version"]),
+    )
     dlls = sorted(third_party["native_dll_names"](DATA)) + ["libnewcodec"]
     bundle = bundle_with(tmp_path, dlls)
-    assert any("libnewcodec" in p for p in third_party["check_native_libs"](bundle, DATA, strict=False))
+    assert any(
+        "libnewcodec" in p
+        for p in third_party["check_native_libs"](bundle, DATA, strict=False)
+    )
     with pytest.raises(SystemExit, match="native-components.json"):
         third_party["check_native_libs"](bundle, DATA, strict=True)
 
 
 def test_other_pyav_version_is_flagged(tmp_path, monkeypatch):
-    monkeypatch.setitem(third_party["check_native_libs"].__globals__, "metadata", _FakeMetadata("99.0.0"))
+    monkeypatch.setitem(
+        third_party["check_native_libs"].__globals__,
+        "metadata",
+        _FakeMetadata("99.0.0"),
+    )
     bundle = bundle_with(tmp_path, third_party["native_dll_names"](DATA))
-    assert any("99.0.0" in p for p in third_party["check_native_libs"](bundle, DATA, strict=False))
+    assert any(
+        "99.0.0" in p
+        for p in third_party["check_native_libs"](bundle, DATA, strict=False)
+    )
 
 
 class _FakeMetadata:

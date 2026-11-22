@@ -14,7 +14,11 @@ NS = {
     "uap": "http://schemas.microsoft.com/appx/manifest/uap/windows10",
     "rescap": "http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities",
 }
-IDENTITY = ("IgorBispo.ParrotIA", "CN=11111111-2222-3333-4444-555555555555", "Igor Bispo")
+IDENTITY = (
+    "IgorBispo.ParrotIA",
+    "CN=11111111-2222-3333-4444-555555555555",
+    "Igor Bispo",
+)
 
 
 def manifest(*identity, version="1.5.3"):
@@ -105,8 +109,13 @@ def test_layout_contains_app_manifest_and_logos(monkeypatch, tmp_path):
     (bundle / "_internal/lib.dll").write_bytes(b"x")
     layout = tmp_path / "layout"
     run_main(
-        monkeypatch, "--test-package", "--layout-only",
-        "--bundle", str(bundle), "--layout-dir", str(layout),
+        monkeypatch,
+        "--test-package",
+        "--layout-only",
+        "--bundle",
+        str(bundle),
+        "--layout-dir",
+        str(layout),
     )
     assert (layout / "parrotia-gui.exe").is_file()
     assert (layout / "_internal/lib.dll").is_file()
@@ -118,6 +127,11 @@ def test_layout_contains_app_manifest_and_logos(monkeypatch, tmp_path):
 def test_missing_bundle_stops_with_instructions(monkeypatch, tmp_path):
     with pytest.raises(SystemExit, match="--bundle-only"):
         run_main(
-            monkeypatch, "--test-package", "--layout-only",
-            "--bundle", str(tmp_path), "--layout-dir", str(tmp_path / "layout"),
+            monkeypatch,
+            "--test-package",
+            "--layout-only",
+            "--bundle",
+            str(tmp_path),
+            "--layout-dir",
+            str(tmp_path / "layout"),
         )

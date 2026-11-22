@@ -39,7 +39,9 @@ LOGOS = {
 def msix_version(version: str) -> str:
     """Return a four-part MSIX version; the Store reserves the last part (0)."""
     parts = version.split(".")
-    if len(parts) != 3 or not all(part.isdigit() and int(part) <= 65535 for part in parts):
+    if len(parts) != 3 or not all(
+        part.isdigit() and int(part) <= 65535 for part in parts
+    ):
         raise ValueError(f"Expected a version like 1.5.3, got {version!r}")
     return ".".join([*parts, "0"])
 
@@ -105,7 +107,9 @@ def make_logos(assets: Path) -> None:
 
 def build_layout(bundle: Path, layout: Path, manifest: str) -> None:
     if not (bundle / EXECUTABLE).is_file():
-        raise SystemExit(f"{bundle / EXECUTABLE} not found; run build.py --bundle-only first.")
+        raise SystemExit(
+            f"{bundle / EXECUTABLE} not found; run build.py --bundle-only first."
+        )
     if layout.exists():
         shutil.rmtree(layout)
     shutil.copytree(bundle, layout)
@@ -117,11 +121,16 @@ def find_makeappx() -> str:
     found = shutil.which("makeappx.exe")
     if found:
         return found
-    sdk = Path(os.environ.get("ProgramFiles(x86)", "C:/Program Files (x86)")) / "Windows Kits/10/bin"
+    sdk = (
+        Path(os.environ.get("ProgramFiles(x86)", "C:/Program Files (x86)"))
+        / "Windows Kits/10/bin"
+    )
     candidates = sorted(sdk.glob("*/x64/makeappx.exe"), reverse=True)
     if candidates:
         return str(candidates[0])
-    raise SystemExit("Install the Windows SDK or pass --makeappx <path-to-makeappx.exe>.")
+    raise SystemExit(
+        "Install the Windows SDK or pass --makeappx <path-to-makeappx.exe>."
+    )
 
 
 def main() -> None:
@@ -165,12 +174,22 @@ def main() -> None:
     if args.layout_only:
         return
     if sys.platform != "win32":
-        parser.error("Packing needs makeappx.exe; run on Windows or pass --layout-only.")
+        parser.error(
+            "Packing needs makeappx.exe; run on Windows or pass --layout-only."
+        )
     suffix = "-test" if args.test_package else ""
     args.output_dir.mkdir(parents=True, exist_ok=True)
     package = args.output_dir / f"ParrotIA-{__version__}-windows-x64{suffix}.msix"
     subprocess.run(
-        [args.makeappx or find_makeappx(), "pack", "/o", "/d", str(args.layout_dir), "/p", str(package)],
+        [
+            args.makeappx or find_makeappx(),
+            "pack",
+            "/o",
+            "/d",
+            str(args.layout_dir),
+            "/p",
+            str(package),
+        ],
         check=True,
     )
     print(f"Package: {package}")
