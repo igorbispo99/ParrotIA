@@ -38,7 +38,6 @@ apps:
   gui:
     command: bin/python3 $SNAP/share/parrotia/launcher.py
     command-chain: [bin/parrotia-env]
-    desktop: usr/share/applications/parrotia.desktop
     plugs: [home, network, removable-media, x11, desktop]
   check:
     command: bin/python3 $SNAP/share/parrotia/check.py
