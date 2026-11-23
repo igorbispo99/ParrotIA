@@ -2,9 +2,11 @@
 
 [Documentation](README.md) · [Installation](installation.md) · [Signing setup for maintainers](code-signing.md)
 
-**Status (21 November 2026): Windows installers are not code-signed yet, and
-macOS builds are not notarized yet.** An application to the SignPath Foundation
-for free Windows signing was submitted on 21 November 2026 and is pending.
+**As of 22 November 2026, direct Windows installers are unsigned and macOS
+builds are unnotarized.** SignPath Foundation declined the 21 November
+application for free Windows signing because the project has limited evidence
+of public adoption. The [Microsoft Store MSIX submission](microsoft-store-roadmap.md)
+is published; Microsoft signs the Store package.
 Windows may show a SmartScreen warning and macOS Gatekeeper may ask for
 confirmation. This policy describes how releases will be signed once the
 signing services below are enabled.
@@ -26,15 +28,9 @@ and the package managers verify them before installing.
 
 ## Signing provider
 
-Windows signing is planned through the SignPath Foundation's free program for
-open source projects. When it is enabled, this section applies:
-
-> Free code signing provided by [SignPath.io](https://signpath.io), certificate
-> by [SignPath Foundation](https://signpath.org).
-
-The certificate is issued to SignPath Foundation, which is therefore the
-publisher shown by Windows. macOS builds use the project owner's own Apple
-Developer ID.
+The Foundation invited ParrotIA to reapply once it can demonstrate broader
+community adoption. The planned macOS signing identity is the project owner’s
+Apple Developer ID.
 
 ## Team roles
 

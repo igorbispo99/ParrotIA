@@ -2,7 +2,7 @@
 
 [Documentation](README.md) · [Store submission plan](store-submission-plan.md) · [Installation](installation.md)
 
-Status as of **21 November 2026**, for ParrotIA **1.5.3**. The first section
+Status as of **23 November 2026**, for ParrotIA **1.5.3**. The first section
 records what has been submitted and what each channel is waiting for. The
 second holds ready-to-edit copy for announcing ParrotIA; nothing in it has
 been posted.
@@ -21,8 +21,8 @@ been posted.
 | AUR (`parrotia-bin`) | Recipe tested; **not published** | An AUR account (registration was reported closed on 21 November) | Re-check registration, add the SSH key, push `packaging/aur/parrotia-bin` |
 | Arch package on GitHub | `parrotia-bin-1.5.3-1-x86_64.pkg.tar.zst` is attached to the 1.5.3 release | — | Documented in [installation](installation.md#arch-linux) |
 | Flathub | Not started | A human maintainer | See below |
-| Code signing | Workflows and policy prepared, **not enabled**; SignPath application submitted 21 November 2026 | SignPath Foundation decision (Windows) and an Apple Developer ID (macOS) | Follow [code signing setup](code-signing.md) |
-| Microsoft Store | Deferred | Trusted code signing of the installer and every bundled executable | Revisit with a signing certificate |
+| Code signing | Direct Windows installer unsigned. SignPath Foundation declined the application. macOS notarization is pending. | Broader public adoption for a Foundation reapplication, and an Apple Developer ID for macOS | Track independent references and usage before reapplying. See [signing setup](code-signing.md). |
+| Microsoft Store | **Live** since 23 November 2026: [ParrotIA](https://apps.microsoft.com/detail/9NXSSCQKW2XR), version 1.5.3 | — | Submit each release as a new Partner Center submission; see the [Microsoft Store roadmap](microsoft-store-roadmap.md) |
 | Mac App Store | Planning only | Developer account, rights review, sandbox prototype | [Roadmap](mac-app-store-roadmap.md) |
 
 ### WinGet evidence

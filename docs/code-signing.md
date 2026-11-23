@@ -19,10 +19,13 @@ Without configuration both jobs log that signing is not enabled and continue.
 
 ## Windows: SignPath Foundation
 
-> **Status:** application submitted on 21 November 2026; waiting for a decision.
-> The form asked for a download page that mentions SignPath. Add that statement
-> (the attribution text from the [signing policy](code-signing-policy.md)) to the
-> README and release notes only after the project is approved.
+**Status as of 22 November 2026.** The Foundation declined the 21 November
+application because ParrotIA has too little public evidence of community
+adoption. It welcomes a new application once the project can point to broader
+use, independent coverage or sustained contributor activity. SignPath also
+offered a [paid subscription](https://docs.signpath.io/change-subscription).
+The direct Windows installer remains unsigned. The [Microsoft Store MSIX
+submission](microsoft-store-roadmap.md) was published on 23 November 2026.
 
 SignPath Foundation offers free certificates to open source projects. The
 [conditions](https://signpath.org/terms) include an OSI-approved license without
@@ -34,12 +37,12 @@ Foundation, which becomes the publisher shown by Windows. Acceptance is at
 their discretion.
 
 1. Turn on two-factor authentication for the GitHub account.
-2. Apply at [signpath.org](https://signpath.org) with the repository URL and the
+2. When broader adoption is documented, reapply at [signpath.org](https://signpath.org) with the repository URL and the
    [code signing policy](code-signing-policy.md). Say that the installer bundles
    upstream Python, FFmpeg/PyAV, ONNX Runtime and CTranslate2 binaries, and ask
    whether they may stay unsigned inside the signed installer. The NVIDIA CUDA
    libraries are **not** bundled; they are an optional `parrotia[cuda]` extra.
-3. In the SignPath project, create the two artifact configurations below, a
+3. After approval, in the SignPath project, create the two artifact configurations below, a
    signing policy named `release-signing` that requires manual approval, and
    an API token for the CI user. Install the SignPath GitHub app if prompted.
 4. In the GitHub repository, add:
@@ -152,15 +155,12 @@ can still show a warning for a short time.
   and add its link to the release notes and download pages, as SignPath requires.
 - The installer hash changes with signing, so submit a new WinGet version rather
   than editing the existing manifest.
-- Official Homebrew casks and the Microsoft Store become possible: see the
-  [distribution channels](distribution-channels.md) and [macOS roadmap](mac-app-store-roadmap.md).
+- For an official Homebrew cask, follow the [macOS roadmap](mac-app-store-roadmap.md).
 - Re-check `brew audit --cask --online` before proposing the cask.
 
 ## Not yet verified
 
-- The SignPath application was submitted on 21 November 2026 and has no
-  decision yet. The artifact configurations above have not been run through
-  SignPath's validator.
+- The artifact configurations above still need to be checked with SignPath's validator.
 - The Windows workflow was not run on a Windows runner after the build was split
   into `--bundle-only` and `--installer-only`; the unsigned path should be
   confirmed by a normal CI run on a branch before tagging a release.

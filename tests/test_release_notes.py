@@ -75,3 +75,12 @@ def test_linux_downloads_identify_architecture():
         assert label in body
     for asset in assets:
         assert body.count(f"/{asset})") == 1
+
+
+def test_windows_row_recommends_the_store_over_the_unsigned_installer():
+    body = render(CHANGELOG, "v2.0.0", ["ParrotIA-2.0.0-windows-x64-setup.exe"])
+    store = body.index("Microsoft Store (recommended)")
+    installer = body.index("not code-signed")
+    assert store < installer
+    assert "https://apps.microsoft.com/detail/9NXSSCQKW2XR" in body
+    assert "/v2.0.0/ParrotIA-2.0.0-windows-x64-setup.exe" in body

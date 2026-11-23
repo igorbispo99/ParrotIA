@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from parrotia import __version__  # noqa: E402
 
 REPOSITORY = "https://github.com/igorbispo99/ParrotIA"
+STORE_URL = "https://apps.microsoft.com/detail/9NXSSCQKW2XR"
 
 
 def version_changes(changelog: str, version: str) -> str:
@@ -43,7 +44,7 @@ def render_release_notes(changelog: str, tag: str, assets: list[str]) -> str:
     labels = [
         ("macOS · Apple Silicon", lambda n: n.endswith("-macos-arm64.dmg")),
         ("macOS · Intel", lambda n: n.endswith("-macos-x86_64.dmg")),
-        ("Windows · x64", lambda n: n.endswith(".exe")),
+        ("Windows · x64 installer (not code-signed)", lambda n: n.endswith(".exe")),
         ("Linux · Debian / Ubuntu · x86-64", lambda n: n.endswith("_amd64.deb")),
         ("Linux · Debian / Ubuntu · ARM64", lambda n: n.endswith("_arm64.deb")),
         ("Linux · Fedora / RPM · x86-64", lambda n: n.endswith(".x86_64.rpm")),
@@ -52,6 +53,11 @@ def render_release_notes(changelog: str, tag: str, assets: list[str]) -> str:
         ("Source archive", lambda n: n.endswith(".tar.gz")),
     ]
     for label, matches in labels:
+        if label.startswith("Windows") and any(matches(n) for n in assets):
+            # The Store edition is signed by Microsoft; the setup program is not.
+            rows.append(
+                f"| Windows · Microsoft Store (recommended) | [Get it]({STORE_URL}) |"
+            )
         for name in sorted(assets):
             if matches(name):
                 url = f"{REPOSITORY}/releases/download/{tag}/{quote(name, safe='')}"
