@@ -4,16 +4,29 @@
 
 ## Requirements
 
-- **Windows installer:** 64-bit Windows 10 (1809 or later) or Windows 11. Python and FFmpeg are included; models download on first use.
+- **Windows (Microsoft Store or installer):** 64-bit Windows 10 (1809 or later) or Windows 11. Python and FFmpeg are included; models download on first use.
 - **macOS app:** macOS 14 Sonoma or later, Apple Silicon or Intel (separate downloads). Models download on first use.
 - **Linux installers:** x86-64 or ARM64 (AArch64) Linux with glibc 2.35 or newer (Ubuntu 22.04+, Debian 12+, current Fedora, or RHEL 10+), and an X11/XWayland desktop.
 - **Install from Python/source:** Python 3.9 or later and pip.
 
-## Windows installer (recommended)
+## Microsoft Store (recommended for Windows)
 
-Download `ParrotIA-<version>-windows-x64-setup.exe` from
-[Releases](https://github.com/igorbispo99/ParrotIA/releases/latest). Run it and follow
-the setup wizard. The installer
+Install **ParrotIA** from the [Microsoft Store](https://apps.microsoft.com/detail/9NXSSCQKW2XR). Microsoft signs the
+package, so Windows shows no "unknown publisher" warning, and the Store keeps the
+app up to date. Launch it from the Start menu.
+
+The Store edition differs from the setup program below: it has no **Transcribe on
+Parrot** Explorer right-click action. Downloaded models are kept in the Hugging
+Face cache in your user folder (`%USERPROFILE%\.cache\huggingface\hub`), so they
+survive uninstalling. See the [privacy policy](privacy.md).
+
+## Windows installer (not code-signed)
+
+This installer is not code-signed, so Windows SmartScreen reports an unknown or
+untrusted publisher; choose **More info → Run anyway** only if you downloaded it
+from this project's [Releases](https://github.com/igorbispo99/ParrotIA/releases/latest).
+Prefer the Store edition above. Download
+`ParrotIA-<version>-windows-x64-setup.exe`, run it and follow the setup wizard. The installer
 works for your Windows account without administrator access. It creates a Start
 menu shortcut and offers a desktop shortcut and Explorer integration, both
 enabled by default. Launch **ParrotIA** from either shortcut.

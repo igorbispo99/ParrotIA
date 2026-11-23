@@ -27,14 +27,17 @@
 Desktop installers include Python and media codecs. Models download on first use;
 the default `large-v3-turbo` download is about 1.6 GB. Smaller models are available.
 
-| Platform | Download from [Releases](https://github.com/igorbispo99/ParrotIA/releases/latest) | Requirements |
+| Platform | Download | Requirements |
 | --- | --- | --- |
-| Windows | `windows-x64-setup.exe` | 64-bit Windows 10 (1809+) or Windows 11 |
-| macOS | `macos-arm64.dmg` or `macos-x86_64.dmg` | macOS 14+, Apple Silicon or Intel |
-| Linux | `.deb` or `.rpm` | x86-64 or ARM64, glibc 2.35+, X11/XWayland |
+| Windows | [Microsoft Store](https://apps.microsoft.com/detail/9NXSSCQKW2XR) (recommended) | 64-bit Windows 10 (1809+) or Windows 11 |
+| macOS | [Releases](https://github.com/igorbispo99/ParrotIA/releases/latest): `macos-arm64.dmg` or `macos-x86_64.dmg` | macOS 14+, Apple Silicon or Intel |
+| Linux | [Releases](https://github.com/igorbispo99/ParrotIA/releases/latest): `.deb` or `.rpm` | x86-64 or ARM64, glibc 2.35+, X11/XWayland |
 
-On macOS, open the DMG and drag **ParrotIA** to **Applications**. On Windows, run
-the setup wizard. On Linux, install the package with `apt` or `dnf`.
+On Windows, install ParrotIA from the [Microsoft Store](https://apps.microsoft.com/detail/9NXSSCQKW2XR); it is signed by
+Microsoft and updates automatically. The `windows-x64-setup.exe` on Releases is not
+code-signed, so Windows shows an "unknown publisher" warning for it; prefer the
+Store. On macOS, open the DMG and drag **ParrotIA** to **Applications**. On Linux,
+install the package with `apt` or `dnf`.
 
 On Ubuntu (AMD64 or ARM64), you can also use `sudo snap install parrotia` from
 the [Snap Store](https://snapcraft.io/parrotia), then launch `parrotia.gui`.
