@@ -9,6 +9,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#installation)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![Get it from the Microsoft Store](https://img.shields.io/badge/Microsoft%20Store-Get%20it-0078D4)](https://apps.microsoft.com/detail/9NXSSCQKW2XR)
+[![Get it from the Snap Store](https://img.shields.io/badge/Snap%20Store-Get%20it-E95420)](https://snapcraft.io/parrotia)
 
 [Download the latest release](https://github.com/igorbispo99/ParrotIA/releases/latest) · [Documentation](https://github.com/igorbispo99/ParrotIA/blob/main/docs/README.md) · [Report an issue](https://github.com/igorbispo99/ParrotIA/issues)
 
